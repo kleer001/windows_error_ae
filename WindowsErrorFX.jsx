@@ -2120,9 +2120,9 @@ function loadSettings(comp) {
     var settings = defaultSettings();
 
     // Scan markers for our data
-    for (var i = 1; i <= comp.marker.numKeys; i++) {
+    for (var i = 1; i <= comp.markerProperty.numKeys; i++) {
         try {
-            var data = JSON.parse(comp.marker.keyValue(i).comment);
+            var data = JSON.parse(comp.markerProperty.keyValue(i).comment);
             if (data._type === "WEFX_SETTINGS") {
                 // Merge stored values into defaults
                 for (var key in data) {
@@ -2152,9 +2152,9 @@ function saveSettings(comp, settings) {
     // Remove existing WEFX markers
     var toRemove = [];
     var i;
-    for (i = 1; i <= comp.marker.numKeys; i++) {
+    for (i = 1; i <= comp.markerProperty.numKeys; i++) {
         try {
-            var data = JSON.parse(comp.marker.keyValue(i).comment);
+            var data = JSON.parse(comp.markerProperty.keyValue(i).comment);
             if (data._type && data._type.indexOf("WEFX_") === 0) {
                 toRemove.push(i);
             }
@@ -2164,7 +2164,7 @@ function saveSettings(comp, settings) {
     }
     // Remove in reverse order
     for (i = toRemove.length - 1; i >= 0; i--) {
-        comp.marker.removeKey(toRemove[i]);
+        comp.markerProperty.removeKey(toRemove[i]);
     }
 
     // Write new marker
@@ -2178,7 +2178,7 @@ function saveSettings(comp, settings) {
 
     var mv = new MarkerValue("");
     mv.comment = JSON.stringify(markerData);
-    comp.marker.setValueAtTime(0, mv);
+    comp.markerProperty.setValueAtTime(0, mv);
 }
 
 /** Read UI state into a WEFXSettings object. */
