@@ -127,17 +127,32 @@ assert(ctx.nameMatchesKeyword("my_fg_layer", ["fg"]) === true,
 // --- defaultSettings ---
 var ds = ctx.defaultSettings();
 assert(ds.seed === 1984, "defaultSettings seed = 1984");
-assert(ds.chaos === 50, "defaultSettings chaos = 50");
+assert(ds.chaos === 100, "defaultSettings chaos = 100");
 assert(ds.rotoMode === "split", "defaultSettings rotoMode = split");
 assert(ds.chaosCurve === "flat", "defaultSettings chaosCurve = flat");
 assert(ds.animStyle === "xpClassic", "defaultSettings animStyle = xpClassic");
 assert(ds.minFrames === 8, "defaultSettings minFrames = 8");
 assert(ds.maxFrames === 96, "defaultSettings maxFrames = 96");
-assert(ds.mix.dialog === 75, "defaultSettings mix.dialog = 75");
-assert(ds.mix.bsod === 50, "defaultSettings mix.bsod = 50");
-assert(ds.mix.text === 75, "defaultSettings mix.text = 75");
-assert(ds.mix.cursor === 50, "defaultSettings mix.cursor = 50");
-assert(ds.mix.pixel === 25, "defaultSettings mix.pixel = 25");
+// Element counts default to 0 (auto mode)
+assert(ds.counts.dialog === 0, "defaultSettings counts.dialog = 0");
+assert(ds.counts.bsod === 0, "defaultSettings counts.bsod = 0");
+assert(ds.counts.text === 0, "defaultSettings counts.text = 0");
+assert(ds.counts.cursor === 0, "defaultSettings counts.cursor = 0");
+assert(ds.counts.pixel === 0, "defaultSettings counts.pixel = 0");
+// Overlay settings
+assert(ds.scanlines.enabled === true, "defaultSettings scanlines.enabled = true");
+assert(ds.scanlines.opacity === 20, "defaultSettings scanlines.opacity = 20");
+assert(ds.scanlines.spacing === 4, "defaultSettings scanlines.spacing = 4");
+assert(ds.noise.enabled === true, "defaultSettings noise.enabled = true");
+assert(ds.headScratch.enabled === false, "defaultSettings headScratch.enabled = false");
+// Element controls
+assert(ds.elementScale === 100, "defaultSettings elementScale = 100");
+assert(ds.speedMult === 100, "defaultSettings speedMult = 100");
+assert(ds.opacityMin === 50, "defaultSettings opacityMin = 50");
+assert(ds.opacityMax === 100, "defaultSettings opacityMax = 100");
+assert(ds.stackDepth === 8, "defaultSettings stackDepth = 8");
+assert(ds.entryFrames === 3, "defaultSettings entryFrames = 3");
+assert(ds.exitFrames === 2, "defaultSettings exitFrames = 2");
 assert(Array.isArray(ds.customMessages) && ds.customMessages.length === 0,
     "defaultSettings customMessages is empty array");
 assert(Array.isArray(ds.customTitles) && ds.customTitles.length === 0,

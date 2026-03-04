@@ -184,13 +184,25 @@ var STACK_OFFSET_X    = 10;
 var STACK_OFFSET_Y    = 10;
 var MAX_STACK_DEPTH   = 8;
 
-// ── Scan lines / noise ──────────────────────────────────────────
-var SCANLINE_OPACITY  = 0.20;
-var SCANLINE_SPACING  = 4;
-var NOISE_OPACITY     = 0.08;
+// ── Overlay defaults ────────────────────────────────────────────
+var DEFAULT_SCANLINE_OPACITY  = 20;   // percent
+var DEFAULT_SCANLINE_SPACING  = 4;    // pixels between lines
+var DEFAULT_NOISE_OPACITY     = 8;    // percent
+var DEFAULT_NOISE_SCALE       = 100;  // fractal noise scale
+var DEFAULT_NOISE_COMPLEXITY  = 5;    // fractal noise detail (1–20)
+var DEFAULT_HEADSCRATCH_FREQ  = 20;   // frames between scratches
+var DEFAULT_HEADSCRATCH_HEIGHT = 2;   // pixels tall
 
 // ── Cursor ───────────────────────────────────────────────────────
 var CURSOR_HEIGHT = 24;
+
+// ── Element control defaults ────────────────────────────────────
+var DEFAULT_ELEMENT_SCALE = 100;  // percent
+var DEFAULT_SPEED_MULT    = 100;  // percent
+var DEFAULT_OPACITY_MIN   = 50;   // minimum element opacity
+var DEFAULT_OPACITY_MAX   = 100;  // maximum element opacity
+var DEFAULT_ENTRY_FRAMES  = 3;    // frames for arrival animation
+var DEFAULT_EXIT_FRAMES   = 2;    // frames for exit animation
 
 // ── Roto detection keywords ─────────────────────────────────────
 var ROTO_KEYWORDS = ["roto", "rotoscope", "matte", "cutout", "subject", "fg"];
@@ -558,22 +570,24 @@ function buildBSOD(params, targetComp) {
     var outSec = params.outPoint;
     var dur = outSec - inSec;
     var fps = targetComp.frameRate;
+    var sc = params.scale || 1;
+    var spd = params.speedMult || 1;
 
     // Determine panel dimensions based on variant
     var panelW, panelH, panelX, panelY;
     if (params.variant === "fullStrip") {
         panelW = params.compW;
-        panelH = rngInt(rng, 80, 120);
+        panelH = Math.round(rngInt(rng, 80, 120) * sc);
         panelX = params.compW / 2;
         panelY = params.y;
     } else if (params.variant === "corner") {
-        panelW = rngInt(rng, 200, 400);
-        panelH = rngInt(rng, 60, 120);
+        panelW = Math.round(rngInt(rng, 200, 400) * sc);
+        panelH = Math.round(rngInt(rng, 60, 120) * sc);
         panelX = params.x;
         panelY = params.y;
     } else { // island
-        panelW = rngInt(rng, 200, 500);
-        panelH = rngInt(rng, 60, 150);
+        panelW = Math.round(rngInt(rng, 200, 500) * sc);
+        panelH = Math.round(rngInt(rng, 60, 150) * sc);
         panelX = params.x;
         panelY = params.y;
     }
@@ -623,8 +637,9 @@ function buildBSOD(params, targetComp) {
     // Create text layer
     var textLines = params.textLines || ["*** STOP: 0x0000000A"];
     var textContent = textLines.join("\n");
+    var scaledBsodFont = Math.round(FSIZE_BSOD * sc);
     var textLayer = createTextLayer(targetComp, textContent,
-        FONT_MONO, FSIZE_BSOD, C_BSOD_TEXT, panelX, panelY,
+        FONT_MONO, scaledBsodFont, C_BSOD_TEXT, panelX, panelY,
         ParagraphJustification.LEFT_JUSTIFY);
     textLayer.name = "WEFX_BSOD_Text";
     setLayerTime(textLayer, inSec, outSec, targetComp);
@@ -690,14 +705,17 @@ function buildDialogBox(params, targetComp) {
     var outSec = params.outPoint;
     var dur = outSec - inSec;
     var fps = targetComp.frameRate;
-    var W = DIALOG_WIDTH;
-    var H = DIALOG_HEIGHT;
-    var titleH = DIALOG_TITLE_H;
+    var sc = params.scale || 1;
+    var spd = params.speedMult || 1;
+    var W = Math.round(DIALOG_WIDTH * sc);
+    var H = Math.round(DIALOG_HEIGHT * sc);
+    var titleH = Math.round(DIALOG_TITLE_H * sc);
     var si = params.stackIndex || 0;
+    var stackOff = params.stackOffset || STACK_OFFSET_X;
 
     // Dialog center position with stack cascade
-    var cx = params.x + si * STACK_OFFSET_X;
-    var cy = params.y + si * STACK_OFFSET_Y;
+    var cx = params.x + si * stackOff;
+    var cy = params.y + si * stackOff;
 
     // 1. Null parent for animation control
     var nullLayer = targetComp.layers.addNull();
@@ -736,62 +754,67 @@ function buildDialogBox(params, targetComp) {
     addRect(contents, "TitleFill", W - 4, titleH - 2, 0, -(H / 2) + titleH / 2, C_DIALOG_TITLE_BG, null, 0);
 
     // Icon indicator (small colored square)
+    var iconSz = Math.round(14 * sc);
     var iconColor = C_ICON_ERROR;
     if (params.icon === "warning") iconColor = C_ICON_WARNING;
     else if (params.icon === "question") iconColor = C_ICON_QUESTION;
     if (params.icon !== "none") {
-        addRect(contents, "Icon", 14, 14, -(W / 2) + 22, -5, iconColor, null, 0);
+        addRect(contents, "Icon", iconSz, iconSz, -(W / 2) + Math.round(22 * sc), -5, iconColor, null, 0);
     }
 
     // Buttons
     var buttons = params.buttons || ["OK"];
-    var btnSpacing = 10;
-    var totalBtnW = buttons.length * DIALOG_BTN_W + (buttons.length - 1) * btnSpacing;
-    var btnStartX = -(totalBtnW / 2) + DIALOG_BTN_W / 2;
-    var btnY = H / 2 - 25;
+    var btnW = Math.round(DIALOG_BTN_W * sc);
+    var btnH = Math.round(DIALOG_BTN_H * sc);
+    var btnSpacing = Math.round(10 * sc);
+    var totalBtnW = buttons.length * btnW + (buttons.length - 1) * btnSpacing;
+    var btnStartX = -(totalBtnW / 2) + btnW / 2;
+    var btnY = H / 2 - Math.round(25 * sc);
     for (var bi = 0; bi < buttons.length; bi++) {
-        var bx = btnStartX + bi * (DIALOG_BTN_W + btnSpacing);
-        // Button raised effect
-        addRect(contents, "Btn_" + bi + "_Light", DIALOG_BTN_W, DIALOG_BTN_H, bx, btnY, C_DIALOG_BTN_BG, C_DIALOG_BORDER_D, 1);
+        var bx = btnStartX + bi * (btnW + btnSpacing);
+        addRect(contents, "Btn_" + bi + "_Light", btnW, btnH, bx, btnY, C_DIALOG_BTN_BG, C_DIALOG_BORDER_D, 1);
     }
 
     layers.push(chrome);
 
     // 3. Title text
+    var scaledTitleFont = Math.round(FSIZE_DIALOG_TITLE * sc);
     var titleTL = createTextLayer(targetComp, params.title || "Error",
-        FONT_UI, FSIZE_DIALOG_TITLE, C_DIALOG_TITLE_TX,
+        FONT_UI, scaledTitleFont, C_DIALOG_TITLE_TX,
         0, 0, ParagraphJustification.LEFT_JUSTIFY);
     titleTL.name = "WEFX_Dialog_Title";
     titleTL.parent = nullLayer;
     titleTL.property("Position").setValue([
-        -(W / 2) + 22,
-        -(H / 2) + titleH / 2 + FSIZE_DIALOG_TITLE / 3
+        -(W / 2) + Math.round(22 * sc),
+        -(H / 2) + titleH / 2 + scaledTitleFont / 3
     ]);
     setLayerTime(titleTL, inSec, outSec, targetComp);
     layers.push(titleTL);
 
     // 4. Body text
+    var scaledBodyFont = Math.round(FSIZE_DIALOG_BODY * sc);
     var bodyTL = createTextLayer(targetComp, params.body || "An error has occurred.",
-        FONT_UI, FSIZE_DIALOG_BODY, [0, 0, 0],
+        FONT_UI, scaledBodyFont, [0, 0, 0],
         0, 0, ParagraphJustification.LEFT_JUSTIFY);
     bodyTL.name = "WEFX_Dialog_Body";
     bodyTL.parent = nullLayer;
     bodyTL.property("Position").setValue([
-        -(W / 2) + 44,
+        -(W / 2) + Math.round(44 * sc),
         -10
     ]);
     setLayerTime(bodyTL, inSec, outSec, targetComp);
     layers.push(bodyTL);
 
     // 5. Button text layers
+    var scaledBtnFont = Math.round(FSIZE_BUTTON * sc);
     for (var bti = 0; bti < buttons.length; bti++) {
-        var btx = btnStartX + bti * (DIALOG_BTN_W + btnSpacing);
+        var btx = btnStartX + bti * (btnW + btnSpacing);
         var btnTL = createTextLayer(targetComp, buttons[bti],
-            FONT_UI, FSIZE_BUTTON, [0, 0, 0],
+            FONT_UI, scaledBtnFont, [0, 0, 0],
             0, 0, ParagraphJustification.CENTER_JUSTIFY);
         btnTL.name = "WEFX_Dialog_Btn_" + bti;
         btnTL.parent = nullLayer;
-        btnTL.property("Position").setValue([btx, btnY + FSIZE_BUTTON / 3]);
+        btnTL.property("Position").setValue([btx, btnY + scaledBtnFont / 3]);
         setLayerTime(btnTL, inSec, outSec, targetComp);
         layers.push(btnTL);
     }
@@ -813,7 +836,7 @@ function buildDialogBox(params, targetComp) {
     // 7. Life behavior
     if (params.lifeBehavior === "drift") {
         var driftAngle = (params.driftDir || rngFloat(rng, 0, 360)) * Math.PI / 180;
-        var driftSpd = params.driftSpeed || rngFloat(rng, 0.5, 2);
+        var driftSpd = (params.driftSpeed || rngFloat(rng, 0.5, 2)) * spd;
         var totalDriftFrames = Math.round(dur * fps);
         var dx = Math.cos(driftAngle) * driftSpd * totalDriftFrames;
         var dy = Math.sin(driftAngle) * driftSpd * totalDriftFrames;
@@ -869,6 +892,8 @@ function buildChromeFragment(params, targetComp) {
     var outSec = params.outPoint;
     var dur = outSec - inSec;
     var fps = targetComp.frameRate;
+    var sc = params.scale || 1;
+    var spd = params.speedMult || 1;
 
     var fragType = params.fragmentType || "titleBar";
     var x = params.x;
@@ -877,8 +902,8 @@ function buildChromeFragment(params, targetComp) {
     if (fragType === "titleBar" || fragType === "titleStack") {
         var barCount = (fragType === "titleStack") ? (params.stackCount || rngInt(rng, 3, 6)) : 1;
         for (var bi = 0; bi < barCount; bi++) {
-            var barW = rngInt(rng, 120, 260);
-            var barH = DIALOG_TITLE_H;
+            var barW = Math.round(rngInt(rng, 120, 260) * sc);
+            var barH = Math.round(DIALOG_TITLE_H * sc);
             var barY = y + bi * (barH + 1);
 
             var barShape = targetComp.layers.addShape();
@@ -951,7 +976,7 @@ function buildChromeFragment(params, targetComp) {
         }
     } else if (params.behavior === "drift" && layers.length > 0) {
         var dAngle = (params.driftDir || rngFloat(rng, 0, 360)) * Math.PI / 180;
-        var dSpd = params.driftSpeed || rngFloat(rng, 0.5, 2);
+        var dSpd = (params.driftSpeed || rngFloat(rng, 0.5, 2)) * spd;
         var dFrames = Math.round(dur * fps);
         var ddx = Math.cos(dAngle) * dSpd * dFrames;
         var ddy = Math.sin(dAngle) * dSpd * dFrames;
@@ -1002,7 +1027,9 @@ function buildTextOverlay(params, targetComp) {
     var outSec = params.outPoint;
     var dur = outSec - inSec;
     var fps = targetComp.frameRate;
-    var fontSize = params.fontSize || FSIZE_TEXT_OVER;
+    var sc = params.scale || 1;
+    var spd = params.speedMult || 1;
+    var fontSize = Math.round((params.fontSize || FSIZE_TEXT_OVER) * sc);
     var lineHeight = fontSize + 4;
     var lines = params.lines || ["ERROR"];
 
@@ -1053,7 +1080,7 @@ function buildTextOverlay(params, targetComp) {
                 }
             } else if (params.behavior === "ghostDrift") {
                 var gDir = (params.driftDir === "up") ? -1 : 1;
-                var gSpd = params.driftSpeed || rngFloat(rng, 0.3, 1);
+                var gSpd = (params.driftSpeed || rngFloat(rng, 0.3, 1)) * spd;
                 var gDist = gSpd * Math.round(dur * fps) * gDir;
                 var gPos = lineTL.property("Position");
                 setLinearKey(gPos, inSec, [params.x, lineY]);
@@ -1099,7 +1126,9 @@ function buildCursor(params, targetComp) {
     var outSec = params.outPoint;
     var dur = outSec - inSec;
     var fps = targetComp.frameRate;
-    var cursorSize = params.size || CURSOR_HEIGHT;
+    var sc = params.scale || 1;
+    var spd = params.speedMult || 1;
+    var cursorSize = Math.round((params.size || CURSOR_HEIGHT) * sc);
 
     // Windows arrow cursor polygon (scaled to cursorSize)
     var scale = cursorSize / 22;
@@ -1132,8 +1161,8 @@ function buildCursor(params, targetComp) {
     } else if (params.behavior === "orbit") {
         var orbitCl = makeCursorLayer(params.x, params.y, params.opacity);
         var orbitPos = orbitCl.property("Position");
-        var oRadius = params.orbitRadius || rngInt(rng, 40, 120);
-        var oSpeed = params.orbitSpeed || rngFloat(rng, 4, 12);
+        var oRadius = Math.round((params.orbitRadius || rngInt(rng, 40, 120)) * sc);
+        var oSpeed = (params.orbitSpeed || rngFloat(rng, 4, 12)) * spd;
         var oDir = params.orbitDir || 1;
         var totalOrbitFrames = Math.round(dur * fps);
         for (var oi = 0; oi <= totalOrbitFrames; oi += 2) {
@@ -1269,8 +1298,9 @@ function buildPixelBlock(params, targetComp) {
     var outSec = params.outPoint;
     var dur = outSec - inSec;
     var fps = targetComp.frameRate;
-    var blockW = params.w || rngInt(rng, 4, 40);
-    var blockH = params.h || rngInt(rng, 2, 20);
+    var sc = params.scale || 1;
+    var blockW = Math.round((params.w || rngInt(rng, 4, 40)) * sc);
+    var blockH = Math.round((params.h || rngInt(rng, 2, 20)) * sc);
     var colors = params.colors || C_PIXEL_COLORS;
 
     if (params.behavior === "flash") {
@@ -1356,20 +1386,24 @@ function buildPixelBlock(params, targetComp) {
 
 /**
  * Build full-comp scan lines overlay.
- * Uses a single rectangle + Repeater for performance (one shape group
- * instead of hundreds). Works at any resolution including 4K+.
+ * Uses a single rectangle + Repeater for performance.
+ * opts: { opacity, spacing, jitter }
  */
-function buildScanLines(comp) {
+function buildScanLines(comp, opts) {
+    var opacity = (opts && opts.opacity != null) ? opts.opacity : DEFAULT_SCANLINE_OPACITY;
+    var spacing = (opts && opts.spacing != null) ? opts.spacing : DEFAULT_SCANLINE_SPACING;
+    var jitter = (opts && opts.jitter);
+    if (spacing < 1) spacing = 1;
+
     var sl = comp.layers.addShape();
     sl.name = "WEFX_ScanLines";
-    sl.property("Opacity").setValue(SCANLINE_OPACITY * 100);
+    sl.property("Opacity").setValue(opacity);
     sl.blendingMode = BlendingMode.MULTIPLY;
     sl.inPoint = 0;
     sl.outPoint = comp.duration;
 
     var contents = sl.property("Contents");
 
-    // Single 1px-tall black line at the top
     var group = contents.addProperty("ADBE Vector Group");
     group.name = "Line";
     var gc = group.property("Contents");
@@ -1379,41 +1413,141 @@ function buildScanLines(comp) {
     var fill = gc.addProperty("ADBE Vector Graphic - Fill");
     fill.property("Color").setValue([0, 0, 0]);
 
-    // Repeater duplicates the line down the comp
-    var lineCount = Math.ceil(comp.height / SCANLINE_SPACING);
+    var lineCount = Math.ceil(comp.height / spacing);
     var repeater = contents.addProperty("ADBE Vector Filter - Repeater");
     repeater.property("ADBE Vector Repeater Copies").setValue(lineCount);
     var repTransform = repeater.property("ADBE Vector Repeater Transform");
-    repTransform.property("ADBE Vector Repeater Position").setValue([0, SCANLINE_SPACING]);
+    repTransform.property("ADBE Vector Repeater Position").setValue([0, spacing]);
 
     sl.property("Position").setValue([comp.width / 2, comp.height / 2]);
+
+    // Jitter: periodic 1px vertical shift via hold keyframes
+    if (jitter) {
+        var posProp = sl.property("Position");
+        var basePos = [comp.width / 2, comp.height / 2];
+        var jitterInterval = 30; // frames between jitters
+        var totalFrames = Math.round(comp.duration * comp.frameRate);
+        for (var ji = 0; ji < totalFrames; ji += jitterInterval) {
+            var jTime = ji / comp.frameRate;
+            setHoldKey(posProp, jTime, basePos);
+            var jShiftTime = jTime + 1 / comp.frameRate;
+            if (jShiftTime < comp.duration) {
+                setHoldKey(posProp, jShiftTime, [basePos[0], basePos[1] + 1]);
+                var jReturnTime = jShiftTime + 1 / comp.frameRate;
+                if (jReturnTime < comp.duration) {
+                    setHoldKey(posProp, jReturnTime, basePos);
+                }
+            }
+        }
+    }
+
     return sl;
 }
 
 /**
- * Build noise overlay using Noise HLS Auto effect on a solid.
+ * Build noise overlay. Tries Fractal Noise for better quality/control,
+ * falls back to Noise HLS Auto if unavailable.
+ * opts: { opacity, scale, complexity }
  */
-function buildNoise(comp) {
+function buildNoise(comp, opts) {
+    var opacity = (opts && opts.opacity != null) ? opts.opacity : DEFAULT_NOISE_OPACITY;
+    var scale = (opts && opts.scale != null) ? opts.scale : DEFAULT_NOISE_SCALE;
+    var complexity = (opts && opts.complexity != null) ? opts.complexity : DEFAULT_NOISE_COMPLEXITY;
+
     var solid = comp.layers.addSolid(
         [0.5, 0.5, 0.5], "WEFX_Noise",
         comp.width, comp.height, 1.0
     );
     solid.blendingMode = BlendingMode.OVERLAY;
-    solid.property("Opacity").setValue(NOISE_OPACITY * 100);
+    solid.property("Opacity").setValue(opacity);
     solid.inPoint = 0;
     solid.outPoint = comp.duration;
 
-    // Try to add the Noise HLS Auto effect
+    var usedFractal = false;
+
+    // Try Fractal Noise first (better control, animated grain)
     try {
-        var noiseEffect = solid.property("Effects").addProperty("ADBE Noise HLS Auto");
-        if (noiseEffect) {
-            noiseEffect.property("Noise").setValue(30);
+        var fractalEffect = solid.property("Effects").addProperty("ADBE Fractal Noise");
+        if (fractalEffect) {
+            fractalEffect.property("Contrast").setValue(120);
+            fractalEffect.property("Brightness").setValue(-20);
+            fractalEffect.property("Complexity").setValue(complexity);
+            // Scale controls grain size: smaller = finer static
+            try { fractalEffect.property("Scale").setValue(scale); } catch (e2) {}
+            // Animate evolution so noise changes each frame
+            try {
+                var evo = fractalEffect.property("Evolution");
+                evo.expression = "time * 360 * 5";
+            } catch (e3) {}
+            usedFractal = true;
         }
     } catch (e) {
-        // Effect may not exist in all versions; solid alone provides some texture
+        // Fractal Noise not available
+    }
+
+    // Fallback to Noise HLS Auto
+    if (!usedFractal) {
+        try {
+            var noiseEffect = solid.property("Effects").addProperty("ADBE Noise HLS Auto");
+            if (noiseEffect) {
+                noiseEffect.property("Noise").setValue(30);
+            }
+        } catch (e) {}
     }
 
     return solid;
+}
+
+/**
+ * Build head scratch overlay — bright horizontal flash lines that appear
+ * periodically across the comp, simulating VHS/CRT signal distortion.
+ * opts: { freq, height }
+ */
+function buildHeadScratch(comp, opts) {
+    var freq = (opts && opts.freq != null) ? opts.freq : DEFAULT_HEADSCRATCH_FREQ;
+    var scratchH = (opts && opts.height != null) ? opts.height : DEFAULT_HEADSCRATCH_HEIGHT;
+    if (freq < 2) freq = 2;
+
+    var sl = comp.layers.addShape();
+    sl.name = "WEFX_HeadScratch";
+    sl.blendingMode = BlendingMode.ADD;
+    sl.inPoint = 0;
+    sl.outPoint = comp.duration;
+
+    var contents = sl.property("Contents");
+    var group = contents.addProperty("ADBE Vector Group");
+    group.name = "Scratch";
+    var gc = group.property("Contents");
+    var rect = gc.addProperty("ADBE Vector Shape - Rect");
+    rect.property("Size").setValue([comp.width, scratchH]);
+    var scratchFill = gc.addProperty("ADBE Vector Graphic - Fill");
+    scratchFill.property("Color").setValue([0.9, 1, 1]); // slight cyan tint
+
+    sl.property("Position").setValue([comp.width / 2, comp.height / 2]);
+
+    // Flash on/off via opacity hold keyframes
+    var opacProp = sl.property("Opacity");
+    var posProp = sl.property("Position");
+    var fps = comp.frameRate;
+    var totalFrames = Math.round(comp.duration * fps);
+    var rng = createRNG(42); // deterministic for head scratch
+
+    opacProp.setValue(0); // default off
+    for (var fi = freq; fi < totalFrames; fi += freq) {
+        var scratchTime = fi / fps;
+        var scratchDur = rngInt(rng, 2, 4); // 2-4 frames visible
+        var scratchY = rngInt(rng, 0, comp.height);
+
+        setHoldKey(opacProp, scratchTime, 60);
+        setHoldKey(posProp, scratchTime, [comp.width / 2, scratchY]);
+
+        var offTime = (fi + scratchDur) / fps;
+        if (offTime < comp.duration) {
+            setHoldKey(opacProp, offTime, 0);
+        }
+    }
+
+    return sl;
 }
 
 
@@ -1802,7 +1936,8 @@ function buildJob(type, inFrame, outFrame, layer, settings, compInfo, rng) {
  * Find dialogs with the same title and assign stackIndex for cascade effect.
  * Mutates jobs in place.
  */
-function assignDialogStacks(jobs, rng) {
+function assignDialogStacks(jobs, rng, maxDepth) {
+    var stackMax = maxDepth || MAX_STACK_DEPTH;
     // Group dialogs by title
     var groups = {};
     var i;
@@ -1819,12 +1954,10 @@ function assignDialogStacks(jobs, rng) {
         if (groups.hasOwnProperty(key)) {
             var indices = groups[key];
             if (indices.length < 2) continue;
-            // Sort by inFrame so earlier dialogs get lower stack index
             indices.sort(function(a, b) {
                 return jobs[a].inFrame - jobs[b].inFrame;
             });
-            // Cap at MAX_STACK_DEPTH
-            var depth = Math.min(indices.length, MAX_STACK_DEPTH);
+            var depth = Math.min(indices.length, stackMax);
             for (var si = 0; si < depth; si++) {
                 jobs[indices[si]].stackIndex = si;
             }
@@ -1838,10 +1971,10 @@ function assignDialogStacks(jobs, rng) {
  */
 function schedule(settings, compInfo) {
     var rng = createRNG(settings.seed);
-    var chaos = (settings.chaos != null) ? settings.chaos : 50;
+    var chaos = (settings.chaos != null) ? settings.chaos : 100;
     var totalFrames = compInfo.totalFrames;
     var curve = settings.chaosCurve || "flat";
-    var mix = settings.mix || { dialog: 75, bsod: 50, text: 75, cursor: 50, pixel: 25 };
+    var counts = settings.counts || { dialog: 0, bsod: 0, text: 0, cursor: 0, pixel: 0 };
     var rotoMode = settings.rotoMode || "flat";
 
     // Apply animation style duration modifiers
@@ -1856,18 +1989,58 @@ function schedule(settings, compInfo) {
         maxF = Math.min(maxF, 36);
     }
 
-    // Calculate element count
-    var count = calcElementCount(chaos, totalFrames);
-    if (count === 0) return [];
+    // Determine element types to spawn
+    var typeList = [];  // pre-determined type strings
+    var typeNames = ["dialog", "bsod", "text", "cursor", "pixel"];
+    var totalCounts = 0;
+    var ti;
+    for (ti = 0; ti < typeNames.length; ti++) {
+        totalCounts += (counts[typeNames[ti]] || 0);
+    }
+
+    if (totalCounts > 0) {
+        // Exact counts mode: build specified number of each type
+        for (ti = 0; ti < typeNames.length; ti++) {
+            var n = counts[typeNames[ti]] || 0;
+            for (var ci = 0; ci < n; ci++) {
+                typeList.push(typeNames[ti]);
+            }
+        }
+        // Shuffle so types are distributed across time (Fisher-Yates)
+        for (var si = typeList.length - 1; si > 0; si--) {
+            var j = rngInt(rng, 0, si);
+            var tmp = typeList[si];
+            typeList[si] = typeList[j];
+            typeList[j] = tmp;
+        }
+    } else {
+        // Auto mode: chaos determines total count, equal type weights
+        var autoMix = { dialog: 75, bsod: 50, text: 75, cursor: 50, pixel: 25 };
+        var count = calcElementCount(chaos, totalFrames);
+        if (count === 0) return [];
+        for (var ai = 0; ai < count; ai++) {
+            typeList.push(pickElementType(autoMix, rng));
+        }
+    }
+
+    if (typeList.length === 0) return [];
 
     // Distribute spawn times
-    var spawnTimes = distributeTimes(count, totalFrames, curve, rng);
+    var spawnTimes = distributeTimes(typeList.length, totalFrames, curve, rng);
+
+    // User-specified element controls
+    var scaleFactor = (settings.elementScale || 100) / 100;
+    var speedFactor = (settings.speedMult || 100) / 100;
+    var opMin = (settings.opacityMin != null) ? settings.opacityMin : 50;
+    var opMax = (settings.opacityMax != null) ? settings.opacityMax : 100;
+    var stackDepth = settings.stackDepth || MAX_STACK_DEPTH;
+    var stackOff = settings.stackOffset || STACK_OFFSET_X;
 
     // Build jobs
     var jobs = [];
     for (var i = 0; i < spawnTimes.length; i++) {
         var inFrame = spawnTimes[i];
-        var type = pickElementType(mix, rng);
+        var type = typeList[i];
         var duration = pickDuration(type, minF, maxF, rng);
         var outFrame = Math.min(inFrame + duration, totalFrames);
 
@@ -1875,7 +2048,6 @@ function schedule(settings, compInfo) {
         var actualDur = outFrame - inFrame;
         var floor = (type === "pixel") ? FLOOR_PIXEL_BLOCK : FLOOR_FRAMES;
         if (actualDur < floor) {
-            // Try to shift inFrame back
             inFrame = Math.max(0, outFrame - floor);
             if (outFrame - inFrame < floor) {
                 outFrame = Math.min(inFrame + floor, totalFrames);
@@ -1888,11 +2060,20 @@ function schedule(settings, compInfo) {
         if (job.type === "chrome") {
             job.layer = "over";
         }
+
+        // Apply element controls
+        job.scale = scaleFactor;
+        job.speedMult = speedFactor;
+        job.opacity = clamp(job.opacity, opMin, opMax);
+        job.entryFrames = settings.entryFrames || DEFAULT_ENTRY_FRAMES;
+        job.exitFrames = settings.exitFrames || DEFAULT_EXIT_FRAMES;
+        job.stackOffset = stackOff;
+
         jobs.push(job);
     }
 
-    // Assign dialog stacks
-    assignDialogStacks(jobs, rng);
+    // Assign dialog stacks (with user-controlled depth)
+    assignDialogStacks(jobs, rng, stackDepth);
 
     return jobs;
 }
@@ -2007,7 +2188,7 @@ function clearEffect(comp) {
  * In split mode: creates OVER and UNDER comps + scanlines/noise in parent.
  * In flat mode: creates single effect comp.
  */
-function createPreCompStructure(parentComp, seed, rotoMode, rotoLayers) {
+function createPreCompStructure(parentComp, seed, rotoMode, rotoLayers, settings) {
     wlog("createPreCompStructure: seed=" + seed + " rotoMode=" + rotoMode +
          " rotoLayers=" + (rotoLayers ? rotoLayers.length : 0));
     var isSplit = (rotoMode === "split") && rotoLayers && rotoLayers.length > 0;
@@ -2020,48 +2201,37 @@ function createPreCompStructure(parentComp, seed, rotoMode, rotoLayers) {
         underLayer: null,
         flatLayer: null,
         scanLineLayer: null,
-        noiseLayer: null
+        noiseLayer: null,
+        headScratchLayer: null
     };
 
     if (isSplit) {
-        // Create OVER comp
         structure.overComp = app.project.items.addComp(
             "WindowsErrorFX_OVER_" + seed,
             parentComp.width, parentComp.height,
             1.0, parentComp.duration, parentComp.frameRate
         );
-
-        // Create UNDER comp
         structure.underComp = app.project.items.addComp(
             "WindowsErrorFX_UNDER_" + seed,
             parentComp.width, parentComp.height,
             1.0, parentComp.duration, parentComp.frameRate
         );
 
-        // Find the topmost and bottommost roto layers by reference
-        // (layer references survive index shifts when we add new layers)
         var rotoTopLayer = rotoLayers[0];
         var rotoBotLayer = rotoLayers[0];
         for (var ri = 1; ri < rotoLayers.length; ri++) {
-            if (rotoLayers[ri].index < rotoTopLayer.index) {
-                rotoTopLayer = rotoLayers[ri];
-            }
-            if (rotoLayers[ri].index > rotoBotLayer.index) {
-                rotoBotLayer = rotoLayers[ri];
-            }
+            if (rotoLayers[ri].index < rotoTopLayer.index) rotoTopLayer = rotoLayers[ri];
+            if (rotoLayers[ri].index > rotoBotLayer.index) rotoBotLayer = rotoLayers[ri];
         }
 
-        // Add OVER comp above the topmost roto layer
         structure.overLayer = parentComp.layers.add(structure.overComp);
         structure.overLayer.name = "WEFX_OVER";
         structure.overLayer.moveBefore(rotoTopLayer);
 
-        // Add UNDER comp below the bottommost roto layer
         structure.underLayer = parentComp.layers.add(structure.underComp);
         structure.underLayer.name = "WEFX_UNDER";
         structure.underLayer.moveAfter(rotoBotLayer);
     } else {
-        // Flat mode: single comp
         structure.flatComp = app.project.items.addComp(
             "WindowsErrorFX_" + seed,
             parentComp.width, parentComp.height,
@@ -2071,17 +2241,40 @@ function createPreCompStructure(parentComp, seed, rotoMode, rotoLayers) {
         structure.flatLayer.name = "WEFX_Effect";
         structure.flatLayer.moveToBeginning();
 
-        // Alias for convenience
         structure.overComp = structure.flatComp;
         structure.underComp = structure.flatComp;
     }
 
-    // Add scanlines and noise directly in parent comp (on top of everything)
-    structure.scanLineLayer = buildScanLines(parentComp);
-    structure.noiseLayer = buildNoise(parentComp);
-    // Move to top
-    structure.scanLineLayer.moveToBeginning();
-    structure.noiseLayer.moveAfter(structure.scanLineLayer);
+    // Overlays — conditionally built from settings
+    var slOpts = settings.scanlines || {};
+    var noOpts = settings.noise || {};
+    var hsOpts = settings.headScratch || {};
+
+    // Scanlines
+    if (slOpts.enabled !== false) {
+        wlog("Building scanlines: opacity=" + (slOpts.opacity || DEFAULT_SCANLINE_OPACITY) +
+             " spacing=" + (slOpts.spacing || DEFAULT_SCANLINE_SPACING) +
+             " jitter=" + (slOpts.jitter || false));
+        structure.scanLineLayer = buildScanLines(parentComp, slOpts);
+        structure.scanLineLayer.moveToBeginning();
+    }
+
+    // Noise
+    if (noOpts.enabled !== false) {
+        wlog("Building noise: opacity=" + (noOpts.opacity || DEFAULT_NOISE_OPACITY) +
+             " scale=" + (noOpts.scale || DEFAULT_NOISE_SCALE) +
+             " complexity=" + (noOpts.complexity || DEFAULT_NOISE_COMPLEXITY));
+        structure.noiseLayer = buildNoise(parentComp, noOpts);
+        structure.noiseLayer.moveToBeginning();
+    }
+
+    // Head scratch
+    if (hsOpts.enabled) {
+        wlog("Building head scratch: freq=" + (hsOpts.freq || DEFAULT_HEADSCRATCH_FREQ) +
+             " height=" + (hsOpts.height || DEFAULT_HEADSCRATCH_HEIGHT));
+        structure.headScratchLayer = buildHeadScratch(parentComp, hsOpts);
+        structure.headScratchLayer.moveToBeginning();
+    }
 
     return structure;
 }
@@ -2095,19 +2288,48 @@ function createPreCompStructure(parentComp, seed, rotoMode, rotoLayers) {
 function defaultSettings() {
     return {
         seed: 1984,
-        chaos: 50,
+        chaos: 100,
         rotoMode: "split",
         chaosCurve: "flat",
         animStyle: "xpClassic",
         minFrames: FLOOR_FRAMES,
         maxFrames: MAX_FRAMES,
-        mix: {
-            dialog: 75,
-            bsod: 50,
-            text: 75,
-            cursor: 50,
-            pixel: 25
+        // Per-type element counts (0 = auto from chaos with equal weights)
+        counts: {
+            dialog: 0,
+            bsod: 0,
+            text: 0,
+            cursor: 0,
+            pixel: 0
         },
+        // Overlay settings
+        scanlines: {
+            enabled: true,
+            opacity: DEFAULT_SCANLINE_OPACITY,
+            spacing: DEFAULT_SCANLINE_SPACING,
+            jitter: false
+        },
+        noise: {
+            enabled: true,
+            opacity: DEFAULT_NOISE_OPACITY,
+            scale: DEFAULT_NOISE_SCALE,
+            complexity: DEFAULT_NOISE_COMPLEXITY
+        },
+        headScratch: {
+            enabled: false,
+            freq: DEFAULT_HEADSCRATCH_FREQ,
+            height: DEFAULT_HEADSCRATCH_HEIGHT
+        },
+        // Element controls
+        elementScale: DEFAULT_ELEMENT_SCALE,
+        speedMult: DEFAULT_SPEED_MULT,
+        opacityMin: DEFAULT_OPACITY_MIN,
+        opacityMax: DEFAULT_OPACITY_MAX,
+        stackDepth: MAX_STACK_DEPTH,
+        stackOffset: STACK_OFFSET_X,
+        entryFrames: DEFAULT_ENTRY_FRAMES,
+        exitFrames: DEFAULT_EXIT_FRAMES,
+        // Custom content
         customMessages: [],
         customTitles: [],
         rotoKeywords: [],
@@ -2119,23 +2341,31 @@ function defaultSettings() {
 function loadSettings(comp) {
     var settings = defaultSettings();
 
+    // Known nested-object keys that should be merged, not replaced
+    var nestedKeys = ["counts", "scanlines", "noise", "headScratch"];
+
     // Scan markers for our data
     for (var i = 1; i <= comp.markerProperty.numKeys; i++) {
         try {
             var data = JSON.parse(comp.markerProperty.keyValue(i).comment);
             if (data._type === "WEFX_SETTINGS") {
-                // Merge stored values into defaults
                 for (var key in data) {
-                    if (data.hasOwnProperty(key) && key !== "_type") {
-                        if (key === "mix" && typeof data[key] === "object") {
-                            for (var mk in data[key]) {
-                                if (data[key].hasOwnProperty(mk)) {
-                                    settings.mix[mk] = data[key][mk];
-                                }
+                    if (!data.hasOwnProperty(key) || key === "_type") continue;
+                    // Skip deprecated 'mix' field from old saves
+                    if (key === "mix") continue;
+                    // Merge nested objects field-by-field
+                    var isNested = false;
+                    for (var ni = 0; ni < nestedKeys.length; ni++) {
+                        if (key === nestedKeys[ni]) { isNested = true; break; }
+                    }
+                    if (isNested && typeof data[key] === "object" && settings[key]) {
+                        for (var nk in data[key]) {
+                            if (data[key].hasOwnProperty(nk)) {
+                                settings[key][nk] = data[key][nk];
                             }
-                        } else {
-                            settings[key] = data[key];
                         }
+                    } else {
+                        settings[key] = data[key];
                     }
                 }
             }
@@ -2183,7 +2413,6 @@ function saveSettings(comp, settings) {
 
 /** Read UI state into a WEFXSettings object. */
 function settingsFromUI(ui) {
-    // Map dropdown indices to canonical values (avoids text-casing bugs)
     var rotoMap  = ["split", "allOver", "allUnder", "flat"];
     var curveMap = ["flat", "build", "peak", "burst", "random"];
     var styleMap = ["xpClassic", "glitchHeavy", "slowBurn", "chaosMax"];
@@ -2194,19 +2423,44 @@ function settingsFromUI(ui) {
 
     return {
         seed: parseInt(ui.seedField.text, 10) || 1984,
-        chaos: Math.round(ui.chaosSlider.value),
+        chaos: parseInt(ui.chaosField.text, 10) || 0,
         rotoMode: rotoMap[rotoIdx] || "split",
         chaosCurve: curveMap[curveIdx] || "flat",
         animStyle: styleMap[styleIdx] || "xpClassic",
         minFrames: parseInt(ui.minFramesField.text, 10) || FLOOR_FRAMES,
         maxFrames: parseInt(ui.maxFramesField.text, 10) || MAX_FRAMES,
-        mix: {
-            dialog: Math.round(ui.mixDialog.value),
-            bsod: Math.round(ui.mixBsod.value),
-            text: Math.round(ui.mixText.value),
-            cursor: Math.round(ui.mixCursor.value),
-            pixel: Math.round(ui.mixPixel.value)
+        counts: {
+            dialog: parseInt(ui.countDialog.text, 10) || 0,
+            bsod:   parseInt(ui.countBsod.text, 10) || 0,
+            text:   parseInt(ui.countText.text, 10) || 0,
+            cursor: parseInt(ui.countCursor.text, 10) || 0,
+            pixel:  parseInt(ui.countPixel.text, 10) || 0
         },
+        scanlines: {
+            enabled: ui.slEnabled.value,
+            opacity: parseInt(ui.slOpacity.text, 10) || DEFAULT_SCANLINE_OPACITY,
+            spacing: parseInt(ui.slSpacing.text, 10) || DEFAULT_SCANLINE_SPACING,
+            jitter: ui.slJitter.value
+        },
+        noise: {
+            enabled: ui.noEnabled.value,
+            opacity: parseInt(ui.noOpacity.text, 10) || DEFAULT_NOISE_OPACITY,
+            scale: parseInt(ui.noScale.text, 10) || DEFAULT_NOISE_SCALE,
+            complexity: parseInt(ui.noComplexity.text, 10) || DEFAULT_NOISE_COMPLEXITY
+        },
+        headScratch: {
+            enabled: ui.hsEnabled.value,
+            freq: parseInt(ui.hsFreq.text, 10) || DEFAULT_HEADSCRATCH_FREQ,
+            height: parseInt(ui.hsHeight.text, 10) || DEFAULT_HEADSCRATCH_HEIGHT
+        },
+        elementScale: parseInt(ui.scaleField.text, 10) || DEFAULT_ELEMENT_SCALE,
+        speedMult: parseInt(ui.speedField.text, 10) || DEFAULT_SPEED_MULT,
+        opacityMin: parseInt(ui.opacMinField.text, 10) || DEFAULT_OPACITY_MIN,
+        opacityMax: parseInt(ui.opacMaxField.text, 10) || DEFAULT_OPACITY_MAX,
+        stackDepth: parseInt(ui.stackDepthField.text, 10) || MAX_STACK_DEPTH,
+        stackOffset: parseInt(ui.stackOffsetField.text, 10) || STACK_OFFSET_X,
+        entryFrames: parseInt(ui.entryFramesField.text, 10) || DEFAULT_ENTRY_FRAMES,
+        exitFrames: parseInt(ui.exitFramesField.text, 10) || DEFAULT_EXIT_FRAMES,
         customMessages: ui._customMessages || [],
         customTitles: ui._customTitles || [],
         rotoKeywords: ui._rotoKeywords || [],
@@ -2217,44 +2471,65 @@ function settingsFromUI(ui) {
 /** Populate UI controls from settings. */
 function applySettingsToUI(ui, settings) {
     ui.seedField.text = String(settings.seed);
-    ui.chaosSlider.value = settings.chaos;
-    ui.chaosLabel.text = settings.chaos + "%";
+    ui.chaosField.text = String(settings.chaos);
     ui.minFramesField.text = String(settings.minFrames);
     ui.maxFramesField.text = String(settings.maxFrames);
-    ui.mixDialog.value = settings.mix.dialog;
-    ui.mixBsod.value = settings.mix.bsod;
-    ui.mixText.value = settings.mix.text;
-    ui.mixCursor.value = settings.mix.cursor;
-    ui.mixPixel.value = settings.mix.pixel;
+
+    // Element counts
+    var cts = settings.counts || {};
+    ui.countDialog.text = String(cts.dialog || 0);
+    ui.countBsod.text   = String(cts.bsod || 0);
+    ui.countText.text   = String(cts.text || 0);
+    ui.countCursor.text = String(cts.cursor || 0);
+    ui.countPixel.text  = String(cts.pixel || 0);
+
+    // Overlay settings
+    var sl = settings.scanlines || {};
+    ui.slEnabled.value  = (sl.enabled !== false);
+    ui.slOpacity.text   = String(sl.opacity != null ? sl.opacity : DEFAULT_SCANLINE_OPACITY);
+    ui.slSpacing.text   = String(sl.spacing != null ? sl.spacing : DEFAULT_SCANLINE_SPACING);
+    ui.slJitter.value   = (sl.jitter === true);
+
+    var no = settings.noise || {};
+    ui.noEnabled.value    = (no.enabled !== false);
+    ui.noOpacity.text     = String(no.opacity != null ? no.opacity : DEFAULT_NOISE_OPACITY);
+    ui.noScale.text       = String(no.scale != null ? no.scale : DEFAULT_NOISE_SCALE);
+    ui.noComplexity.text  = String(no.complexity != null ? no.complexity : DEFAULT_NOISE_COMPLEXITY);
+
+    var hs = settings.headScratch || {};
+    ui.hsEnabled.value  = (hs.enabled === true);
+    ui.hsFreq.text      = String(hs.freq != null ? hs.freq : DEFAULT_HEADSCRATCH_FREQ);
+    ui.hsHeight.text    = String(hs.height != null ? hs.height : DEFAULT_HEADSCRATCH_HEIGHT);
+
+    // Element controls
+    ui.scaleField.text       = String(settings.elementScale || DEFAULT_ELEMENT_SCALE);
+    ui.speedField.text       = String(settings.speedMult || DEFAULT_SPEED_MULT);
+    ui.opacMinField.text     = String(settings.opacityMin != null ? settings.opacityMin : DEFAULT_OPACITY_MIN);
+    ui.opacMaxField.text     = String(settings.opacityMax != null ? settings.opacityMax : DEFAULT_OPACITY_MAX);
+    ui.stackDepthField.text  = String(settings.stackDepth || MAX_STACK_DEPTH);
+    ui.stackOffsetField.text = String(settings.stackOffset || STACK_OFFSET_X);
+    ui.entryFramesField.text = String(settings.entryFrames || DEFAULT_ENTRY_FRAMES);
+    ui.exitFramesField.text  = String(settings.exitFrames || DEFAULT_EXIT_FRAMES);
+
+    // Custom content
     ui._customMessages = settings.customMessages || [];
     ui._customTitles = settings.customTitles || [];
     ui._rotoKeywords = settings.rotoKeywords || [];
     ui._rotoLayerNames = settings.rotoLayerNames || [];
 
-    // Select dropdown items by matching canonical values
+    // Dropdowns
     var rotoMap  = ["split", "allOver", "allUnder", "flat"];
     var curveMap = ["flat", "build", "peak", "burst", "random"];
     var styleMap = ["xpClassic", "glitchHeavy", "slowBurn", "chaosMax"];
 
     for (var ri = 0; ri < rotoMap.length; ri++) {
-        if (rotoMap[ri] === settings.rotoMode) {
-            ui.rotoModeDropdown.selection = ri;
-            break;
-        }
+        if (rotoMap[ri] === settings.rotoMode) { ui.rotoModeDropdown.selection = ri; break; }
     }
-
     for (var ci = 0; ci < curveMap.length; ci++) {
-        if (curveMap[ci] === settings.chaosCurve) {
-            ui.chaosCurveDropdown.selection = ci;
-            break;
-        }
+        if (curveMap[ci] === settings.chaosCurve) { ui.chaosCurveDropdown.selection = ci; break; }
     }
-
     for (var si = 0; si < styleMap.length; si++) {
-        if (styleMap[si] === settings.animStyle) {
-            ui.animStyleDropdown.selection = si;
-            break;
-        }
+        if (styleMap[si] === settings.animStyle) { ui.animStyleDropdown.selection = si; break; }
     }
 }
 
@@ -2272,7 +2547,7 @@ function generate(settings, forceReplace) {
     wlogOpen();
     wlog("=== GENERATE START ===");
     wlogObj("Settings", settings, ["seed", "chaos", "rotoMode", "chaosCurve", "animStyle", "minFrames", "maxFrames"]);
-    wlogObj("Mix", settings.mix, ["dialog", "bsod", "text", "cursor", "pixel"]);
+    wlogObj("Counts", settings.counts, ["dialog", "bsod", "text", "cursor", "pixel"]);
 
     // 1. Validate active comp
     var comp = app.project.activeItem;
@@ -2324,13 +2599,13 @@ function generate(settings, forceReplace) {
         totalFrames: Math.round(comp.duration * comp.frameRate)
     };
 
-    // 5. Check for content
-    var totalMix = (settings.mix.dialog || 0) + (settings.mix.bsod || 0) +
-                   (settings.mix.text || 0) + (settings.mix.cursor || 0) +
-                   (settings.mix.pixel || 0);
-    if (totalMix <= 0) {
-        werr("All element types disabled (total mix weight = 0)");
-        alert("Windows Error FX: All element types are disabled. Enable at least one.");
+    // 5. Check for content — skip if all counts are 0 AND chaos is 0
+    var cts = settings.counts || {};
+    var totalCounts = (cts.dialog || 0) + (cts.bsod || 0) +
+                      (cts.text || 0) + (cts.cursor || 0) + (cts.pixel || 0);
+    if (totalCounts <= 0 && (settings.chaos || 0) <= 0) {
+        werr("All element counts are 0 and chaos is 0 — nothing to generate");
+        alert("Windows Error FX: Set element counts or chaos level above 0.");
         wlogClose();
         return;
     }
@@ -2368,7 +2643,7 @@ function generate(settings, forceReplace) {
     app.beginUndoGroup("Windows Error FX \u2014 Generate");
     try {
         wlog("Creating pre-comp structure (rotoMode=" + rotoMode + ")...");
-        var structure = createPreCompStructure(comp, settings.seed, rotoMode, rotoLayers);
+        var structure = createPreCompStructure(comp, settings.seed, rotoMode, rotoLayers, settings);
         wlog("Pre-comp structure created.");
         if (structure.overComp) wlog("  overComp: \"" + structure.overComp.name + "\"");
         if (structure.underComp && structure.underComp !== structure.overComp) {
@@ -2475,14 +2750,13 @@ function generate(settings, forceReplace) {
     var randBtn = seedRow.add("button", undefined, "Random");
     randBtn.preferredSize.width = 60;
 
-    // ── Chaos slider ──────────────────────────────
+    // ── Chaos (number field, uncapped) ────────────
     var chaosRow = panel.add("group");
     chaosRow.orientation = "row";
     chaosRow.add("statictext", undefined, "CHAOS");
-    var chaosSlider = chaosRow.add("slider", undefined, 50, 0, 100);
-    chaosSlider.preferredSize.width = 120;
-    var chaosLabel = chaosRow.add("statictext", undefined, "50%");
-    chaosLabel.preferredSize.width = 35;
+    var chaosField = chaosRow.add("edittext", undefined, "100");
+    chaosField.preferredSize.width = 50;
+    chaosRow.add("statictext", undefined, "(0 = off, 100 = normal, 500+ = insane)");
 
     // ── Roto status ───────────────────────────────
     var rotoStatus = panel.add("statictext", undefined, "Roto: checking...");
@@ -2501,32 +2775,120 @@ function generate(settings, forceReplace) {
     var advToggle = panel.add("button", undefined, "Show Advanced");
     advToggle.preferredSize.height = 22;
 
-    // Element mix sliders
-    var mixGroup = advPanel.add("panel", undefined, "Element Mix");
-    mixGroup.orientation = "column";
-    mixGroup.alignChildren = ["fill", "top"];
+    // ── Element Counts ────────────────────────────
+    var countGroup = advPanel.add("panel", undefined, "Element Counts (0 = auto)");
+    countGroup.orientation = "column";
+    countGroup.alignChildren = ["fill", "top"];
 
-    function addMixSlider(parent, label, defaultVal) {
+    function addCountField(parent, label, defaultVal) {
         var row = parent.add("group");
         row.orientation = "row";
         row.add("statictext", undefined, label).preferredSize.width = 55;
-        var slider = row.add("slider", undefined, defaultVal, 0, 100);
-        slider.preferredSize.width = 90;
-        var lbl = row.add("statictext", undefined, defaultVal + "%");
-        lbl.preferredSize.width = 35;
-        slider.onChanging = function() {
-            lbl.text = Math.round(slider.value) + "%";
-        };
-        return slider;
+        var field = row.add("edittext", undefined, String(defaultVal));
+        field.preferredSize.width = 40;
+        return field;
     }
 
-    var mixDialog = addMixSlider(mixGroup, "Dialog", 75);
-    var mixBsod   = addMixSlider(mixGroup, "BSOD", 50);
-    var mixText   = addMixSlider(mixGroup, "Text", 75);
-    var mixCursor = addMixSlider(mixGroup, "Cursor", 50);
-    var mixPixel  = addMixSlider(mixGroup, "Pixel", 25);
+    var countDialog = addCountField(countGroup, "Dialog", 0);
+    var countBsod   = addCountField(countGroup, "BSOD", 0);
+    var countText   = addCountField(countGroup, "Text", 0);
+    var countCursor = addCountField(countGroup, "Cursor", 0);
+    var countPixel  = addCountField(countGroup, "Pixel", 0);
 
-    // Animation style
+    // ── Overlays ──────────────────────────────────
+    var overlayGroup = advPanel.add("panel", undefined, "Overlays");
+    overlayGroup.orientation = "column";
+    overlayGroup.alignChildren = ["fill", "top"];
+
+    // Scanlines
+    var slRow1 = overlayGroup.add("group");
+    slRow1.orientation = "row";
+    var slEnabled = slRow1.add("checkbox", undefined, "Scanlines");
+    slEnabled.value = true;
+    slRow1.add("statictext", undefined, "Opacity").preferredSize.width = 45;
+    var slOpacity = slRow1.add("edittext", undefined, String(DEFAULT_SCANLINE_OPACITY));
+    slOpacity.preferredSize.width = 35;
+    slRow1.add("statictext", undefined, "Spacing").preferredSize.width = 45;
+    var slSpacing = slRow1.add("edittext", undefined, String(DEFAULT_SCANLINE_SPACING));
+    slSpacing.preferredSize.width = 35;
+
+    var slRow2 = overlayGroup.add("group");
+    slRow2.orientation = "row";
+    var slJitter = slRow2.add("checkbox", undefined, "Scanline Jitter");
+    slJitter.value = false;
+
+    // Noise
+    var noRow = overlayGroup.add("group");
+    noRow.orientation = "row";
+    var noEnabled = noRow.add("checkbox", undefined, "Noise");
+    noEnabled.value = true;
+    noRow.add("statictext", undefined, "Opacity").preferredSize.width = 45;
+    var noOpacity = noRow.add("edittext", undefined, String(DEFAULT_NOISE_OPACITY));
+    noOpacity.preferredSize.width = 35;
+    noRow.add("statictext", undefined, "Scale").preferredSize.width = 35;
+    var noScale = noRow.add("edittext", undefined, String(DEFAULT_NOISE_SCALE));
+    noScale.preferredSize.width = 40;
+
+    var noRow2 = overlayGroup.add("group");
+    noRow2.orientation = "row";
+    noRow2.add("statictext", undefined, "Complexity").preferredSize.width = 65;
+    var noComplexity = noRow2.add("edittext", undefined, String(DEFAULT_NOISE_COMPLEXITY));
+    noComplexity.preferredSize.width = 35;
+
+    // Head Scratch
+    var hsRow = overlayGroup.add("group");
+    hsRow.orientation = "row";
+    var hsEnabled = hsRow.add("checkbox", undefined, "Head Scratch");
+    hsEnabled.value = false;
+    hsRow.add("statictext", undefined, "Freq").preferredSize.width = 30;
+    var hsFreq = hsRow.add("edittext", undefined, String(DEFAULT_HEADSCRATCH_FREQ));
+    hsFreq.preferredSize.width = 35;
+    hsRow.add("statictext", undefined, "Height").preferredSize.width = 40;
+    var hsHeight = hsRow.add("edittext", undefined, String(DEFAULT_HEADSCRATCH_HEIGHT));
+    hsHeight.preferredSize.width = 35;
+
+    // ── Element Controls ──────────────────────────
+    var elemGroup = advPanel.add("panel", undefined, "Element Controls");
+    elemGroup.orientation = "column";
+    elemGroup.alignChildren = ["fill", "top"];
+
+    var scaleRow = elemGroup.add("group");
+    scaleRow.orientation = "row";
+    scaleRow.add("statictext", undefined, "Scale %").preferredSize.width = 55;
+    var scaleField = scaleRow.add("edittext", undefined, String(DEFAULT_ELEMENT_SCALE));
+    scaleField.preferredSize.width = 40;
+    scaleRow.add("statictext", undefined, "Speed %").preferredSize.width = 55;
+    var speedField = scaleRow.add("edittext", undefined, String(DEFAULT_SPEED_MULT));
+    speedField.preferredSize.width = 40;
+
+    var opacRow = elemGroup.add("group");
+    opacRow.orientation = "row";
+    opacRow.add("statictext", undefined, "Opacity").preferredSize.width = 55;
+    var opacMinField = opacRow.add("edittext", undefined, String(DEFAULT_OPACITY_MIN));
+    opacMinField.preferredSize.width = 35;
+    opacRow.add("statictext", undefined, "-");
+    var opacMaxField = opacRow.add("edittext", undefined, String(DEFAULT_OPACITY_MAX));
+    opacMaxField.preferredSize.width = 35;
+
+    var stackRow = elemGroup.add("group");
+    stackRow.orientation = "row";
+    stackRow.add("statictext", undefined, "Stack").preferredSize.width = 35;
+    var stackDepthField = stackRow.add("edittext", undefined, String(MAX_STACK_DEPTH));
+    stackDepthField.preferredSize.width = 30;
+    stackRow.add("statictext", undefined, "Offset").preferredSize.width = 35;
+    var stackOffsetField = stackRow.add("edittext", undefined, String(STACK_OFFSET_X));
+    stackOffsetField.preferredSize.width = 30;
+
+    var entryRow = elemGroup.add("group");
+    entryRow.orientation = "row";
+    entryRow.add("statictext", undefined, "Entry f").preferredSize.width = 45;
+    var entryFramesField = entryRow.add("edittext", undefined, String(DEFAULT_ENTRY_FRAMES));
+    entryFramesField.preferredSize.width = 30;
+    entryRow.add("statictext", undefined, "Exit f").preferredSize.width = 40;
+    var exitFramesField = entryRow.add("edittext", undefined, String(DEFAULT_EXIT_FRAMES));
+    exitFramesField.preferredSize.width = 30;
+
+    // ── Style / Timing / Roto ─────────────────────
     var styleRow = advPanel.add("group");
     styleRow.orientation = "row";
     styleRow.add("statictext", undefined, "Style");
@@ -2534,7 +2896,6 @@ function generate(settings, forceReplace) {
         ["XP Classic", "Glitch Heavy", "Slow Burn", "Chaos Maximum"]);
     animStyleDropdown.selection = 0;
 
-    // Min/Max frames
     var frameRow = advPanel.add("group");
     frameRow.orientation = "row";
     frameRow.add("statictext", undefined, "Min");
@@ -2544,7 +2905,6 @@ function generate(settings, forceReplace) {
     var maxFramesField = frameRow.add("edittext", undefined, "96");
     maxFramesField.preferredSize.width = 40;
 
-    // Roto mode
     var rotoRow = advPanel.add("group");
     rotoRow.orientation = "row";
     rotoRow.add("statictext", undefined, "Roto");
@@ -2552,7 +2912,6 @@ function generate(settings, forceReplace) {
         ["Split", "All Over", "All Under", "Flat"]);
     rotoModeDropdown.selection = 0;
 
-    // Chaos curve
     var curveRow = advPanel.add("group");
     curveRow.orientation = "row";
     curveRow.add("statictext", undefined, "Curve");
@@ -2574,19 +2933,32 @@ function generate(settings, forceReplace) {
     // ── Assemble UI references ────────────────────
     var ui = {
         seedField: seedField,
-        chaosSlider: chaosSlider,
-        chaosLabel: chaosLabel,
+        chaosField: chaosField,
         rotoStatus: rotoStatus,
-        mixDialog: mixDialog,
-        mixBsod: mixBsod,
-        mixText: mixText,
-        mixCursor: mixCursor,
-        mixPixel: mixPixel,
+        // Element counts
+        countDialog: countDialog,
+        countBsod: countBsod,
+        countText: countText,
+        countCursor: countCursor,
+        countPixel: countPixel,
+        // Overlays
+        slEnabled: slEnabled, slOpacity: slOpacity,
+        slSpacing: slSpacing, slJitter: slJitter,
+        noEnabled: noEnabled, noOpacity: noOpacity,
+        noScale: noScale, noComplexity: noComplexity,
+        hsEnabled: hsEnabled, hsFreq: hsFreq, hsHeight: hsHeight,
+        // Element controls
+        scaleField: scaleField, speedField: speedField,
+        opacMinField: opacMinField, opacMaxField: opacMaxField,
+        stackDepthField: stackDepthField, stackOffsetField: stackOffsetField,
+        entryFramesField: entryFramesField, exitFramesField: exitFramesField,
+        // Dropdowns
         animStyleDropdown: animStyleDropdown,
         minFramesField: minFramesField,
         maxFramesField: maxFramesField,
         rotoModeDropdown: rotoModeDropdown,
         chaosCurveDropdown: chaosCurveDropdown,
+        // Custom content
         _customMessages: [],
         _customTitles: [],
         _rotoKeywords: [],
@@ -2597,10 +2969,6 @@ function generate(settings, forceReplace) {
 
     randBtn.onClick = function() {
         seedField.text = String(Math.floor(Math.random() * 89999) + 10000);
-    };
-
-    chaosSlider.onChanging = function() {
-        chaosLabel.text = Math.round(chaosSlider.value) + "%";
     };
 
     advToggle.onClick = function() {

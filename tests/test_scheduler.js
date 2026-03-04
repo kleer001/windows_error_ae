@@ -334,13 +334,39 @@ schedSettings0.chaos = 0;
 var jobs0 = ctx.schedule(schedSettings0, compInfo);
 assert(jobs0.length === 0, "schedule: chaos 0 produces no elements");
 
-// All element types disabled
+// Exact counts mode: specify per-type counts
+var schedSettingsExact = ctx.defaultSettings();
+schedSettingsExact.seed = 42;
+schedSettingsExact.chaos = 100;
+schedSettingsExact.counts = { dialog: 3, bsod: 2, text: 0, cursor: 1, pixel: 0 };
+var jobsExact = ctx.schedule(schedSettingsExact, compInfo);
+assert(jobsExact.length === 6, "schedule: exact counts mode produces 3+2+0+1+0 = 6 jobs (got " + jobsExact.length + ")");
+// Count types
+var exactTypeCounts = {};
+for (var ei = 0; ei < jobsExact.length; ei++) {
+    var et = jobsExact[ei].type;
+    // chrome is a sub-type of dialog
+    if (et === "chrome") et = "dialog";
+    exactTypeCounts[et] = (exactTypeCounts[et] || 0) + 1;
+}
+assert((exactTypeCounts.dialog || 0) === 3,
+    "schedule exact: 3 dialogs (got " + (exactTypeCounts.dialog || 0) + ")");
+assert((exactTypeCounts.bsod || 0) === 2,
+    "schedule exact: 2 bsod (got " + (exactTypeCounts.bsod || 0) + ")");
+assert((exactTypeCounts.cursor || 0) === 1,
+    "schedule exact: 1 cursor (got " + (exactTypeCounts.cursor || 0) + ")");
+assert((exactTypeCounts.text || 0) === 0,
+    "schedule exact: 0 text (got " + (exactTypeCounts.text || 0) + ")");
+assert((exactTypeCounts.pixel || 0) === 0,
+    "schedule exact: 0 pixel (got " + (exactTypeCounts.pixel || 0) + ")");
+
+// All counts 0 + chaos 0 = nothing
 var schedSettingsNone = ctx.defaultSettings();
 schedSettingsNone.seed = 42;
-schedSettingsNone.chaos = 50;
-schedSettingsNone.mix = { dialog: 0, bsod: 0, text: 0, cursor: 0, pixel: 0 };
-// This will still produce jobs (pickElementType falls back to "dialog")
-// The generate() function checks for total mix = 0 before calling schedule
+schedSettingsNone.chaos = 0;
+schedSettingsNone.counts = { dialog: 0, bsod: 0, text: 0, cursor: 0, pixel: 0 };
+var jobsNone = ctx.schedule(schedSettingsNone, compInfo);
+assert(jobsNone.length === 0, "schedule: all counts 0 + chaos 0 = no elements");
 
 // Floor rule check
 var allAboveFloor = true;
