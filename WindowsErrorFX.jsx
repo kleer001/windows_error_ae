@@ -851,7 +851,13 @@ function defaultElementSettings() {
         opacityMin: DEFAULT_OPACITY_MIN,
         opacityMax: DEFAULT_OPACITY_MAX,
         entryFrames: DEFAULT_ENTRY_FRAMES,
-        exitFrames: DEFAULT_EXIT_FRAMES
+        exitFrames: DEFAULT_EXIT_FRAMES,
+        // Per-element overrides (null = inherit global)
+        trails: null,
+        rotoForce: null,
+        curve: null,
+        customMessages: null,
+        customTitles: null
     };
 }
 
@@ -874,7 +880,12 @@ function getElementSettings(settings, type) {
         opacityMin: (src.opacityMin != null) ? src.opacityMin : defaults.opacityMin,
         opacityMax: (src.opacityMax != null) ? src.opacityMax : defaults.opacityMax,
         entryFrames: (src.entryFrames != null) ? src.entryFrames : defaults.entryFrames,
-        exitFrames: (src.exitFrames != null) ? src.exitFrames : defaults.exitFrames
+        exitFrames: (src.exitFrames != null) ? src.exitFrames : defaults.exitFrames,
+        trails: src.trails || null,
+        rotoForce: src.rotoForce || null,
+        curve: src.curve || null,
+        customMessages: src.customMessages || null,
+        customTitles: src.customTitles || null
     };
 }
 
@@ -949,7 +960,7 @@ function randomizeSettings() {
         var t = typeNames[i];
         var minF = Math.floor(Math.random() * 40) + 4;  // 4-43
         var maxF = minF + Math.floor(Math.random() * 80) + 10; // minF+10 to minF+89
-        elements[t] = {
+        var el = {
             count: Math.floor(Math.random() * 30),
             minFrames: minF,
             maxFrames: maxF,
@@ -958,8 +969,20 @@ function randomizeSettings() {
             opacityMin: Math.floor(Math.random() * 50) + 20, // 20-69
             opacityMax: Math.floor(Math.random() * 30) + 70, // 70-99
             entryFrames: Math.floor(Math.random() * 8) + 1,  // 1-8
-            exitFrames: Math.floor(Math.random() * 6) + 1    // 1-6
+            exitFrames: Math.floor(Math.random() * 6) + 1,   // 1-6
+            // Per-element overrides (~30% chance each)
+            trails: (Math.random() < 0.3) ? {
+                enabled: Math.random() > 0.2,
+                chance: Math.floor(Math.random() * 80) + 5,
+                echoes: Math.floor(Math.random() * 8) + 2,
+                decay: Math.floor(Math.random() * 70) + 20
+            } : null,
+            rotoForce: (Math.random() < 0.3) ? ((Math.random() < 0.5) ? "over" : "under") : null,
+            curve: (Math.random() < 0.3) ? curves[Math.floor(Math.random() * curves.length)] : null,
+            customMessages: null,
+            customTitles: null
         };
+        elements[t] = el;
     }
 
     return {
@@ -2265,7 +2288,9 @@ function pickDuration(type, minFrames, maxFrames, rng) {
  * Assign "over" or "under" layer based on type and roto mode.
  * Roto interaction matrix from spec.
  */
-function assignLayer(type, rotoMode, rng) {
+function assignLayer(type, rotoMode, rng, forceLayer) {
+    if (forceLayer === "over") return "over";
+    if (forceLayer === "under") return "under";
     if (rotoMode === "flat" || rotoMode === "allOver") return "over";
     if (rotoMode === "allUnder") return "under";
 
@@ -2354,6 +2379,13 @@ function buildJob(type, inFrame, outFrame, layer, settings, compInfo, rng) {
         job.stutterFrame = rngInt(rng, 4, Math.max(5, Math.round((outFrame - inFrame) / 2)));
         job.stutterDur = rngInt(rng, 3, 6);
         job.textLines = pickBSODLines(rng, rngInt(rng, 3, 8));
+        // Mix in per-element custom messages for BSOD
+        var esBsod = getElementSettings(settings, "bsod");
+        if (esBsod.customMessages && esBsod.customMessages.length > 0) {
+            for (var bci = 0; bci < esBsod.customMessages.length && bci < 3; bci++) {
+                job.textLines.push(esBsod.customMessages[bci]);
+            }
+        }
         job.opacity = rngInt(rng, 80, 95);
 
         // Position based on variant
@@ -2370,14 +2402,17 @@ function buildJob(type, inFrame, outFrame, layer, settings, compInfo, rng) {
         }
 
     } else if (type === "dialog") {
+        var esDialog = getElementSettings(settings, "dialog");
         job.dialogVariant = weightedPick([
             { value: "A", weight: 25 },
             { value: "B", weight: 50 },
             { value: "C", weight: 25 }
         ], rng);
 
-        job.title = pickWindowTitle(rng, settings.customTitles || []);
-        job.body = pickErrorMessage(rng, settings.customMessages || []);
+        var dlgTitles = (esDialog.customTitles && esDialog.customTitles.length > 0) ? esDialog.customTitles : (settings.customTitles || []);
+        var dlgMsgs = (esDialog.customMessages && esDialog.customMessages.length > 0) ? esDialog.customMessages : (settings.customMessages || []);
+        job.title = pickWindowTitle(rng, dlgTitles);
+        job.body = pickErrorMessage(rng, dlgMsgs);
         job.buttons = rngPick(rng, BUTTON_COMBOS);
         job.icon = weightedPick([
             { value: "error",    weight: 40 },
@@ -2415,6 +2450,7 @@ function buildJob(type, inFrame, outFrame, layer, settings, compInfo, rng) {
         job.y = rngInt(rng, margin, compInfo.height - DIALOG_HEIGHT - margin) + DIALOG_HEIGHT / 2;
 
     } else if (type === "chrome") {
+        var esChrome = getElementSettings(settings, "dialog"); // chrome inherits dialog
         job.dialogVariant = weightedPick([
             { value: "A", weight: 25 },
             { value: "B", weight: 50 },
@@ -2435,7 +2471,8 @@ function buildJob(type, inFrame, outFrame, layer, settings, compInfo, rng) {
             { value: "jumpCut", weight: (style === "glitchHeavy") ? 50 : 25 }
         ], rng);
 
-        job.title = pickWindowTitle(rng, settings.customTitles || []);
+        var chrTitles = (esChrome.customTitles && esChrome.customTitles.length > 0) ? esChrome.customTitles : (settings.customTitles || []);
+        job.title = pickWindowTitle(rng, chrTitles);
         job.driftDir = rngFloat(rng, 0, 360);
         job.driftSpeed = rngFloat(rng, 0.5, 2);
         job.jumpInterval = rngInt(rng, 6, 12);
@@ -2517,7 +2554,9 @@ function buildJob(type, inFrame, outFrame, layer, settings, compInfo, rng) {
     }
 
     // Trails: probabilistic Echo effect on any element
-    var trailSettings = settings.trails || {};
+    // Per-element override wins over global trails settings
+    var esTrails = getElementSettings(settings, type).trails;
+    var trailSettings = (esTrails != null) ? esTrails : (settings.trails || {});
     var trailChance = (trailSettings.chance != null) ? trailSettings.chance : DEFAULT_TRAILS_CHANCE;
     if (trailSettings.enabled !== false && rngBool(rng, trailChance / 100)) {
         job.trails = true;
@@ -2611,8 +2650,29 @@ function schedule(settings, compInfo) {
 
     if (typeList.length === 0) return [];
 
-    // Distribute spawn times
-    var spawnTimes = distributeTimes(typeList.length, totalFrames, curve, rng);
+    // Distribute spawn times — group by effective curve for per-element overrides
+    var curveGroups = {};  // curveName → [indices]
+    for (var cgi = 0; cgi < typeList.length; cgi++) {
+        var esCurve = getElementSettings(settings, typeList[cgi]).curve || curve;
+        if (!curveGroups[esCurve]) curveGroups[esCurve] = [];
+        curveGroups[esCurve].push(cgi);
+    }
+    var curveKeys = [];
+    for (var ck in curveGroups) {
+        if (curveGroups.hasOwnProperty(ck)) curveKeys.push(ck);
+    }
+    curveKeys.sort();  // stable ordering for determinism
+
+    var spawnTimes = [];
+    for (var sti = 0; sti < typeList.length; sti++) spawnTimes.push(0);
+
+    for (var gi = 0; gi < curveKeys.length; gi++) {
+        var groupIndices = curveGroups[curveKeys[gi]];
+        var groupTimes = distributeTimes(groupIndices.length, totalFrames, curveKeys[gi], rng);
+        for (var gj = 0; gj < groupIndices.length; gj++) {
+            spawnTimes[groupIndices[gj]] = groupTimes[gj];
+        }
+    }
 
     // Global stack controls
     var stackDepth = settings.stackDepth || MAX_STACK_DEPTH;
@@ -2650,10 +2710,11 @@ function schedule(settings, compInfo) {
             }
         }
 
-        var layerAssign = assignLayer(type, rotoMode, rng);
+        var rotoForce = es.rotoForce || null;
+        var layerAssign = assignLayer(type, rotoMode, rng, rotoForce);
         var job = buildJob(type, inFrame, outFrame, layerAssign, settings, compInfo, rng);
-        // buildJob may convert dialog→chrome; chrome is always over
-        if (job.type === "chrome") {
+        // buildJob may convert dialog→chrome; chrome defaults to over unless rotoForce overrides
+        if (job.type === "chrome" && !rotoForce) {
             job.layer = "over";
         }
 
@@ -3042,6 +3103,7 @@ function settingsFromUI(ui) {
     for (var i = 0; i < typeKeys.length; i++) {
         var t = typeKeys[i];
         var tab = ui.elemTabs[t];
+        var curveMapLocal = ["flat", "build", "peak", "burst", "random"];
         elements[t] = {
             count: parseInt(tab.count.text, 10) || 0,
             minFrames: parseInt(tab.minFrames.text, 10) || FLOOR_FRAMES,
@@ -3051,7 +3113,20 @@ function settingsFromUI(ui) {
             opacityMin: parseInt(tab.opacMin.text, 10) || DEFAULT_OPACITY_MIN,
             opacityMax: parseInt(tab.opacMax.text, 10) || DEFAULT_OPACITY_MAX,
             entryFrames: parseInt(tab.entryFrames.text, 10) || DEFAULT_ENTRY_FRAMES,
-            exitFrames: parseInt(tab.exitFrames.text, 10) || DEFAULT_EXIT_FRAMES
+            exitFrames: parseInt(tab.exitFrames.text, 10) || DEFAULT_EXIT_FRAMES,
+            // Per-element overrides (null = inherit global)
+            trails: (tab.trailsOverride && tab.trailsOverride.value) ? {
+                enabled: true,
+                chance: parseInt(tab.trailsChance.text, 10) || DEFAULT_TRAILS_CHANCE,
+                echoes: parseInt(tab.trailsEchoes.text, 10) || DEFAULT_TRAILS_ECHOES,
+                decay: parseInt(tab.trailsDecay.text, 10) || DEFAULT_TRAILS_DECAY
+            } : null,
+            rotoForce: (tab.rotoOverride && tab.rotoOverride.value) ?
+                ((tab.rotoForceDropdown.selection && tab.rotoForceDropdown.selection.index === 0) ? "over" : "under") : null,
+            curve: (tab.curveOverride && tab.curveOverride.value) ?
+                (curveMapLocal[tab.curveDropdown.selection ? tab.curveDropdown.selection.index : 0]) : null,
+            customMessages: (tab.msgsOverride && tab.msgsOverride.value) ? (tab._customMessages || []) : null,
+            customTitles: (tab.msgsOverride && tab.msgsOverride.value) ? (tab._customTitles || []) : null
         };
     }
 
@@ -3114,6 +3189,44 @@ function applySettingsToUI(ui, settings) {
         tab.opacMax.text    = String(es.opacityMax);
         tab.entryFrames.text = String(es.entryFrames);
         tab.exitFrames.text = String(es.exitFrames);
+
+        // Per-element overrides
+        if (tab.trailsOverride) {
+            var hasTrails = (es.trails != null);
+            tab.trailsOverride.value = hasTrails;
+            if (hasTrails) {
+                tab.trailsChance.text = String(es.trails.chance != null ? es.trails.chance : DEFAULT_TRAILS_CHANCE);
+                tab.trailsEchoes.text = String(es.trails.echoes != null ? es.trails.echoes : DEFAULT_TRAILS_ECHOES);
+                tab.trailsDecay.text  = String(es.trails.decay != null ? es.trails.decay : DEFAULT_TRAILS_DECAY);
+            }
+            if (tab.trailsGroup) tab.trailsGroup.visible = hasTrails;
+        }
+        if (tab.rotoOverride) {
+            var hasRoto = (es.rotoForce != null);
+            tab.rotoOverride.value = hasRoto;
+            if (hasRoto && tab.rotoForceDropdown) {
+                tab.rotoForceDropdown.selection = (es.rotoForce === "over") ? 0 : 1;
+            }
+            if (tab.rotoGroup) tab.rotoGroup.visible = hasRoto;
+        }
+        if (tab.curveOverride) {
+            var hasCurve = (es.curve != null);
+            tab.curveOverride.value = hasCurve;
+            if (hasCurve && tab.curveDropdown) {
+                var curveNames = ["flat", "build", "peak", "burst", "random"];
+                for (var cmi = 0; cmi < curveNames.length; cmi++) {
+                    if (curveNames[cmi] === es.curve) { tab.curveDropdown.selection = cmi; break; }
+                }
+            }
+            if (tab.curveGroup) tab.curveGroup.visible = hasCurve;
+        }
+        if (tab.msgsOverride) {
+            var hasMsgs = (es.customMessages != null || es.customTitles != null);
+            tab.msgsOverride.value = hasMsgs;
+            tab._customMessages = es.customMessages || [];
+            tab._customTitles = es.customTitles || [];
+            if (tab.msgsGroup) tab.msgsGroup.visible = hasMsgs;
+        }
     }
 
     // Overlay settings
@@ -3498,6 +3611,86 @@ function generate(settings, forceReplace) {
         var exitF = r5.add("edittext", undefined, String(DEFAULT_EXIT_FRAMES));
         exitF.preferredSize.width = 25;
 
+        // ── Override: Trails ──────────────────────────
+        var trailsRow = tab.add("group");
+        trailsRow.orientation = "row";
+        var trailsCb = trailsRow.add("checkbox", undefined, "Override Trails");
+        trailsCb.value = false;
+        var trailsGroup = trailsRow.add("group");
+        trailsGroup.orientation = "row";
+        trailsGroup.visible = false;
+        trailsGroup.add("statictext", undefined, "Ch%").preferredSize.width = 25;
+        var trChanceF = trailsGroup.add("edittext", undefined, String(DEFAULT_TRAILS_CHANCE));
+        trChanceF.preferredSize.width = 30;
+        trailsGroup.add("statictext", undefined, "Ech").preferredSize.width = 24;
+        var trEchoesF = trailsGroup.add("edittext", undefined, String(DEFAULT_TRAILS_ECHOES));
+        trEchoesF.preferredSize.width = 25;
+        trailsGroup.add("statictext", undefined, "Dc%").preferredSize.width = 25;
+        var trDecayF = trailsGroup.add("edittext", undefined, String(DEFAULT_TRAILS_DECAY));
+        trDecayF.preferredSize.width = 30;
+
+        // ── Override: Roto ────────────────────────────
+        var rotoOvRow = tab.add("group");
+        rotoOvRow.orientation = "row";
+        var rotoCb = rotoOvRow.add("checkbox", undefined, "Override Roto");
+        rotoCb.value = false;
+        var rotoGroup = rotoOvRow.add("group");
+        rotoGroup.orientation = "row";
+        rotoGroup.visible = false;
+        var rotoDD = rotoGroup.add("dropdownlist", undefined, ["Over", "Under"]);
+        rotoDD.selection = 0;
+
+        // ── Override: Curve ───────────────────────────
+        var curveOvRow = tab.add("group");
+        curveOvRow.orientation = "row";
+        var curveCb = curveOvRow.add("checkbox", undefined, "Override Curve");
+        curveCb.value = false;
+        var curveGroup = curveOvRow.add("group");
+        curveGroup.orientation = "row";
+        curveGroup.visible = false;
+        var curveDD = curveGroup.add("dropdownlist", undefined, ["Flat", "Build", "Peak", "Burst", "Random"]);
+        curveDD.selection = 0;
+
+        // ── Override: Custom Messages (dialog + bsod only) ──
+        var msgsCb = null;
+        var msgsGroup = null;
+        var msgsBtn = null;
+        var tabCustomMessages = [];
+        var tabCustomTitles = [];
+        if (tkey === "dialog" || tkey === "bsod") {
+            var msgsRow = tab.add("group");
+            msgsRow.orientation = "row";
+            msgsCb = msgsRow.add("checkbox", undefined, "Custom Messages");
+            msgsCb.value = false;
+            msgsGroup = msgsRow.add("group");
+            msgsGroup.orientation = "row";
+            msgsGroup.visible = false;
+            msgsBtn = msgsGroup.add("button", undefined, "Edit\u2026");
+            msgsBtn.preferredSize.width = 55;
+        }
+
+        // Checkbox onClick handlers (IIFE to capture closure vars in ES3 for-loop)
+        (function(trCb, trGrp, rCb, rGrp, cCb, cGrp, mCb, mGrp, pnl) {
+            trCb.onClick = function() {
+                trGrp.visible = trCb.value;
+                pnl.layout.layout(true);
+            };
+            rCb.onClick = function() {
+                rGrp.visible = rCb.value;
+                pnl.layout.layout(true);
+            };
+            cCb.onClick = function() {
+                cGrp.visible = cCb.value;
+                pnl.layout.layout(true);
+            };
+            if (mCb && mGrp) {
+                mCb.onClick = function() {
+                    mGrp.visible = mCb.value;
+                    pnl.layout.layout(true);
+                };
+            }
+        })(trailsCb, trailsGroup, rotoCb, rotoGroup, curveCb, curveGroup, msgsCb, msgsGroup, panel);
+
         tabUI[tkey] = {
             count: countF,
             minFrames: minF,
@@ -3507,8 +3700,65 @@ function generate(settings, forceReplace) {
             opacMin: opMinF,
             opacMax: opMaxF,
             entryFrames: entryF,
-            exitFrames: exitF
+            exitFrames: exitF,
+            // Override controls
+            trailsOverride: trailsCb, trailsChance: trChanceF,
+            trailsEchoes: trEchoesF, trailsDecay: trDecayF, trailsGroup: trailsGroup,
+            rotoOverride: rotoCb, rotoForceDropdown: rotoDD, rotoGroup: rotoGroup,
+            curveOverride: curveCb, curveDropdown: curveDD, curveGroup: curveGroup,
+            msgsOverride: msgsCb, msgsGroup: msgsGroup,
+            _customMessages: [], _customTitles: []
         };
+
+        // Custom Messages Edit button handler (IIFE for closure, after tabUI[tkey] exists)
+        if (msgsBtn) {
+            (function(btn, tk, tabMap, labels) {
+                btn.onClick = function() {
+                    var entry = tabMap[tk];
+                    var dlg = new Window("dialog", "Custom Messages \u2014 " + labels[tk]);
+                    dlg.orientation = "column";
+                    dlg.alignChildren = ["fill", "top"];
+                    dlg.margins = 10;
+
+                    dlg.add("statictext", undefined, "Custom Error Messages (one per line):");
+                    var msgArea = dlg.add("edittext", undefined,
+                        (entry._customMessages || []).join("\n"),
+                        { multiline: true, scrolling: true });
+                    msgArea.preferredSize = [300, 80];
+
+                    var titleArea = null;
+                    if (tk === "dialog") {
+                        dlg.add("statictext", undefined, "Custom Window Titles (one per line):");
+                        titleArea = dlg.add("edittext", undefined,
+                            (entry._customTitles || []).join("\n"),
+                            { multiline: true, scrolling: true });
+                        titleArea.preferredSize = [300, 60];
+                    }
+
+                    var dBtnRow = dlg.add("group");
+                    dBtnRow.orientation = "row";
+                    dBtnRow.add("button", undefined, "Save", { name: "ok" });
+                    dBtnRow.add("button", undefined, "Cancel", { name: "cancel" });
+
+                    if (dlg.show() === 1) {
+                        var lines = msgArea.text.split("\n");
+                        var filtered = [];
+                        for (var fi = 0; fi < lines.length; fi++) {
+                            if (lines[fi].replace(/^\s+|\s+$/g, "") !== "") filtered.push(lines[fi]);
+                        }
+                        entry._customMessages = filtered;
+                        if (tk === "dialog" && titleArea) {
+                            var tLines = titleArea.text.split("\n");
+                            var tFiltered = [];
+                            for (var fj = 0; fj < tLines.length; fj++) {
+                                if (tLines[fj].replace(/^\s+|\s+$/g, "") !== "") tFiltered.push(tLines[fj]);
+                            }
+                            entry._customTitles = tFiltered;
+                        }
+                    }
+                };
+            })(msgsBtn, tkey, tabUI, tabLabels);
+        }
     }
 
     // ── Global Stack Controls ────────────────────

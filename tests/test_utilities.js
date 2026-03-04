@@ -177,6 +177,12 @@ assert(des.opacityMin === 50, "defaultElementSettings opacityMin = 50");
 assert(des.opacityMax === 100, "defaultElementSettings opacityMax = 100");
 assert(des.entryFrames === 3, "defaultElementSettings entryFrames = 3");
 assert(des.exitFrames === 2, "defaultElementSettings exitFrames = 2");
+// Override fields default to null
+assert(des.trails === null, "defaultElementSettings trails = null");
+assert(des.rotoForce === null, "defaultElementSettings rotoForce = null");
+assert(des.curve === null, "defaultElementSettings curve = null");
+assert(des.customMessages === null, "defaultElementSettings customMessages = null");
+assert(des.customTitles === null, "defaultElementSettings customTitles = null");
 
 // --- getElementSettings ---
 // Full settings with elements
@@ -208,6 +214,30 @@ assert(gesBsod.scale === 100, "getElementSettings partial override falls back fo
 // Null settings
 var gesNull = ctx.getElementSettings(null, "dialog");
 assert(gesNull.count === 0, "getElementSettings null settings returns defaults");
+
+// Override fields resolution
+var overrideSettings = ctx.defaultSettings();
+overrideSettings.elements.dialog.trails = { enabled: true, chance: 50, echoes: 6, decay: 30 };
+overrideSettings.elements.dialog.rotoForce = "over";
+overrideSettings.elements.dialog.curve = "peak";
+overrideSettings.elements.dialog.customMessages = ["Custom error"];
+overrideSettings.elements.dialog.customTitles = ["Custom title"];
+var gesOv = ctx.getElementSettings(overrideSettings, "dialog");
+assert(gesOv.trails != null && gesOv.trails.chance === 50, "getElementSettings trails override resolves");
+assert(gesOv.rotoForce === "over", "getElementSettings rotoForce override resolves");
+assert(gesOv.curve === "peak", "getElementSettings curve override resolves");
+assert(gesOv.customMessages != null && gesOv.customMessages[0] === "Custom error",
+    "getElementSettings customMessages override resolves");
+assert(gesOv.customTitles != null && gesOv.customTitles[0] === "Custom title",
+    "getElementSettings customTitles override resolves");
+
+// Override fields null when not set
+var gesNoOv = ctx.getElementSettings(overrideSettings, "bsod");
+assert(gesNoOv.trails === null, "getElementSettings bsod trails null when not set");
+assert(gesNoOv.rotoForce === null, "getElementSettings bsod rotoForce null when not set");
+assert(gesNoOv.curve === null, "getElementSettings bsod curve null when not set");
+assert(gesNoOv.customMessages === null, "getElementSettings bsod customMessages null when not set");
+assert(gesNoOv.customTitles === null, "getElementSettings bsod customTitles null when not set");
 
 // --- migrateSettings ---
 // Old format → new
@@ -245,6 +275,16 @@ assert(passthrough.elements.dialog.count === 0, "migrateSettings passthrough pre
 // Null passthrough
 assert(ctx.migrateSettings(null) === null, "migrateSettings null returns null");
 
+// migrateSettings: new format with missing override fields still works
+var newFmtNoOverrides = ctx.defaultSettings();
+delete newFmtNoOverrides.elements.dialog.trails;
+delete newFmtNoOverrides.elements.dialog.rotoForce;
+var migratedNew = ctx.migrateSettings(newFmtNoOverrides);
+assert(migratedNew.elements != null, "migrateSettings new format without overrides passes through");
+var gesAfterMigrate = ctx.getElementSettings(migratedNew, "dialog");
+assert(gesAfterMigrate.trails === null, "getElementSettings after migrate: missing trails = null");
+assert(gesAfterMigrate.rotoForce === null, "getElementSettings after migrate: missing rotoForce = null");
+
 // --- randomizeSettings ---
 var rs = ctx.randomizeSettings();
 assert(rs.seed >= 10000 && rs.seed <= 99999, "randomizeSettings seed in range");
@@ -260,6 +300,41 @@ assert(rs.scanlines != null, "randomizeSettings has scanlines");
 assert(rs.noise != null, "randomizeSettings has noise");
 assert(rs.trails != null, "randomizeSettings has trails");
 assert(rs.stackDepth >= 3, "randomizeSettings stackDepth >= 3");
+
+// Override fields exist on each element (null or valid object/string)
+var rsTypes = ["dialog", "bsod", "text", "cursor", "pixel"];
+for (var rti = 0; rti < rsTypes.length; rti++) {
+    var rt = rsTypes[rti];
+    var rel = rs.elements[rt];
+    // trails: null or object with enabled/chance/echoes/decay
+    assert(rel.trails === null || (typeof rel.trails === "object" && rel.trails.chance != null),
+        "randomizeSettings " + rt + " trails is null or valid object");
+    // rotoForce: null, "over", or "under"
+    assert(rel.rotoForce === null || rel.rotoForce === "over" || rel.rotoForce === "under",
+        "randomizeSettings " + rt + " rotoForce is null/over/under");
+    // curve: null or valid curve name
+    var validCurves = ["flat", "build", "peak", "burst", "random"];
+    assert(rel.curve === null || validCurves.indexOf(rel.curve) !== -1,
+        "randomizeSettings " + rt + " curve is null or valid name");
+    // customMessages and customTitles always null (not randomized)
+    assert(rel.customMessages === null, "randomizeSettings " + rt + " customMessages = null");
+    assert(rel.customTitles === null, "randomizeSettings " + rt + " customTitles = null");
+}
+
+// Run randomize 20 times to verify at least one override appears
+var anyTrails = false, anyRoto = false, anyCurve = false;
+for (var rri = 0; rri < 20; rri++) {
+    var rr = ctx.randomizeSettings();
+    for (var rrj = 0; rrj < rsTypes.length; rrj++) {
+        var rrel = rr.elements[rsTypes[rrj]];
+        if (rrel.trails != null) anyTrails = true;
+        if (rrel.rotoForce != null) anyRoto = true;
+        if (rrel.curve != null) anyCurve = true;
+    }
+}
+assert(anyTrails, "randomizeSettings produces at least one trails override in 20 runs");
+assert(anyRoto, "randomizeSettings produces at least one rotoForce override in 20 runs");
+assert(anyCurve, "randomizeSettings produces at least one curve override in 20 runs");
 
 console.log("Utilities: " + passed + " passed, " + failed + " failed");
 module.exports = { passed: passed, failed: failed };

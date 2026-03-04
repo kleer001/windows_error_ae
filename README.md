@@ -99,28 +99,130 @@ Layers with names containing **roto**, **matte**, **cutout**, **subject**, or **
 
 Each generate writes a log to `Documents/WindowsErrorFX/WindowsErrorFX.log`. The file is overwritten each run and is safe to delete. Use the **Show Log** button to view it, reveal it in Explorer/Finder, or delete it.
 
-## Project Structure
+---
 
-```
-WindowsErrorFX.jsx           <- The plugin (single deliverable file)
-docs/images/                  <- GUI mockup SVGs
-tests/
-  run_tests.js               <- Test runner (node tests/run_tests.js)
-  test_harness.js             <- Node.js VM sandbox with AE mocks
-  test_prng.js                <- PRNG tests
-  test_utilities.js           <- Utility function tests
-  test_scheduler.js           <- Scheduler logic tests (heaviest)
-```
+<details>
+<summary><strong>Seed &amp; Determinism</strong></summary>
 
-## Testing
+Every generated layout is driven by a single integer **seed**. The same seed with the same settings always produces the exact same arrangement of error windows, BSOD panels, text, cursors, and pixel blocks.
 
-The PRNG, utilities, and scheduler are pure logic with no AE dependencies. Tests run in Node.js:
+- Change the seed to get a completely different layout
+- Write down a seed you like — you can recreate it any time
+- **RANDOMIZE** picks a new seed *and* randomizes all settings at once
 
-```bash
-node tests/run_tests.js
-```
+</details>
 
-856 tests covering determinism, distribution curves, element weighting, floor rules, per-element controls, settings migration, and edge cases.
+<details>
+<summary><strong>Chaos Level</strong></summary>
+
+Chaos controls how many elements are generated (when per-element counts are set to 0/auto).
+
+| Range | Feel |
+|---|---|
+| 0 | Nothing generated |
+| 1–50 | Subtle — a few scattered elements |
+| 50–150 | Normal — a healthy amount of error chaos |
+| 150–300 | Heavy — screen fills up fast |
+| 300+ | Insane — hundreds of overlapping elements |
+
+The formula is non-linear (power curve), so low values stay subtle and high values escalate dramatically.
+
+</details>
+
+<details>
+<summary><strong>Per-Element Tabs</strong></summary>
+
+Inside Advanced, five tabs (Dialog, BSOD, Text, Cursor, Pixel) give you independent control over each element type:
+
+- **Count** — Exact number to spawn. Set to `0` for auto (chaos-based). Example: set Dialog to 5, Cursor to 0, and everything else to 0 to get only 5 error windows.
+- **Min / Max f** — Duration range in frames. Elements will last between these values.
+- **Scale %** — Size multiplier. 100 = normal, 200 = double size.
+- **Spd %** — Animation speed. 100 = normal, 50 = half speed, 200 = double speed.
+- **Opac** — Opacity range. Elements get a random opacity between min and max.
+- **Entry / Exit** — Fade-in and fade-out duration in frames.
+
+**Per-element overrides** (below the main fields in each tab):
+- **Override Trails** — Set trails (echo effect) independently for this element type. Unchecked = use global trails setting.
+- **Override Roto** — Force this element type to always appear Over or Under the roto subject, regardless of the global roto mode.
+- **Override Curve** — Use a different time distribution curve for this element type.
+- **Custom Messages** — (Dialog and BSOD only) Set custom error text specific to this element type.
+
+</details>
+
+<details>
+<summary><strong>Animation Style</strong></summary>
+
+The Style dropdown changes the personality of element animations:
+
+- **XP Classic** — Balanced mix of behaviors, moderate timing
+- **Glitch Heavy** — More shaking, jump-cuts, and erratic movement
+- **Slow Burn** — Longer durations, more static/drifting, gradual buildup
+- **Chaos Maximum** — Short durations, rapid-fire, maximum visual noise
+
+</details>
+
+<details>
+<summary><strong>Chaos Curve</strong></summary>
+
+Controls *when* elements appear across your timeline:
+
+- **Flat** — Evenly distributed throughout the comp
+- **Build** — Sparse at the start, dense toward the end (ramps up)
+- **Peak** — Clustered in the middle, sparse at edges (bell curve)
+- **Burst** — Random clusters of activity with gaps between
+- **Random** — Weighted random segments of varying density
+
+Per-element curve overrides let different types follow different distributions (e.g., dialogs build up while BSOD panels appear flat).
+
+</details>
+
+<details>
+<summary><strong>Roto Mode</strong></summary>
+
+Controls how elements interact with your roto subject:
+
+- **Split** — Elements randomly appear above and below the subject based on type-specific weights (e.g., BSOD panels tend to go behind, cursors tend to go in front)
+- **All Over** — Everything composites in front of the subject
+- **All Under** — Everything composites behind the subject
+- **Flat** — No roto splitting; everything in one layer (use when you have no roto layers)
+
+Per-element roto overrides let you force specific types over or under regardless of the global mode.
+
+</details>
+
+<details>
+<summary><strong>Overlays</strong></summary>
+
+- **Scanlines** — CRT-style horizontal line overlay. Adjust opacity, line spacing, and enable jitter for randomized line positions.
+- **Noise** — Fractal noise grain overlay. Control opacity, scale (grain size), and complexity (detail level).
+- **Head Scratch** — Horizontal line artifacts that appear at random positions, like a damaged VHS tape.
+
+</details>
+
+<details>
+<summary><strong>Trails</strong></summary>
+
+Trails add an echo/ghost effect to random elements using AE's Echo effect.
+
+- **Chance %** — Probability that any given element gets trails (e.g., 20 = 1 in 5 elements)
+- **Echoes** — Number of trailing copies
+- **Decay %** — How quickly each echo fades (higher = faster fade)
+
+Per-element trail overrides let you give specific types their own trail settings (or disable trails entirely for a type while keeping them globally on).
+
+</details>
+
+<details>
+<summary><strong>Custom Messages</strong></summary>
+
+Add your own error messages and window titles via the **Custom Messages** button in Advanced. Messages are mixed into the random pool — the more you add, the more often they appear.
+
+- **Global custom messages** apply to all dialogs and BSOD elements
+- **Per-element custom messages** (via the Override checkbox in Dialog/BSOD tabs) apply only to that element type and override the global pool
+
+The Dialog tab also supports custom window titles. BSOD custom messages are appended as additional text lines.
+
+</details>
 
 ## Requirements
 

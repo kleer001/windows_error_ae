@@ -697,6 +697,190 @@ assert(avgDurSlow > avgDurNorm,
 })();
 
 
+// ── Per-Element Override Tests ────────────────────────
+
+// --- assignLayer forceLayer ---
+(function() {
+    var rng = ctx.createRNG(42);
+    assert(ctx.assignLayer("dialog", "split", rng, "over") === "over",
+        "assignLayer: forceLayer 'over' overrides split mode");
+    assert(ctx.assignLayer("bsod", "flat", rng, "under") === "under",
+        "assignLayer: forceLayer 'under' overrides flat mode");
+    assert(ctx.assignLayer("dialog", "allUnder", rng, "over") === "over",
+        "assignLayer: forceLayer 'over' overrides allUnder mode");
+    // null forceLayer falls through to normal logic
+    assert(ctx.assignLayer("dialog", "allUnder", rng, null) === "under",
+        "assignLayer: null forceLayer uses normal logic (allUnder)");
+    assert(ctx.assignLayer("dialog", "allOver", rng, null) === "over",
+        "assignLayer: null forceLayer uses normal logic (allOver)");
+    assert(ctx.assignLayer("dialog", "flat", rng, undefined) === "over",
+        "assignLayer: undefined forceLayer uses normal logic");
+})();
+
+// --- Per-element rotoForce in schedule ---
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 99;
+    s.chaos = 0; // use explicit counts
+    s.rotoMode = "split";
+    s.elements.dialog = ctx.defaultElementSettings();
+    s.elements.dialog.count = 5;
+    s.elements.dialog.rotoForce = "under"; // force all dialogs under
+    s.elements.bsod = ctx.defaultElementSettings();
+    s.elements.bsod.count = 5;
+    s.elements.bsod.rotoForce = null; // use global (split)
+    var ci = { width: 1920, height: 1080, frameRate: 24, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    assert(jobs.length === 10, "rotoForce schedule: 10 jobs total");
+    var allDialogsUnder = true;
+    for (var i = 0; i < jobs.length; i++) {
+        if ((jobs[i].type === "dialog" || jobs[i].type === "chrome") && jobs[i].layer !== "under") {
+            allDialogsUnder = false;
+        }
+    }
+    assert(allDialogsUnder, "rotoForce: all dialog/chrome jobs forced under");
+    // BSOD should have mix of over/under in split mode (at least some of each over multiple seeds)
+})();
+
+// --- Per-element trails override in buildJob ---
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.trails = { enabled: false, chance: 0, echoes: 4, decay: 50 }; // global trails disabled
+    s.elements.dialog = ctx.defaultElementSettings();
+    s.elements.dialog.count = 10;
+    s.elements.dialog.trails = { enabled: true, chance: 100, echoes: 8, decay: 30 }; // force trails on dialogs
+    s.elements.bsod = ctx.defaultElementSettings();
+    s.elements.bsod.count = 10;
+    // bsod has no trails override, inherits global (disabled)
+    var ci = { width: 1920, height: 1080, frameRate: 24, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    var dialogTrails = 0, bsodTrails = 0;
+    for (var i = 0; i < jobs.length; i++) {
+        if ((jobs[i].type === "dialog" || jobs[i].type === "chrome") && jobs[i].trails) dialogTrails++;
+        if (jobs[i].type === "bsod" && jobs[i].trails) bsodTrails++;
+    }
+    assert(dialogTrails > 0, "per-element trails: dialog has trails when override enabled (got " + dialogTrails + ")");
+    assert(bsodTrails === 0, "per-element trails: bsod has no trails when global disabled (got " + bsodTrails + ")");
+    // Check trail settings values
+    for (var i = 0; i < jobs.length; i++) {
+        if ((jobs[i].type === "dialog" || jobs[i].type === "chrome") && jobs[i].trails) {
+            assert(jobs[i].trailEchoes === 8, "per-element trails: dialog echoes = 8");
+            assert(jobs[i].trailDecay === 30, "per-element trails: dialog decay = 30");
+            break;
+        }
+    }
+})();
+
+// --- Per-element custom messages in buildJob ---
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.customMessages = ["Global error"];
+    s.customTitles = ["Global title"];
+    s.elements.dialog = ctx.defaultElementSettings();
+    s.elements.dialog.count = 5;
+    s.elements.dialog.customMessages = ["Dialog specific error"];
+    s.elements.dialog.customTitles = ["Dialog specific title"];
+    s.elements.bsod = ctx.defaultElementSettings();
+    s.elements.bsod.count = 3;
+    s.elements.bsod.customMessages = ["BSOD custom line"];
+    var ci = { width: 1920, height: 1080, frameRate: 24, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+
+    // Check dialog jobs use per-element messages
+    var foundDialogCustom = false;
+    var foundBsodCustom = false;
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type === "dialog") {
+            // title and body come from per-element pools
+            if (jobs[i].title === "Dialog specific title" || jobs[i].body === "Dialog specific error") {
+                foundDialogCustom = true;
+            }
+        }
+        if (jobs[i].type === "bsod") {
+            // BSOD textLines should include custom line
+            if (jobs[i].textLines) {
+                for (var li = 0; li < jobs[i].textLines.length; li++) {
+                    if (jobs[i].textLines[li] === "BSOD custom line") {
+                        foundBsodCustom = true;
+                    }
+                }
+            }
+        }
+    }
+    assert(foundBsodCustom, "per-element customMessages: BSOD includes custom line");
+})();
+
+// --- Per-element curve in schedule ---
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.chaos = 0;
+    s.chaosCurve = "flat"; // global curve
+    s.elements.dialog = ctx.defaultElementSettings();
+    s.elements.dialog.count = 20;
+    s.elements.dialog.curve = "build"; // override to build
+    s.elements.bsod = ctx.defaultElementSettings();
+    s.elements.bsod.count = 20;
+    // bsod inherits flat
+
+    var ci = { width: 1920, height: 1080, frameRate: 24, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+
+    // Collect spawn frames per type
+    var dialogFrames = [], bsodFrames = [];
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type === "dialog" || jobs[i].type === "chrome") dialogFrames.push(jobs[i].inFrame);
+        if (jobs[i].type === "bsod") bsodFrames.push(jobs[i].inFrame);
+    }
+
+    // Build curve should skew later; compute average spawn time
+    var dialogAvg = 0;
+    for (var i = 0; i < dialogFrames.length; i++) dialogAvg += dialogFrames[i];
+    dialogAvg = dialogAvg / dialogFrames.length;
+    var bsodAvg = 0;
+    for (var i = 0; i < bsodFrames.length; i++) bsodAvg += bsodFrames[i];
+    bsodAvg = bsodAvg / bsodFrames.length;
+
+    // Build curve averages should be higher (later) than flat
+    assert(dialogAvg > bsodAvg,
+        "per-element curve: build (dialog avg=" + dialogAvg.toFixed(1) +
+        ") later than flat (bsod avg=" + bsodAvg.toFixed(1) + ")");
+})();
+
+// --- Determinism with overrides ---
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 777;
+    s.chaos = 0;
+    s.rotoMode = "split";
+    s.elements.dialog = ctx.defaultElementSettings();
+    s.elements.dialog.count = 5;
+    s.elements.dialog.rotoForce = "over";
+    s.elements.dialog.curve = "peak";
+    s.elements.dialog.trails = { enabled: true, chance: 100, echoes: 6, decay: 40 };
+    s.elements.bsod = ctx.defaultElementSettings();
+    s.elements.bsod.count = 3;
+    var ci = { width: 1920, height: 1080, frameRate: 24, totalFrames: 240 };
+
+    var jobs1 = ctx.schedule(s, ci);
+    var jobs2 = ctx.schedule(s, ci);
+    assert(jobs1.length === jobs2.length, "determinism w/ overrides: same job count");
+    var allMatch = true;
+    for (var i = 0; i < jobs1.length; i++) {
+        if (jobs1[i].type !== jobs2[i].type ||
+            jobs1[i].inFrame !== jobs2[i].inFrame ||
+            jobs1[i].layer !== jobs2[i].layer ||
+            jobs1[i].trails !== jobs2[i].trails) {
+            allMatch = false;
+            break;
+        }
+    }
+    assert(allMatch, "determinism w/ overrides: identical jobs across runs");
+})();
+
+
 // ── Scheduler Distribution Summary ────────────────────
 
 console.log("\n  --- Distribution Summary (chaos 50, seed 42) ---");
