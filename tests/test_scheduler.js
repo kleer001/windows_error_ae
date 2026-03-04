@@ -338,7 +338,11 @@ assert(jobs0.length === 0, "schedule: chaos 0 produces no elements");
 var schedSettingsExact = ctx.defaultSettings();
 schedSettingsExact.seed = 42;
 schedSettingsExact.chaos = 100;
-schedSettingsExact.counts = { dialog: 3, bsod: 2, text: 0, cursor: 1, pixel: 0 };
+schedSettingsExact.elements.dialog.count = 3;
+schedSettingsExact.elements.bsod.count = 2;
+schedSettingsExact.elements.text.count = 0;
+schedSettingsExact.elements.cursor.count = 1;
+schedSettingsExact.elements.pixel.count = 0;
 var jobsExact = ctx.schedule(schedSettingsExact, compInfo);
 assert(jobsExact.length === 6, "schedule: exact counts mode produces 3+2+0+1+0 = 6 jobs (got " + jobsExact.length + ")");
 // Count types
@@ -364,7 +368,6 @@ assert((exactTypeCounts.pixel || 0) === 0,
 var schedSettingsNone = ctx.defaultSettings();
 schedSettingsNone.seed = 42;
 schedSettingsNone.chaos = 0;
-schedSettingsNone.counts = { dialog: 0, bsod: 0, text: 0, cursor: 0, pixel: 0 };
 var jobsNone = ctx.schedule(schedSettingsNone, compInfo);
 assert(jobsNone.length === 0, "schedule: all counts 0 + chaos 0 = no elements");
 
@@ -471,6 +474,227 @@ avgDurNorm /= jobs.length;
 assert(avgDurSlow > avgDurNorm,
     "schedule slowBurn: longer avg duration (" +
     avgDurSlow.toFixed(1) + " vs " + avgDurNorm.toFixed(1) + ")");
+
+
+// ── dialogVariant on dialog jobs ──────────────────────────
+(function() {
+    var compInfo = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var settings = { seed: 42, chaos: 100, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic", elements: { dialog: { count: 20 }, bsod: { count: 0 }, text: { count: 0 }, cursor: { count: 0 }, pixel: { count: 0 } } };
+    var jobs = ctx.schedule(settings, compInfo);
+    var dialogJobs = [];
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type === "dialog") dialogJobs.push(jobs[i]);
+    }
+    assert(dialogJobs.length > 0, "dialogVariant: has dialog jobs");
+    var hasVariant = true;
+    var variantCounts = { A: 0, B: 0, C: 0 };
+    for (var i = 0; i < dialogJobs.length; i++) {
+        var v = dialogJobs[i].dialogVariant;
+        if (v !== "A" && v !== "B" && v !== "C") { hasVariant = false; break; }
+        variantCounts[v]++;
+    }
+    assert(hasVariant, "dialogVariant: all dialog jobs have variant A/B/C");
+    // B should be most common (weight 50 vs 25/25)
+    assert(variantCounts.B >= variantCounts.A, "dialogVariant: B >= A (B=" + variantCounts.B + " A=" + variantCounts.A + ")");
+    assert(variantCounts.B >= variantCounts.C, "dialogVariant: B >= C (B=" + variantCounts.B + " C=" + variantCounts.C + ")");
+})();
+
+// ── dialogVariant on chrome jobs ──────────────────────────
+(function() {
+    var compInfo = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var settings = { seed: 99, chaos: 100, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic", elements: { dialog: { count: 40 }, bsod: { count: 0 }, text: { count: 0 }, cursor: { count: 0 }, pixel: { count: 0 } } };
+    var jobs = ctx.schedule(settings, compInfo);
+    var chromeJobs = [];
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type === "chrome") chromeJobs.push(jobs[i]);
+    }
+    assert(chromeJobs.length > 0, "chrome dialogVariant: has chrome jobs");
+    var allHaveVariant = true;
+    for (var i = 0; i < chromeJobs.length; i++) {
+        var v = chromeJobs[i].dialogVariant;
+        if (v !== "A" && v !== "B" && v !== "C") { allHaveVariant = false; break; }
+    }
+    assert(allHaveVariant, "chrome dialogVariant: all chrome jobs have variant A/B/C");
+})();
+
+// ── bsodEra on bsod jobs ─────────────────────────────────
+(function() {
+    var compInfo = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var settings = { seed: 42, chaos: 100, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic", elements: { dialog: { count: 0 }, bsod: { count: 20 }, text: { count: 0 }, cursor: { count: 0 }, pixel: { count: 0 } } };
+    var jobs = ctx.schedule(settings, compInfo);
+    var bsodJobs = [];
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type === "bsod") bsodJobs.push(jobs[i]);
+    }
+    assert(bsodJobs.length === 20, "bsodEra: has 20 bsod jobs");
+    var hasEra = true;
+    var eraCounts = { xp: 0, "9x": 0 };
+    for (var i = 0; i < bsodJobs.length; i++) {
+        var era = bsodJobs[i].bsodEra;
+        if (era !== "xp" && era !== "9x") { hasEra = false; break; }
+        eraCounts[era]++;
+    }
+    assert(hasEra, "bsodEra: all bsod jobs have era xp or 9x");
+    assert(eraCounts.xp > 0, "bsodEra: has xp jobs (" + eraCounts.xp + ")");
+    assert(eraCounts["9x"] > 0, "bsodEra: has 9x jobs (" + eraCounts["9x"] + ")");
+    // Both eras present confirms weighted pick is working (60/40 split)
+})();
+
+// ── trails fields on all jobs ─────────────────────────────
+(function() {
+    var compInfo = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var settings = { seed: 42, chaos: 50, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic",
+        trails: { enabled: true, chance: 20, echoes: 4, decay: 50 } };
+    var jobs = ctx.schedule(settings, compInfo);
+    assert(jobs.length > 0, "trails: has jobs");
+    var allHaveTrails = true;
+    var trueCount = 0, falseCount = 0;
+    for (var i = 0; i < jobs.length; i++) {
+        if (typeof jobs[i].trails !== "boolean") { allHaveTrails = false; break; }
+        if (jobs[i].trails) {
+            trueCount++;
+            if (typeof jobs[i].trailEchoes !== "number" || typeof jobs[i].trailDecay !== "number") {
+                allHaveTrails = false;
+                break;
+            }
+        } else {
+            falseCount++;
+        }
+    }
+    assert(allHaveTrails, "trails: all jobs have boolean trails field");
+    assert(trueCount > 0, "trails: some jobs have trails=true (count=" + trueCount + ")");
+    assert(falseCount > 0, "trails: some jobs have trails=false (count=" + falseCount + ")");
+})();
+
+// ── trails disabled ───────────────────────────────────────
+(function() {
+    var compInfo = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var settings = { seed: 42, chaos: 50, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic",
+        trails: { enabled: false, chance: 100, echoes: 4, decay: 50 } };
+    var jobs = ctx.schedule(settings, compInfo);
+    var anyTrails = false;
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].trails) { anyTrails = true; break; }
+    }
+    assert(!anyTrails, "trails disabled: no jobs have trails=true");
+})();
+
+// ── trails chance 0 ───────────────────────────────────────
+(function() {
+    var compInfo = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var settings = { seed: 42, chaos: 50, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic",
+        trails: { enabled: true, chance: 0, echoes: 4, decay: 50 } };
+    var jobs = ctx.schedule(settings, compInfo);
+    var anyTrails = false;
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].trails) { anyTrails = true; break; }
+    }
+    assert(!anyTrails, "trails chance=0: no jobs have trails=true");
+})();
+
+// ── trails chance 100 ─────────────────────────────────────
+(function() {
+    var compInfo = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var settings = { seed: 42, chaos: 50, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic",
+        trails: { enabled: true, chance: 100, echoes: 6, decay: 75 } };
+    var jobs = ctx.schedule(settings, compInfo);
+    var allTrails = true;
+    for (var i = 0; i < jobs.length; i++) {
+        if (!jobs[i].trails) { allTrails = false; break; }
+    }
+    assert(allTrails, "trails chance=100: all jobs have trails=true");
+    if (jobs.length > 0) {
+        assert(jobs[0].trailEchoes === 6, "trails chance=100: echoes=6 propagated");
+        assert(jobs[0].trailDecay === 75, "trails chance=100: decay=75 propagated");
+    }
+})();
+
+// ── DIALOG_VARIANTS structure ─────────────────────────────
+(function() {
+    var variants = ctx.DIALOG_VARIANTS;
+    assert(variants != null, "DIALOG_VARIANTS exported");
+    assert(variants.A != null, "DIALOG_VARIANTS has A");
+    assert(variants.B != null, "DIALOG_VARIANTS has B");
+    assert(variants.C != null, "DIALOG_VARIANTS has C");
+    var keys = ["body", "titleStart", "titleEnd", "borderL", "borderD", "borderOuter", "btnBg", "btnBorderL", "btnBorderD", "cornerRadius", "titleH"];
+    for (var ki = 0; ki < keys.length; ki++) {
+        assert(variants.B[keys[ki]] != null, "DIALOG_VARIANTS.B." + keys[ki] + " exists");
+    }
+    assert(variants.C.closeBtn != null, "DIALOG_VARIANTS.C.closeBtn exists (red oval)");
+    assert(variants.A.closeBtn == null, "DIALOG_VARIANTS.A.closeBtn is null");
+    assert(variants.C.titleH === 25, "DIALOG_VARIANTS.C.titleH = 25 (XP)");
+    assert(variants.A.titleH === 18, "DIALOG_VARIANTS.A.titleH = 18 (Classic)");
+    assert(variants.B.titleH === 18, "DIALOG_VARIANTS.B.titleH = 18 (Standard)");
+    assert(variants.C.cornerRadius === 4, "DIALOG_VARIANTS.C.cornerRadius = 4");
+    assert(variants.A.cornerRadius === 0, "DIALOG_VARIANTS.A.cornerRadius = 0");
+})();
+
+// ── BSOD text arrays exported ─────────────────────────────
+(function() {
+    assert(ctx.BSOD_LINES_XP != null && ctx.BSOD_LINES_XP.length > 10, "BSOD_LINES_XP exported with > 10 lines");
+    assert(ctx.BSOD_LINES_9X != null && ctx.BSOD_LINES_9X.length > 5, "BSOD_LINES_9X exported with > 5 lines");
+    assert(ctx.BSOD_CODES != null && ctx.BSOD_CODES.length > 3, "BSOD_CODES exported");
+    assert(ctx.BSOD_EXCEPTIONS != null && ctx.BSOD_EXCEPTIONS.length > 2, "BSOD_EXCEPTIONS exported");
+})();
+
+
+// ── Per-type duration test ──────────────────────────────
+(function() {
+    var compInfo = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var settings = { seed: 42, chaos: 100, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic",
+        elements: {
+            dialog: { count: 10, minFrames: 20, maxFrames: 40 },
+            bsod: { count: 10, minFrames: 50, maxFrames: 80 },
+            text: { count: 0 }, cursor: { count: 0 }, pixel: { count: 0 }
+        }
+    };
+    var jobs = ctx.schedule(settings, compInfo);
+    var dialogDurs = [], bsodDurs = [];
+    for (var i = 0; i < jobs.length; i++) {
+        var dur = jobs[i].outFrame - jobs[i].inFrame;
+        if (jobs[i].type === "dialog" || jobs[i].type === "chrome") dialogDurs.push(dur);
+        else if (jobs[i].type === "bsod") bsodDurs.push(dur);
+    }
+    // Average bsod duration should be > dialog duration
+    var avgDialog = 0, avgBsod = 0;
+    for (var i = 0; i < dialogDurs.length; i++) avgDialog += dialogDurs[i];
+    avgDialog /= (dialogDurs.length || 1);
+    for (var i = 0; i < bsodDurs.length; i++) avgBsod += bsodDurs[i];
+    avgBsod /= (bsodDurs.length || 1);
+    assert(avgBsod > avgDialog,
+        "per-type duration: bsod avg (" + avgBsod.toFixed(1) + ") > dialog avg (" + avgDialog.toFixed(1) + ")");
+})();
+
+// ── Per-type scale/speed test ──────────────────────────
+(function() {
+    var compInfo = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var settings = { seed: 42, chaos: 100, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic",
+        elements: {
+            dialog: { count: 5, scale: 200, speed: 50 },
+            bsod: { count: 5, scale: 75, speed: 150 },
+            text: { count: 0 }, cursor: { count: 0 }, pixel: { count: 0 }
+        }
+    };
+    var jobs = ctx.schedule(settings, compInfo);
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type === "dialog" || jobs[i].type === "chrome") {
+            assert(jobs[i].scale === 2.0,
+                "per-type scale: dialog scale = 2.0 (got " + jobs[i].scale + ")");
+            assert(jobs[i].speedMult === 0.5,
+                "per-type speed: dialog speedMult = 0.5 (got " + jobs[i].speedMult + ")");
+            break; // just check first one
+        }
+    }
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type === "bsod") {
+            assert(jobs[i].scale === 0.75,
+                "per-type scale: bsod scale = 0.75 (got " + jobs[i].scale + ")");
+            assert(jobs[i].speedMult === 1.5,
+                "per-type speed: bsod speedMult = 1.5 (got " + jobs[i].speedMult + ")");
+            break;
+        }
+    }
+})();
 
 
 // ── Scheduler Distribution Summary ────────────────────

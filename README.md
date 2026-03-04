@@ -14,6 +14,7 @@ Generates native AE shape layers and text layers that look like Windows error di
 
 - **Seeded randomness** — same seed always produces the same layout
 - **Chaos slider** — controls density from subtle glitches to total system failure
+- **Per-element control** — independent settings for each element type
 - **Roto-aware** — automatically splits elements above and below your subject
 - **Fully editable** — output is normal AE layers, not baked pixels
 
@@ -35,31 +36,60 @@ Generates native AE shape layers and text layers that look like Windows error di
 
 1. Open a comp with your footage.
 2. Open the **Windows Error FX** panel.
-3. Pick a **seed** (or hit **Random**).
-4. Set **chaos** (start around 50%).
+3. Enter a **seed** (or hit **RANDOMIZE** for a full random setup).
+4. Set **chaos** (start around 50-100).
 5. Hit **GENERATE**.
 
 A pre-comp with error windows, BSOD panels, cursors, and glitch text appears in your comp. Change the seed for a different look. Same seed = same result every time.
 
-## Controls
+## Panel Layout
+
+### Main Panel
+
+<p align="center">
+  <img src="docs/images/gui-main-panel.svg" alt="Main panel" width="320"/>
+</p>
+
+The main panel is always visible. Enter a seed, set your chaos level, and hit **GENERATE**. The **RANDOMIZE** button randomizes all settings at once — seed, chaos, per-element controls, overlays, style, and curve — for quick experimentation.
+
+### Per-Element Tabs
+
+<p align="center">
+  <img src="docs/images/gui-element-tabs.svg" alt="Per-element tabbed controls" width="340"/>
+</p>
+
+Inside Advanced, a tabbed panel gives independent control over each of the 5 element types. Each tab has:
+
+| Field | What it does |
+|---|---|
+| **Count** | Exact number to spawn (0 = auto from chaos level) |
+| **Min / Max f** | Duration range in frames |
+| **Scale %** | Size multiplier |
+| **Spd %** | Animation speed multiplier |
+| **Opac** | Opacity range (min - max) |
+| **Entry / Exit** | Fade-in and fade-out frames |
+
+Stack Depth and Offset (for dialog cascade stacking) remain global controls below the tabs.
+
+### Overlays & Global Controls
+
+<p align="center">
+  <img src="docs/images/gui-advanced-panel.svg" alt="Advanced panel" width="340"/>
+</p>
 
 | Control | What it does |
 |---|---|
-| **Seed** | Determines the layout. Same seed = identical output. |
-| **Chaos** | Density of elements. 0% = nothing. 100% = total failure. |
-| **Generate** | Builds the effect in your active comp. |
-
-### Advanced
-
-| Control | What it does |
-|---|---|
-| **Element Mix** | Per-type sliders (Dialog, BSOD, Text, Cursor, Pixel). Set to 0% to disable. |
-| **Style** | Animation personality: XP Classic, Glitch Heavy, Slow Burn, Chaos Maximum. |
-| **Min / Max** | Frame duration limits for elements. |
-| **Roto** | How elements interact with roto layers (Split / All Over / All Under / Flat). |
-| **Curve** | Time distribution: Flat, Build, Peak, Burst, Random. |
-| **Custom Messages** | Add your own error messages and window titles. |
-| **Show Log** | View the generation log file for debugging. |
+| **Scanlines** | CRT scanline overlay with opacity, spacing, and jitter |
+| **Noise** | Fractal noise grain overlay |
+| **Head Scratch** | Horizontal line artifacts |
+| **Trails** | Echo/ghost trail effect on random elements |
+| **Style** | Animation personality: XP Classic, Glitch Heavy, Slow Burn, Chaos Maximum |
+| **Roto** | How elements interact with roto layers (Split / All Over / All Under / Flat) |
+| **Curve** | Time distribution: Flat, Build, Peak, Burst, Random |
+| **Custom Messages** | Add your own error messages and window titles |
+| **REGENERATE** | Replaces existing effect without confirmation |
+| **CLEAR ALL** | Removes all generated elements |
+| **Show Log** | View the generation log file for debugging |
 
 ## Roto Layers
 
@@ -73,7 +103,7 @@ Each generate writes a log to `Documents/WindowsErrorFX/WindowsErrorFX.log`. The
 
 ```
 WindowsErrorFX.jsx           <- The plugin (single deliverable file)
-USER_GUIDE.md                <- Friendly user guide
+docs/images/                  <- GUI mockup SVGs
 tests/
   run_tests.js               <- Test runner (node tests/run_tests.js)
   test_harness.js             <- Node.js VM sandbox with AE mocks
@@ -90,7 +120,7 @@ The PRNG, utilities, and scheduler are pure logic with no AE dependencies. Tests
 node tests/run_tests.js
 ```
 
-733 tests covering determinism, distribution curves, element weighting, floor rules, and edge cases.
+856 tests covering determinism, distribution curves, element weighting, floor rules, per-element controls, settings migration, and edge cases.
 
 ## Requirements
 

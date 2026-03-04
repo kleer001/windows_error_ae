@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="380" font-family="Segoe UI, Arial, sans-serif" font-size="11">
+  <defs>
+    <linearGradient id="panelBg3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a3a3a"/>
+      <stop offset="100%" stop-color="#2b2b2b"/>
+    </linearGradient>
+    <linearGradient id="btnBg3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#505050"/>
+      <stop offset="100%" stop-color="#3c3c3c"/>
+    </linearGradient>
+    <linearGradient id="regenBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a6fa5"/>
+      <stop offset="100%" stop-color="#3a5a8a"/>
+    </linearGradient>
+    <linearGradient id="clearBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8a4a4a"/>
+      <stop offset="100%" stop-color="#703a3a"/>
+    </linearGradient>
+  </defs>
+  <!-- Panel background -->
+  <rect width="340" height="380" rx="4" fill="url(#panelBg3)" stroke="#555" stroke-width="1"/>
+  <text x="170" y="20" text-anchor="middle" fill="#999" font-size="9" font-weight="bold" letter-spacing="1">OVERLAYS &amp; GLOBAL CONTROLS</text>
+  <!-- Overlays panel -->
+  <rect x="12" y="30" width="316" height="210" rx="3" fill="#2e2e2e" stroke="#555" stroke-width="0.5"/>
+  <text x="24" y="46" fill="#aaa" font-size="10" font-weight="bold">Overlays</text>
+  <!-- Scanlines -->
+  <rect x="24" y="54" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="26" y="64" fill="#4a9eff" font-size="10" font-weight="bold">&#x2713;</text>
+  <text x="42" y="64" fill="#ccc" font-size="10">Scanlines</text>
+  <text x="110" y="64" fill="#888" font-size="9">Opacity</text>
+  <rect x="148" y="52" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="155" y="64" fill="#e0e0e0" font-size="10">20</text>
+  <text x="186" y="64" fill="#888" font-size="9">Spacing</text>
+  <rect x="228" y="52" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="238" y="64" fill="#e0e0e0" font-size="10">4</text>
+  <!-- Jitter -->
+  <rect x="40" y="72" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="58" y="82" fill="#999" font-size="10">Scanline Jitter</text>
+  <!-- Noise -->
+  <rect x="24" y="90" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="26" y="100" fill="#4a9eff" font-size="10" font-weight="bold">&#x2713;</text>
+  <text x="42" y="100" fill="#ccc" font-size="10">Noise</text>
+  <text x="90" y="100" fill="#888" font-size="9">Opacity</text>
+  <rect x="130" y="88" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="140" y="100" fill="#e0e0e0" font-size="10">8</text>
+  <text x="168" y="100" fill="#888" font-size="9">Scale</text>
+  <rect x="198" y="88" width="36" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="204" y="100" fill="#e0e0e0" font-size="10">100</text>
+  <!-- Complexity -->
+  <text x="40" y="118" fill="#888" font-size="9">Complexity</text>
+  <rect x="98" y="106" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="108" y="118" fill="#e0e0e0" font-size="10">5</text>
+  <!-- Head Scratch -->
+  <rect x="24" y="126" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="42" y="136" fill="#999" font-size="10">Head Scratch</text>
+  <text x="120" y="136" fill="#888" font-size="9">Freq</text>
+  <rect x="146" y="124" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="153" y="136" fill="#e0e0e0" font-size="10">20</text>
+  <text x="184" y="136" fill="#888" font-size="9">Height</text>
+  <rect x="218" y="124" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="228" y="136" fill="#e0e0e0" font-size="10">2</text>
+  <!-- Trails -->
+  <rect x="24" y="148" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="26" y="158" fill="#4a9eff" font-size="10" font-weight="bold">&#x2713;</text>
+  <text x="42" y="158" fill="#ccc" font-size="10">Trails</text>
+  <text x="84" y="158" fill="#888" font-size="9">Chance%</text>
+  <rect x="132" y="146" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="139" y="158" fill="#e0e0e0" font-size="10">20</text>
+  <text x="170" y="158" fill="#888" font-size="9">Echoes</text>
+  <rect x="206" y="146" width="28" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="214" y="158" fill="#e0e0e0" font-size="10">4</text>
+  <!-- Decay -->
+  <text x="40" y="176" fill="#888" font-size="9">Decay%</text>
+  <rect x="82" y="164" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="89" y="176" fill="#e0e0e0" font-size="10">50</text>
+  <!-- Dropdowns section -->
+  <text x="24" y="206" fill="#888" font-size="9">Style</text>
+  <rect x="60" y="194" width="120" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="68" y="207" fill="#e0e0e0" font-size="10">XP Classic</text>
+  <text x="166" y="207" fill="#777" font-size="9">&#x25BE;</text>
+  <text x="24" y="228" fill="#888" font-size="9">Roto</text>
+  <rect x="60" y="216" width="120" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="68" y="229" fill="#e0e0e0" font-size="10">Split</text>
+  <text x="166" y="229" fill="#777" font-size="9">&#x25BE;</text>
+  <text x="24" y="250" fill="#888" font-size="9">Curve</text>
+  <rect x="60" y="238" width="120" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="68" y="251" fill="#e0e0e0" font-size="10">Flat</text>
+  <text x="166" y="251" fill="#777" font-size="9">&#x25BE;</text>
+  <!-- Custom Messages -->
+  <rect x="16" y="268" width="308" height="24" rx="3" fill="url(#btnBg3)" stroke="#666" stroke-width="0.5"/>
+  <text x="170" y="284" text-anchor="middle" fill="#ccc" font-size="10">Custom Messages...</text>
+  <!-- Action row -->
+  <rect x="16" y="302" width="144" height="26" rx="3" fill="url(#regenBg)" stroke="#5a7ab5" stroke-width="0.5"/>
+  <text x="88" y="320" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">REGENERATE</text>
+  <rect x="168" y="302" width="144" height="26" rx="3" fill="url(#clearBg)" stroke="#a55a5a" stroke-width="0.5"/>
+  <text x="240" y="320" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">CLEAR ALL</text>
+  <!-- Show Log -->
+  <rect x="16" y="338" width="308" height="24" rx="3" fill="url(#btnBg3)" stroke="#666" stroke-width="0.5"/>
+  <text x="170" y="354" text-anchor="middle" fill="#ccc" font-size="10">Show Log</text>
+</svg>

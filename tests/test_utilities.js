@@ -131,32 +131,135 @@ assert(ds.chaos === 100, "defaultSettings chaos = 100");
 assert(ds.rotoMode === "split", "defaultSettings rotoMode = split");
 assert(ds.chaosCurve === "flat", "defaultSettings chaosCurve = flat");
 assert(ds.animStyle === "xpClassic", "defaultSettings animStyle = xpClassic");
-assert(ds.minFrames === 8, "defaultSettings minFrames = 8");
-assert(ds.maxFrames === 96, "defaultSettings maxFrames = 96");
-// Element counts default to 0 (auto mode)
-assert(ds.counts.dialog === 0, "defaultSettings counts.dialog = 0");
-assert(ds.counts.bsod === 0, "defaultSettings counts.bsod = 0");
-assert(ds.counts.text === 0, "defaultSettings counts.text = 0");
-assert(ds.counts.cursor === 0, "defaultSettings counts.cursor = 0");
-assert(ds.counts.pixel === 0, "defaultSettings counts.pixel = 0");
+// Per-element settings (new structure)
+assert(ds.elements != null, "defaultSettings has elements object");
+assert(ds.elements.dialog.count === 0, "defaultSettings elements.dialog.count = 0");
+assert(ds.elements.bsod.count === 0, "defaultSettings elements.bsod.count = 0");
+assert(ds.elements.text.count === 0, "defaultSettings elements.text.count = 0");
+assert(ds.elements.cursor.count === 0, "defaultSettings elements.cursor.count = 0");
+assert(ds.elements.pixel.count === 0, "defaultSettings elements.pixel.count = 0");
+assert(ds.elements.dialog.minFrames === 8, "defaultSettings elements.dialog.minFrames = 8");
+assert(ds.elements.dialog.maxFrames === 96, "defaultSettings elements.dialog.maxFrames = 96");
+assert(ds.elements.dialog.scale === 100, "defaultSettings elements.dialog.scale = 100");
+assert(ds.elements.dialog.speed === 100, "defaultSettings elements.dialog.speed = 100");
+assert(ds.elements.dialog.opacityMin === 50, "defaultSettings elements.dialog.opacityMin = 50");
+assert(ds.elements.dialog.opacityMax === 100, "defaultSettings elements.dialog.opacityMax = 100");
+assert(ds.elements.dialog.entryFrames === 3, "defaultSettings elements.dialog.entryFrames = 3");
+assert(ds.elements.dialog.exitFrames === 2, "defaultSettings elements.dialog.exitFrames = 2");
 // Overlay settings
 assert(ds.scanlines.enabled === true, "defaultSettings scanlines.enabled = true");
 assert(ds.scanlines.opacity === 20, "defaultSettings scanlines.opacity = 20");
 assert(ds.scanlines.spacing === 4, "defaultSettings scanlines.spacing = 4");
 assert(ds.noise.enabled === true, "defaultSettings noise.enabled = true");
 assert(ds.headScratch.enabled === false, "defaultSettings headScratch.enabled = false");
-// Element controls
-assert(ds.elementScale === 100, "defaultSettings elementScale = 100");
-assert(ds.speedMult === 100, "defaultSettings speedMult = 100");
-assert(ds.opacityMin === 50, "defaultSettings opacityMin = 50");
-assert(ds.opacityMax === 100, "defaultSettings opacityMax = 100");
+// Global stack controls
 assert(ds.stackDepth === 8, "defaultSettings stackDepth = 8");
-assert(ds.entryFrames === 3, "defaultSettings entryFrames = 3");
-assert(ds.exitFrames === 2, "defaultSettings exitFrames = 2");
 assert(Array.isArray(ds.customMessages) && ds.customMessages.length === 0,
     "defaultSettings customMessages is empty array");
 assert(Array.isArray(ds.customTitles) && ds.customTitles.length === 0,
     "defaultSettings customTitles is empty array");
+
+// --- trails defaults ---
+assert(ds.trails != null, "defaultSettings has trails object");
+assert(ds.trails.enabled === true, "defaultSettings trails.enabled = true");
+assert(ds.trails.chance === 20, "defaultSettings trails.chance = 20");
+assert(ds.trails.echoes === 4, "defaultSettings trails.echoes = 4");
+assert(ds.trails.decay === 50, "defaultSettings trails.decay = 50");
+
+// --- defaultElementSettings ---
+var des = ctx.defaultElementSettings();
+assert(des.count === 0, "defaultElementSettings count = 0");
+assert(des.minFrames === 8, "defaultElementSettings minFrames = 8");
+assert(des.maxFrames === 96, "defaultElementSettings maxFrames = 96");
+assert(des.scale === 100, "defaultElementSettings scale = 100");
+assert(des.speed === 100, "defaultElementSettings speed = 100");
+assert(des.opacityMin === 50, "defaultElementSettings opacityMin = 50");
+assert(des.opacityMax === 100, "defaultElementSettings opacityMax = 100");
+assert(des.entryFrames === 3, "defaultElementSettings entryFrames = 3");
+assert(des.exitFrames === 2, "defaultElementSettings exitFrames = 2");
+
+// --- getElementSettings ---
+// Full settings with elements
+var fullSettings = ctx.defaultSettings();
+fullSettings.elements.dialog.scale = 200;
+fullSettings.elements.dialog.speed = 150;
+var ges = ctx.getElementSettings(fullSettings, "dialog");
+assert(ges.scale === 200, "getElementSettings dialog scale override = 200");
+assert(ges.speed === 150, "getElementSettings dialog speed override = 150");
+assert(ges.count === 0, "getElementSettings dialog count default = 0");
+
+// Missing elements key
+var noElements = { seed: 42 };
+var gesNone = ctx.getElementSettings(noElements, "dialog");
+assert(gesNone.scale === 100, "getElementSettings missing elements returns default scale");
+assert(gesNone.minFrames === 8, "getElementSettings missing elements returns default minFrames");
+
+// Missing type key
+var partialElements = { elements: { bsod: { count: 5 } } };
+var gesPartial = ctx.getElementSettings(partialElements, "dialog");
+assert(gesPartial.count === 0, "getElementSettings missing type returns default count");
+assert(gesPartial.scale === 100, "getElementSettings missing type returns default scale");
+
+// Partial override within type
+var gesBsod = ctx.getElementSettings(partialElements, "bsod");
+assert(gesBsod.count === 5, "getElementSettings partial override count = 5");
+assert(gesBsod.scale === 100, "getElementSettings partial override falls back for scale");
+
+// Null settings
+var gesNull = ctx.getElementSettings(null, "dialog");
+assert(gesNull.count === 0, "getElementSettings null settings returns defaults");
+
+// --- migrateSettings ---
+// Old format → new
+var oldFmt = {
+    seed: 42, chaos: 80,
+    counts: { dialog: 5, bsod: 3, text: 0, cursor: 0, pixel: 0 },
+    minFrames: 10, maxFrames: 80,
+    elementScale: 120, speedMult: 90,
+    opacityMin: 60, opacityMax: 95,
+    entryFrames: 5, exitFrames: 3
+};
+var migrated = ctx.migrateSettings(oldFmt);
+assert(migrated.elements != null, "migrateSettings creates elements object");
+assert(migrated.elements.dialog.count === 5, "migrateSettings dialog count = 5");
+assert(migrated.elements.bsod.count === 3, "migrateSettings bsod count = 3");
+assert(migrated.elements.dialog.minFrames === 10, "migrateSettings dialog minFrames = 10");
+assert(migrated.elements.dialog.maxFrames === 80, "migrateSettings dialog maxFrames = 80");
+assert(migrated.elements.dialog.scale === 120, "migrateSettings dialog scale = 120");
+assert(migrated.elements.dialog.speed === 90, "migrateSettings dialog speed = 90");
+assert(migrated.elements.dialog.opacityMin === 60, "migrateSettings dialog opacityMin = 60");
+assert(migrated.elements.dialog.opacityMax === 95, "migrateSettings dialog opacityMax = 95");
+assert(migrated.elements.dialog.entryFrames === 5, "migrateSettings dialog entryFrames = 5");
+assert(migrated.elements.dialog.exitFrames === 3, "migrateSettings dialog exitFrames = 3");
+assert(migrated.counts == null, "migrateSettings removes counts");
+assert(migrated.minFrames == null, "migrateSettings removes minFrames");
+assert(migrated.elementScale == null, "migrateSettings removes elementScale");
+assert(migrated.seed === 42, "migrateSettings preserves seed");
+
+// New format passthrough
+var newFmt = ctx.defaultSettings();
+var passthrough = ctx.migrateSettings(newFmt);
+assert(passthrough.elements != null, "migrateSettings passthrough preserves elements");
+assert(passthrough.elements.dialog.count === 0, "migrateSettings passthrough preserves count");
+
+// Null passthrough
+assert(ctx.migrateSettings(null) === null, "migrateSettings null returns null");
+
+// --- randomizeSettings ---
+var rs = ctx.randomizeSettings();
+assert(rs.seed >= 10000 && rs.seed <= 99999, "randomizeSettings seed in range");
+assert(rs.chaos >= 20 && rs.chaos <= 200, "randomizeSettings chaos in range");
+assert(rs.elements != null, "randomizeSettings has elements");
+assert(rs.elements.dialog != null, "randomizeSettings has dialog element");
+assert(rs.elements.bsod != null, "randomizeSettings has bsod element");
+assert(rs.elements.dialog.count >= 0 && rs.elements.dialog.count < 30,
+    "randomizeSettings dialog count in range");
+assert(rs.elements.dialog.scale >= 50 && rs.elements.dialog.scale < 200,
+    "randomizeSettings dialog scale in range");
+assert(rs.scanlines != null, "randomizeSettings has scanlines");
+assert(rs.noise != null, "randomizeSettings has noise");
+assert(rs.trails != null, "randomizeSettings has trails");
+assert(rs.stackDepth >= 3, "randomizeSettings stackDepth >= 3");
 
 console.log("Utilities: " + passed + " passed, " + failed + " failed");
 module.exports = { passed: passed, failed: failed };

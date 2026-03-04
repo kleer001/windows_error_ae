@@ -150,8 +150,9 @@ var C_TEXT_OVERLAY     = [1,     1,     1    ]; // white monospace text
 var C_CURSOR_FILL     = [1,     1,     1    ]; // white
 var C_CURSOR_STROKE   = [0,     0,     0    ]; // black outline
 var C_ICON_ERROR      = [0.8,   0,     0    ]; // red
-var C_ICON_WARNING    = [0.9,   0.8,   0    ]; // yellow
-var C_ICON_QUESTION   = [0,     0,     0.6  ]; // blue
+var C_ICON_WARNING    = [1,     0.800, 0    ]; // #FFCC00
+var C_ICON_QUESTION   = [0,     0,     0.800]; // #0000CC
+var C_ICON_INFO       = [0,     0,     0.800]; // #0000CC (same as question)
 var C_PIXEL_COLORS    = [
     [0, 0, 0],          // black
     [1, 1, 1],          // white
@@ -267,6 +268,118 @@ var BSOD_LINES = [
     "If this is the first time you have seen this Stop error screen,",
     "restart your computer. If this screen appears again, follow these steps:"
 ];
+
+// ── Dialog variant palettes ─────────────────────────────────
+var DIALOG_VARIANTS = {
+    A: { // Win95/98 Classic
+        body:       [0.753, 0.753, 0.753], // #C0C0C0
+        titleStart: [0,     0,     0.502], // #000080
+        titleEnd:   [0.063, 0.518, 0.816], // #1084D0
+        borderL:    [1,     1,     1    ], // white highlight
+        borderMid:  [0.875, 0.875, 0.875], // #DFDFDF
+        borderD:    [0.502, 0.502, 0.502], // #808080
+        borderOuter:[0,     0,     0    ], // #000000
+        btnBg:      [0.753, 0.753, 0.753], // #C0C0C0
+        btnBorderL: [1,     1,     1    ], // #FFFFFF
+        btnBorderD: [0.502, 0.502, 0.502], // #808080
+        closeBtn:   null,                   // grey same as body
+        cornerRadius: 0,
+        titleH: 18
+    },
+    B: { // Win98/2000 Standard (PRIMARY)
+        body:       [0.831, 0.816, 0.784], // #D4D0C8
+        titleStart: [0.039, 0.141, 0.416], // #0A246A
+        titleEnd:   [0.651, 0.792, 0.941], // #A6CAF0
+        borderL:    [1,     1,     1    ], // white highlight
+        borderMid:  [0.831, 0.816, 0.784], // same as body
+        borderD:    [0.502, 0.502, 0.502], // #808080
+        borderOuter:[0.251, 0.251, 0.251], // #404040
+        btnBg:      [0.831, 0.816, 0.784], // #D4D0C8
+        btnBorderL: [1,     1,     1    ], // #FFFFFF
+        btnBorderD: [0.502, 0.502, 0.502], // #808080
+        closeBtn:   null,                   // grey same as body
+        cornerRadius: 0,
+        titleH: 18
+    },
+    C: { // Win XP Luna
+        body:       [0.925, 0.914, 0.847], // #ECE9D8
+        titleStart: [0,     0.329, 0.890], // #0054E3
+        titleEnd:   [0.239, 0.584, 1.0  ], // #3D95FF
+        borderL:    [1,     1,     1    ], // white highlight
+        borderMid:  [0.925, 0.914, 0.847], // same as body
+        borderD:    [0.675, 0.659, 0.600], // #ACA899
+        borderOuter:[0,     0,     0    ], // #000000
+        btnBg:      [0.925, 0.914, 0.847], // #ECE9D8
+        btnBorderL: [1,     1,     1    ], // #FFFFFF
+        btnBorderD: [0.675, 0.659, 0.600], // #ACA899
+        closeBtn:   [0.780, 0.314, 0.314], // #C75050 red oval
+        cornerRadius: 4,
+        titleH: 25
+    }
+};
+
+// ── BSOD fonts ──────────────────────────────────────────────
+var FONT_BSOD      = "Lucida Console";     // XP era
+var FONT_BSOD_9X   = "Courier New";        // Win 9x fallback
+
+// ── Geometry extras ─────────────────────────────────────────
+var GEO_ICON_SIZE  = 32;
+var COMP_SCALE     = 2.0;  // 96 DPI → 1080p scale factor
+
+// ── BSOD era text arrays ────────────────────────────────────
+var BSOD_LINES_XP = [
+    "A problem has been detected and Windows has been shut down to prevent damage",
+    "to your computer.",
+    "",
+    "%BSOD_CODE%",
+    "",
+    "If this is the first time you've seen this Stop error screen,",
+    "restart your computer. If this screen appears again, follow",
+    "these steps:",
+    "",
+    "Check to make sure any new hardware or software is properly installed.",
+    "If this is a new installation, ask your hardware or software manufacturer",
+    "for any Windows updates you might need.",
+    "",
+    "If problems continue, disable or remove any newly installed hardware",
+    "or software. Disable BIOS memory options such as caching or shadowing.",
+    "If you need to use Safe Mode to remove or disable components, restart",
+    "your computer, press F8 to select Advanced Startup Options, and then",
+    "select Safe Mode.",
+    "",
+    "Technical information:",
+    "",
+    "*** STOP: %HEX% (%HEX%, %HEX%, %HEX%, %HEX%)"
+];
+
+var BSOD_LINES_9X = [
+    "A fatal exception %BSOD_EXCEPTION% has occurred at %HEX%:%HEX% in VXD VMM(01) +",
+    "%HEX%. The current application will be terminated.",
+    "",
+    "*  Press any key to terminate the current application.",
+    "*  Press CTRL+ALT+DELETE again to restart your computer. You will",
+    "   lose any unsaved information in all applications.",
+    "",
+    "",
+    "Press any key to continue _"
+];
+
+var BSOD_CODES = [
+    "DRIVER_IRQL_NOT_LESS_OR_EQUAL",
+    "UNEXPECTED_KERNEL_MODE_TRAP",
+    "PAGE_FAULT_IN_NONPAGED_AREA",
+    "KERNEL_DATA_INPAGE_ERROR",
+    "INACCESSIBLE_BOOT_DEVICE",
+    "SYSTEM_THREAD_EXCEPTION_NOT_HANDLED",
+    "CRITICAL_PROCESS_DIED"
+];
+
+var BSOD_EXCEPTIONS = ["0E", "0D", "06", "0C", "00"];
+
+// ── Trails defaults ─────────────────────────────────────────
+var DEFAULT_TRAILS_CHANCE = 20;   // percent probability per element
+var DEFAULT_TRAILS_ECHOES = 4;    // number of echo copies
+var DEFAULT_TRAILS_DECAY  = 50;   // percent opacity decay
 
 var CORRUPT_TEXT_LINES = [
     "for, unit_icon(?)make green)",
@@ -420,6 +533,179 @@ function addPath(contents, name, vertices, closed, fillColor, strokeColor, strok
     return group;
 }
 
+/**
+ * Add a rounded rectangle group. Like addRect but sets Roundness for XP Luna corners.
+ */
+function addRoundedRect(contents, name, w, h, cx, cy, fillColor, strokeColor, strokeWidth, roundness) {
+    var group = contents.addProperty("ADBE Vector Group");
+    group.name = name;
+    var gc = group.property("Contents");
+
+    var rect = gc.addProperty("ADBE Vector Shape - Rect");
+    rect.property("Size").setValue([w, h]);
+    rect.property("Position").setValue([cx, cy]);
+    rect.property("Roundness").setValue(roundness || 0);
+
+    var fill = gc.addProperty("ADBE Vector Graphic - Fill");
+    fill.property("Color").setValue(fillColor);
+    fill.property("Opacity").setValue(100);
+
+    if (strokeColor) {
+        var stroke = gc.addProperty("ADBE Vector Graphic - Stroke");
+        stroke.property("Color").setValue(strokeColor);
+        stroke.property("Stroke Width").setValue(strokeWidth || 1);
+    }
+
+    return group;
+}
+
+/**
+ * Add an ellipse shape group. Used for icons and XP close button.
+ */
+function addEllipse(contents, name, w, h, cx, cy, fillColor, strokeColor, strokeWidth) {
+    var group = contents.addProperty("ADBE Vector Group");
+    group.name = name;
+    var gc = group.property("Contents");
+
+    var ellipse = gc.addProperty("ADBE Vector Shape - Ellipse");
+    ellipse.property("Size").setValue([w, h]);
+    ellipse.property("Position").setValue([cx, cy]);
+
+    var fill = gc.addProperty("ADBE Vector Graphic - Fill");
+    fill.property("Color").setValue(fillColor);
+    fill.property("Opacity").setValue(100);
+
+    if (strokeColor) {
+        var stroke = gc.addProperty("ADBE Vector Graphic - Stroke");
+        stroke.property("Color").setValue(strokeColor);
+        stroke.property("Stroke Width").setValue(strokeWidth || 1);
+    }
+
+    return group;
+}
+
+/**
+ * Build an Error icon: red circle + white X (two rotated rects).
+ * contents: shape layer Contents; size: icon bounding box; cx,cy: center.
+ */
+function buildIconError(contents, size, cx, cy) {
+    var r = size / 2;
+    addEllipse(contents, "IconCircle", size, size, cx, cy,
+        C_ICON_ERROR, [0, 0, 0], 1);
+    // Two crossed rectangles for the X
+    var crossLen = size * 0.44;
+    var crossW = size * 0.12;
+    var group1 = addRect(contents, "IconX1", crossLen, crossW, cx, cy, [1, 1, 1], null, 0);
+    try { group1.property("Transform").property("Rotation").setValue(45); } catch (e) {}
+    var group2 = addRect(contents, "IconX2", crossLen, crossW, cx, cy, [1, 1, 1], null, 0);
+    try { group2.property("Transform").property("Rotation").setValue(-45); } catch (e) {}
+}
+
+/**
+ * Build a Warning icon: yellow triangle + black exclamation.
+ */
+function buildIconWarning(contents, size, cx, cy) {
+    var half = size / 2;
+    // Triangle pointing up
+    var triVerts = [
+        [cx, cy - half],          // top
+        [cx - half, cy + half],   // bottom-left
+        [cx + half, cy + half]    // bottom-right
+    ];
+    addPath(contents, "IconTriangle", triVerts, true, C_ICON_WARNING, [0, 0, 0], 1);
+    // Exclamation stem
+    var stemH = size * 0.38;
+    var stemW = size * 0.12;
+    addRect(contents, "IconStem", stemW, stemH, cx, cy - stemH * 0.1, [0, 0, 0], null, 0);
+    // Exclamation dot
+    addRect(contents, "IconDot", stemW, stemW, cx, cy + half - stemW * 1.5, [0, 0, 0], null, 0);
+}
+
+/**
+ * Build a Question icon: blue circle + white ? (via small rects).
+ */
+function buildIconQuestion(contents, size, cx, cy) {
+    addEllipse(contents, "IconCircle", size, size, cx, cy,
+        C_ICON_QUESTION, [0, 0, 0], 1);
+    // Question mark approximation with rects
+    var unit = size * 0.08;
+    // Arc top
+    addRect(contents, "IconQ1", unit * 4, unit * 1.5, cx, cy - size * 0.25, [1, 1, 1], null, 0);
+    // Right side
+    addRect(contents, "IconQ2", unit * 1.5, unit * 2, cx + unit * 1.5, cy - size * 0.12, [1, 1, 1], null, 0);
+    // Diagonal center
+    addRect(contents, "IconQ3", unit * 1.5, unit * 2, cx, cy + unit, [1, 1, 1], null, 0);
+    // Dot
+    addRect(contents, "IconQ4", unit * 1.5, unit * 1.5, cx, cy + size * 0.3, [1, 1, 1], null, 0);
+}
+
+/**
+ * Build an Info icon: blue circle + white i (via small rects).
+ */
+function buildIconInfo(contents, size, cx, cy) {
+    addEllipse(contents, "IconCircle", size, size, cx, cy,
+        C_ICON_INFO, [0, 0, 0], 1);
+    // Dot of the i
+    var unit = size * 0.08;
+    addRect(contents, "IconIDot", unit * 1.5, unit * 1.5, cx, cy - size * 0.22, [1, 1, 1], null, 0);
+    // Stem of the i
+    addRect(contents, "IconIStem", unit * 1.5, size * 0.35, cx, cy + size * 0.08, [1, 1, 1], null, 0);
+}
+
+/**
+ * Apply AE Echo effect (trails) to a layer. Fully try/catch wrapped.
+ * params: { echoes, decay, fps }
+ */
+function applyTrailsEffect(layer, params) {
+    try {
+        var echoes = params.echoes || DEFAULT_TRAILS_ECHOES;
+        var decay = (params.decay != null) ? params.decay : DEFAULT_TRAILS_DECAY;
+        var fps = params.fps || 24;
+        var echoTime = -2 / fps; // negative = trailing behind
+
+        var effects = layer.property("Effects");
+        var echo = null;
+        // Try display name first
+        try {
+            echo = effects.addProperty("Echo");
+        } catch (e1) {
+            // Try ADBE match name
+            try {
+                echo = effects.addProperty("ADBE Echo");
+            } catch (e2) {
+                wlog("applyTrailsEffect: Echo effect not available");
+                return;
+            }
+        }
+        if (!echo) return;
+
+        // Set properties — try display names first, ADBE fallback
+        try { echo.property("Echo Time (seconds)").setValue(echoTime); } catch (e) {
+            try { echo.property(1).setValue(echoTime); } catch (e2) {}
+        }
+        try { echo.property("Number Of Echoes").setValue(echoes); } catch (e) {
+            try { echo.property(2).setValue(echoes); } catch (e2) {}
+        }
+        // Starting Intensity: 1.0 (full)
+        try { echo.property("Starting Intensity").setValue(1.0); } catch (e) {
+            try { echo.property(3).setValue(1.0); } catch (e2) {}
+        }
+        // Decay: convert percent to 0-1
+        var decayVal = 1.0 - (decay / 100);
+        try { echo.property("Decay").setValue(decayVal); } catch (e) {
+            try { echo.property(4).setValue(decayVal); } catch (e2) {}
+        }
+        // Echo Operator: Composite In Front
+        try { echo.property("Echo Operator").setValue(4); } catch (e) {
+            try { echo.property(5).setValue(4); } catch (e2) {}
+        }
+
+        wlog("applyTrailsEffect: applied Echo (echoes=" + echoes + " decay=" + decay + "% time=" + echoTime.toFixed(4) + ")");
+    } catch (e) {
+        wwarn("applyTrailsEffect: failed: " + e.toString());
+    }
+}
+
 /** Set a linear keyframe. */
 function setLinearKey(prop, timeSeconds, value) {
     prop.setValueAtTime(timeSeconds, value);
@@ -552,15 +838,178 @@ function createTextLayer(comp, text, font, fontSize, color, x, y, justification)
     return tl;
 }
 
+// ── Per-element settings helpers ─────────────────────────────
+
+/** Returns a fresh per-element settings object with all defaults. */
+function defaultElementSettings() {
+    return {
+        count: 0,
+        minFrames: FLOOR_FRAMES,
+        maxFrames: MAX_FRAMES,
+        scale: DEFAULT_ELEMENT_SCALE,
+        speed: DEFAULT_SPEED_MULT,
+        opacityMin: DEFAULT_OPACITY_MIN,
+        opacityMax: DEFAULT_OPACITY_MAX,
+        entryFrames: DEFAULT_ENTRY_FRAMES,
+        exitFrames: DEFAULT_EXIT_FRAMES
+    };
+}
+
+/**
+ * Resolve per-element settings with null-safe defaults.
+ * Returns filled object even if settings.elements or the type key is missing.
+ */
+function getElementSettings(settings, type) {
+    var defaults = defaultElementSettings();
+    if (!settings || !settings.elements || !settings.elements[type]) {
+        return defaults;
+    }
+    var src = settings.elements[type];
+    return {
+        count: (src.count != null) ? src.count : defaults.count,
+        minFrames: (src.minFrames != null) ? src.minFrames : defaults.minFrames,
+        maxFrames: (src.maxFrames != null) ? src.maxFrames : defaults.maxFrames,
+        scale: (src.scale != null) ? src.scale : defaults.scale,
+        speed: (src.speed != null) ? src.speed : defaults.speed,
+        opacityMin: (src.opacityMin != null) ? src.opacityMin : defaults.opacityMin,
+        opacityMax: (src.opacityMax != null) ? src.opacityMax : defaults.opacityMax,
+        entryFrames: (src.entryFrames != null) ? src.entryFrames : defaults.entryFrames,
+        exitFrames: (src.exitFrames != null) ? src.exitFrames : defaults.exitFrames
+    };
+}
+
+/**
+ * Detect old-format settings and convert to new per-element format.
+ * Old format had flat fields: counts, minFrames, maxFrames, elementScale, etc.
+ * New format nests these under settings.elements.{type}.
+ * Returns raw unchanged if elements already exists.
+ */
+function migrateSettings(raw) {
+    if (!raw) return raw;
+    // Already new format
+    if (raw.elements) return raw;
+    // Detect old format: has counts or flat minFrames
+    if (!raw.counts && raw.minFrames == null && raw.elementScale == null) return raw;
+
+    var typeNames = ["dialog", "bsod", "text", "cursor", "pixel"];
+    var oldCounts = raw.counts || {};
+    var baseElem = {
+        minFrames: (raw.minFrames != null) ? raw.minFrames : FLOOR_FRAMES,
+        maxFrames: (raw.maxFrames != null) ? raw.maxFrames : MAX_FRAMES,
+        scale: (raw.elementScale != null) ? raw.elementScale : DEFAULT_ELEMENT_SCALE,
+        speed: (raw.speedMult != null) ? raw.speedMult : DEFAULT_SPEED_MULT,
+        opacityMin: (raw.opacityMin != null) ? raw.opacityMin : DEFAULT_OPACITY_MIN,
+        opacityMax: (raw.opacityMax != null) ? raw.opacityMax : DEFAULT_OPACITY_MAX,
+        entryFrames: (raw.entryFrames != null) ? raw.entryFrames : DEFAULT_ENTRY_FRAMES,
+        exitFrames: (raw.exitFrames != null) ? raw.exitFrames : DEFAULT_EXIT_FRAMES
+    };
+
+    raw.elements = {};
+    for (var i = 0; i < typeNames.length; i++) {
+        var t = typeNames[i];
+        raw.elements[t] = {
+            count: (oldCounts[t] != null) ? oldCounts[t] : 0,
+            minFrames: baseElem.minFrames,
+            maxFrames: baseElem.maxFrames,
+            scale: baseElem.scale,
+            speed: baseElem.speed,
+            opacityMin: baseElem.opacityMin,
+            opacityMax: baseElem.opacityMax,
+            entryFrames: baseElem.entryFrames,
+            exitFrames: baseElem.exitFrames
+        };
+    }
+
+    // Remove deprecated flat keys
+    delete raw.counts;
+    delete raw.minFrames;
+    delete raw.maxFrames;
+    delete raw.elementScale;
+    delete raw.speedMult;
+    delete raw.opacityMin;
+    delete raw.opacityMax;
+    delete raw.entryFrames;
+    delete raw.exitFrames;
+
+    return raw;
+}
+
+/**
+ * Returns a fully randomized settings object.
+ * Uses Math.random() (not PRNG — this is a UI action, not deterministic generation).
+ */
+function randomizeSettings() {
+    var typeNames = ["dialog", "bsod", "text", "cursor", "pixel"];
+    var curves = ["flat", "build", "peak", "burst", "random"];
+    var styles = ["xpClassic", "glitchHeavy", "slowBurn", "chaosMax"];
+    var rotoModes = ["split", "allOver", "allUnder", "flat"];
+
+    var elements = {};
+    for (var i = 0; i < typeNames.length; i++) {
+        var t = typeNames[i];
+        var minF = Math.floor(Math.random() * 40) + 4;  // 4-43
+        var maxF = minF + Math.floor(Math.random() * 80) + 10; // minF+10 to minF+89
+        elements[t] = {
+            count: Math.floor(Math.random() * 30),
+            minFrames: minF,
+            maxFrames: maxF,
+            scale: Math.floor(Math.random() * 150) + 50,  // 50-199
+            speed: Math.floor(Math.random() * 150) + 50,   // 50-199
+            opacityMin: Math.floor(Math.random() * 50) + 20, // 20-69
+            opacityMax: Math.floor(Math.random() * 30) + 70, // 70-99
+            entryFrames: Math.floor(Math.random() * 8) + 1,  // 1-8
+            exitFrames: Math.floor(Math.random() * 6) + 1    // 1-6
+        };
+    }
+
+    return {
+        seed: Math.floor(Math.random() * 89999) + 10000,
+        chaos: Math.floor(Math.random() * 181) + 20,  // 20-200
+        rotoMode: rotoModes[Math.floor(Math.random() * rotoModes.length)],
+        chaosCurve: curves[Math.floor(Math.random() * curves.length)],
+        animStyle: styles[Math.floor(Math.random() * styles.length)],
+        elements: elements,
+        scanlines: {
+            enabled: Math.random() > 0.3,
+            opacity: Math.floor(Math.random() * 40) + 5,
+            spacing: Math.floor(Math.random() * 8) + 2,
+            jitter: Math.random() > 0.5
+        },
+        noise: {
+            enabled: Math.random() > 0.3,
+            opacity: Math.floor(Math.random() * 20) + 2,
+            scale: Math.floor(Math.random() * 150) + 50,
+            complexity: Math.floor(Math.random() * 15) + 1
+        },
+        headScratch: {
+            enabled: Math.random() > 0.5,
+            freq: Math.floor(Math.random() * 30) + 5,
+            height: Math.floor(Math.random() * 4) + 1
+        },
+        trails: {
+            enabled: Math.random() > 0.3,
+            chance: Math.floor(Math.random() * 80) + 5,
+            echoes: Math.floor(Math.random() * 8) + 2,
+            decay: Math.floor(Math.random() * 70) + 20
+        },
+        stackDepth: Math.floor(Math.random() * 12) + 3,
+        stackOffset: Math.floor(Math.random() * 20) + 5,
+        customMessages: [],
+        customTitles: [],
+        rotoKeywords: [],
+        rotoLayerNames: []
+    };
+}
+
 
 // ════════════════════════════════════════════════════════════════
 // SECTION 4 — ELEMENT BUILDERS
 // ════════════════════════════════════════════════════════════════
 
 /**
- * Build a BSOD panel element.
+ * Build a BSOD panel element with era variant support.
  * params: { inPoint, outPoint, x, y, compW, compH, rng,
- *           behavior, variant, textBehavior, slideDir, slideSpeed,
+ *           behavior, variant, bsodEra, textBehavior, slideDir, slideSpeed,
  *           stutterFrame, stutterDur, textLines, opacity }
  */
 function buildBSOD(params, targetComp) {
@@ -572,6 +1021,7 @@ function buildBSOD(params, targetComp) {
     var fps = targetComp.frameRate;
     var sc = params.scale || 1;
     var spd = params.speedMult || 1;
+    var era = params.bsodEra || "xp";
 
     // Determine panel dimensions based on variant
     var panelW, panelH, panelX, panelY;
@@ -634,12 +1084,49 @@ function buildBSOD(params, targetComp) {
 
     layers.push(shapeLayer);
 
-    // Create text layer
+    // Era-specific font and text
+    var bsodFont = (era === "9x") ? FONT_BSOD_9X : FONT_BSOD;
     var textLines = params.textLines || ["*** STOP: 0x0000000A"];
     var textContent = textLines.join("\n");
     var scaledBsodFont = Math.round(FSIZE_BSOD * sc);
+
+    // 9x era: add grey highlight bar above text
+    if (era === "9x") {
+        var highlightH = Math.round(scaledBsodFont + 4);
+        var highlightY = panelY - panelH / 3;
+        var hlShape = targetComp.layers.addShape();
+        hlShape.name = "WEFX_BSOD_Highlight";
+        var hlContents = hlShape.property("Contents");
+        addRect(hlContents, "Bar", panelW, highlightH, 0, 0,
+            [0.667, 0.667, 0.667], null, 0); // #AAAAAA grey
+        hlShape.property("Position").setValue([panelX, highlightY]);
+        hlShape.property("Opacity").setValue(params.opacity || 90);
+        setLayerTime(hlShape, inSec, outSec, targetComp);
+        if (params.behavior === "slideH" || params.behavior === "slideV" || params.behavior === "stutter") {
+            hlShape.parent = shapeLayer;
+            hlShape.property("Position").setValue([0, -(panelH / 3)]);
+        }
+        layers.push(hlShape);
+
+        // Highlight text (inverted colors: blue on grey)
+        var hlTextLayer = createTextLayer(targetComp, "A Fatal Exception Has Occurred",
+            bsodFont, scaledBsodFont, C_BSOD_BG, panelX, highlightY,
+            ParagraphJustification.LEFT_JUSTIFY);
+        hlTextLayer.name = "WEFX_BSOD_HighlightText";
+        setLayerTime(hlTextLayer, inSec, outSec, targetComp);
+        hlTextLayer.property("Opacity").setValue(params.opacity || 90);
+        if (params.behavior === "slideH" || params.behavior === "slideV" || params.behavior === "stutter") {
+            hlTextLayer.parent = shapeLayer;
+            hlTextLayer.property("Position").setValue([
+                -(panelW / 2) + 10,
+                -(panelH / 3) + scaledBsodFont / 3
+            ]);
+        }
+        layers.push(hlTextLayer);
+    }
+
     var textLayer = createTextLayer(targetComp, textContent,
-        FONT_MONO, scaledBsodFont, C_BSOD_TEXT, panelX, panelY,
+        bsodFont, scaledBsodFont, C_BSOD_TEXT, panelX, panelY,
         ParagraphJustification.LEFT_JUSTIFY);
     textLayer.name = "WEFX_BSOD_Text";
     setLayerTime(textLayer, inSec, outSec, targetComp);
@@ -685,15 +1172,43 @@ function buildBSOD(params, targetComp) {
         }
     }
 
+    // 9x era: blinking white block cursor at end of text
+    if (era === "9x") {
+        var cursorW = Math.round(9 * sc);
+        var cursorH = Math.round(scaledBsodFont);
+        var blockCursor = targetComp.layers.addShape();
+        blockCursor.name = "WEFX_BSOD_BlockCursor";
+        var bcContents = blockCursor.property("Contents");
+        addRect(bcContents, "Block", cursorW, cursorH, 0, 0, C_BSOD_TEXT, null, 0);
+        blockCursor.property("Position").setValue([
+            panelX + textLines.length * 3, // approximate cursor position
+            panelY + (textLines.length - 1) * (scaledBsodFont + 2)
+        ]);
+        setLayerTime(blockCursor, inSec, outSec, targetComp);
+        if (params.behavior === "slideH" || params.behavior === "slideV" || params.behavior === "stutter") {
+            blockCursor.parent = shapeLayer;
+        }
+        // Blink: toggle opacity every 15 frames
+        var blinkOpac = blockCursor.property("Opacity");
+        var totalBlinkFrames = Math.round(dur * fps);
+        for (var bfi = 0; bfi < totalBlinkFrames; bfi += 15) {
+            var bfTime = snapToFrame(inSec + framesToSeconds(bfi, fps), fps);
+            if (bfTime < outSec) {
+                setHoldKey(blinkOpac, bfTime, (bfi % 30 < 15) ? 100 : 0);
+            }
+        }
+        layers.push(blockCursor);
+    }
+
     layers.push(textLayer);
     return layers;
 }
 
 
 /**
- * Build a Win9x dialog box element.
+ * Build a Win9x/2000/XP dialog box element with variant support.
  * params: { inPoint, outPoint, x, y, compW, compH, rng,
- *           title, body, buttons, icon,
+ *           title, body, buttons, icon, dialogVariant,
  *           arrivalBehavior, lifeBehavior, exitBehavior,
  *           driftDir, driftSpeed, shakeFrame, shakeDur,
  *           stackIndex, opacity }
@@ -707,11 +1222,16 @@ function buildDialogBox(params, targetComp) {
     var fps = targetComp.frameRate;
     var sc = params.scale || 1;
     var spd = params.speedMult || 1;
-    var W = Math.round(DIALOG_WIDTH * sc);
-    var H = Math.round(DIALOG_HEIGHT * sc);
-    var titleH = Math.round(DIALOG_TITLE_H * sc);
     var si = params.stackIndex || 0;
     var stackOff = params.stackOffset || STACK_OFFSET_X;
+
+    // Resolve variant palette (default to B — the most common)
+    var vKey = params.dialogVariant || "B";
+    var v = DIALOG_VARIANTS[vKey] || DIALOG_VARIANTS.B;
+    var titleH = Math.round(v.titleH * sc);
+    var W = Math.round(DIALOG_WIDTH * sc);
+    var H = Math.round(DIALOG_HEIGHT * sc) + (titleH - Math.round(18 * sc)); // adjust for taller XP title
+    var cornerR = Math.round(v.cornerRadius * sc);
 
     // Dialog center position with stack cascade
     var cx = params.x + si * stackOff;
@@ -735,34 +1255,65 @@ function buildDialogBox(params, targetComp) {
     setLayerTime(chrome, inSec, outSec, targetComp);
     var contents = chrome.property("Contents");
 
-    // Coordinates relative to null (dialog center)
-    // Body background
-    var bodyH = H - titleH;
-    addRect(contents, "Body", W, bodyH, 0, titleH / 2, C_DIALOG_BG, null, 0);
-
-    // Title bar
-    addRect(contents, "TitleBar", W, titleH, 0, -(H / 2) + titleH / 2, C_DIALOG_TITLE_BG, null, 0);
-
-    // Light border (3D raised effect — top + left)
-    addRect(contents, "BorderOuter", W + 2, H + 2, 0, 0, C_DIALOG_BORDER_L, null, 0);
-
-    // Dark border (3D shadow — bottom + right)
-    addRect(contents, "BorderInner", W, H, 1, 1, C_DIALOG_BG, C_DIALOG_BORDER_D, 1);
-
-    // Re-add body and title on top of borders
-    addRect(contents, "BodyFill", W - 4, bodyH - 2, 0, titleH / 2, C_DIALOG_BG, null, 0);
-    addRect(contents, "TitleFill", W - 4, titleH - 2, 0, -(H / 2) + titleH / 2, C_DIALOG_TITLE_BG, null, 0);
-
-    // Icon indicator (small colored square)
-    var iconSz = Math.round(14 * sc);
-    var iconColor = C_ICON_ERROR;
-    if (params.icon === "warning") iconColor = C_ICON_WARNING;
-    else if (params.icon === "question") iconColor = C_ICON_QUESTION;
-    if (params.icon !== "none") {
-        addRect(contents, "Icon", iconSz, iconSz, -(W / 2) + Math.round(22 * sc), -5, iconColor, null, 0);
+    // Outer black border
+    var addRectFn = (cornerR > 0) ? addRoundedRect : addRect;
+    if (cornerR > 0) {
+        addRoundedRect(contents, "BorderOuter", W + 2, H + 2, 0, 0, v.borderOuter, null, 0, cornerR);
+    } else {
+        addRect(contents, "BorderOuter", W + 2, H + 2, 0, 0, v.borderOuter, null, 0);
     }
 
-    // Buttons
+    // Light highlight border (top + left 3D effect)
+    if (cornerR > 0) {
+        addRoundedRect(contents, "BorderLight", W, H, 0, 0, v.borderL, null, 0, cornerR);
+    } else {
+        addRect(contents, "BorderLight", W, H, 0, 0, v.borderL, null, 0);
+    }
+
+    // Dark shadow border (bottom-right)
+    addRect(contents, "BorderDark", W - 1, H - 1, 1, 1, v.borderD, null, 0);
+
+    // Body fill
+    var bodyH = H - titleH;
+    if (cornerR > 0) {
+        addRoundedRect(contents, "BodyFill", W - 2, bodyH, 0, titleH / 2, v.body, null, 0, cornerR);
+    } else {
+        addRect(contents, "BodyFill", W - 2, bodyH, 0, titleH / 2, v.body, null, 0);
+    }
+
+    // Title bar fill (uses start color — gradient handled by AE if needed, solid approximation)
+    addRect(contents, "TitleFill", W - 2, titleH, 0, -(H / 2) + titleH / 2, v.titleStart, null, 0);
+
+    // Icon (proper shapes)
+    var iconSz = Math.round(GEO_ICON_SIZE * sc * 0.75);
+    var iconCx = -(W / 2) + Math.round(28 * sc);
+    var iconCy = -5;
+    if (params.icon === "error") {
+        buildIconError(contents, iconSz, iconCx, iconCy);
+    } else if (params.icon === "warning") {
+        buildIconWarning(contents, iconSz, iconCx, iconCy);
+    } else if (params.icon === "question") {
+        buildIconQuestion(contents, iconSz, iconCx, iconCy);
+    } else if (params.icon === "info") {
+        buildIconInfo(contents, iconSz, iconCx, iconCy);
+    }
+    // "none" → skip icon
+
+    // XP Luna close button: red oval
+    if (v.closeBtn) {
+        var closeCx = W / 2 - Math.round(16 * sc);
+        var closeCy = -(H / 2) + titleH / 2;
+        addEllipse(contents, "CloseBtn", Math.round(21 * sc), Math.round(14 * sc),
+            closeCx, closeCy, v.closeBtn, null, 0);
+        // White X on close button
+        var xSz = Math.round(3 * sc);
+        var xg1 = addRect(contents, "CloseX1", Math.round(8 * sc), Math.round(2 * sc), closeCx, closeCy, [1, 1, 1], null, 0);
+        try { xg1.property("Transform").property("Rotation").setValue(45); } catch (e) {}
+        var xg2 = addRect(contents, "CloseX2", Math.round(8 * sc), Math.round(2 * sc), closeCx, closeCy, [1, 1, 1], null, 0);
+        try { xg2.property("Transform").property("Rotation").setValue(-45); } catch (e) {}
+    }
+
+    // Buttons with 3D raised effect
     var buttons = params.buttons || ["OK"];
     var btnW = Math.round(DIALOG_BTN_W * sc);
     var btnH = Math.round(DIALOG_BTN_H * sc);
@@ -772,7 +1323,16 @@ function buildDialogBox(params, targetComp) {
     var btnY = H / 2 - Math.round(25 * sc);
     for (var bi = 0; bi < buttons.length; bi++) {
         var bx = btnStartX + bi * (btnW + btnSpacing);
-        addRect(contents, "Btn_" + bi + "_Light", btnW, btnH, bx, btnY, C_DIALOG_BTN_BG, C_DIALOG_BORDER_D, 1);
+        // Button face
+        if (cornerR > 0) {
+            addRoundedRect(contents, "Btn_" + bi, btnW, btnH, bx, btnY, v.btnBg, v.btnBorderD, 1, 2);
+        } else {
+            // 3D raised: outer shadow, then highlight, then face
+            addRect(contents, "Btn_" + bi + "_Outer", btnW, btnH, bx, btnY, v.borderOuter, null, 0);
+            addRect(contents, "Btn_" + bi + "_Light", btnW - 1, btnH - 1, bx - 0.5, btnY - 0.5, v.btnBorderL, null, 0);
+            addRect(contents, "Btn_" + bi + "_Dark", btnW - 1, btnH - 1, bx + 0.5, btnY + 0.5, v.btnBorderD, null, 0);
+            addRect(contents, "Btn_" + bi + "_Face", btnW - 2, btnH - 2, bx, btnY, v.btnBg, null, 0);
+        }
     }
 
     layers.push(chrome);
@@ -780,7 +1340,7 @@ function buildDialogBox(params, targetComp) {
     // 3. Title text
     var scaledTitleFont = Math.round(FSIZE_DIALOG_TITLE * sc);
     var titleTL = createTextLayer(targetComp, params.title || "Error",
-        FONT_UI, scaledTitleFont, C_DIALOG_TITLE_TX,
+        FONT_UI, scaledTitleFont, [1, 1, 1],
         0, 0, ParagraphJustification.LEFT_JUSTIFY);
     titleTL.name = "WEFX_Dialog_Title";
     titleTL.parent = nullLayer;
@@ -840,7 +1400,6 @@ function buildDialogBox(params, targetComp) {
         var totalDriftFrames = Math.round(dur * fps);
         var dx = Math.cos(driftAngle) * driftSpd * totalDriftFrames;
         var dy = Math.sin(driftAngle) * driftSpd * totalDriftFrames;
-        // Only set drift keys if not already set by arrival
         if (params.arrivalBehavior !== "slideIn") {
             setLinearKey(nullPos, inSec, [cx, cy]);
         }
@@ -855,7 +1414,6 @@ function buildDialogBox(params, targetComp) {
                 setHoldKey(nullPos, shakeTime, [cx + offsetX, cy]);
             }
         }
-        // Return to rest
         var shakeEnd = snapToFrame(shakeStart + framesToSeconds(shakeFrameCount, fps), fps);
         if (shakeEnd < outSec) {
             setHoldKey(nullPos, shakeEnd, [cx, cy]);
@@ -880,9 +1438,9 @@ function buildDialogBox(params, targetComp) {
 
 
 /**
- * Build a window chrome fragment (isolated UI debris).
+ * Build a window chrome fragment (isolated UI debris) with variant colors.
  * params: { inPoint, outPoint, x, y, compW, compH, rng,
- *           fragmentType, behavior, title, driftDir, driftSpeed,
+ *           fragmentType, behavior, title, dialogVariant, driftDir, driftSpeed,
  *           jumpInterval, jumpRadius, stackCount, opacity }
  */
 function buildChromeFragment(params, targetComp) {
@@ -895,6 +1453,10 @@ function buildChromeFragment(params, targetComp) {
     var sc = params.scale || 1;
     var spd = params.speedMult || 1;
 
+    // Resolve variant palette for colors
+    var vKey = params.dialogVariant || "B";
+    var v = DIALOG_VARIANTS[vKey] || DIALOG_VARIANTS.B;
+
     var fragType = params.fragmentType || "titleBar";
     var x = params.x;
     var y = params.y;
@@ -903,13 +1465,13 @@ function buildChromeFragment(params, targetComp) {
         var barCount = (fragType === "titleStack") ? (params.stackCount || rngInt(rng, 3, 6)) : 1;
         for (var bi = 0; bi < barCount; bi++) {
             var barW = Math.round(rngInt(rng, 120, 260) * sc);
-            var barH = Math.round(DIALOG_TITLE_H * sc);
+            var barH = Math.round(v.titleH * sc);
             var barY = y + bi * (barH + 1);
 
             var barShape = targetComp.layers.addShape();
             barShape.name = "WEFX_Chrome_TitleBar";
             var barContents = barShape.property("Contents");
-            addRect(barContents, "Bar", barW, barH, 0, 0, C_DIALOG_TITLE_BG, null, 0);
+            addRect(barContents, "Bar", barW, barH, 0, 0, v.titleStart, null, 0);
             barShape.property("Position").setValue([x, barY]);
             barShape.property("Opacity").setValue(params.opacity || 85);
             setLayerTime(barShape, inSec, outSec, targetComp);
@@ -917,7 +1479,7 @@ function buildChromeFragment(params, targetComp) {
 
             var titleStr = params.title || pickWindowTitle(rng, []);
             var titleTL = createTextLayer(targetComp, titleStr,
-                FONT_UI, FSIZE_DIALOG_TITLE, C_DIALOG_TITLE_TX,
+                FONT_UI, FSIZE_DIALOG_TITLE, [1, 1, 1],
                 x - barW / 2 + 20, barY + FSIZE_DIALOG_TITLE / 3,
                 ParagraphJustification.LEFT_JUSTIFY);
             titleTL.name = "WEFX_Chrome_Title";
@@ -932,7 +1494,7 @@ function buildChromeFragment(params, targetComp) {
         for (var ri = 0; ri < btnCount; ri++) {
             addRect(rowContents, "Btn_" + ri, DIALOG_BTN_W, DIALOG_BTN_H,
                 ri * (DIALOG_BTN_W + 8) - (btnCount * DIALOG_BTN_W) / 2, 0,
-                C_DIALOG_BTN_BG, C_DIALOG_BORDER_D, 1);
+                v.btnBg, v.btnBorderD, 1);
         }
         rowShape.property("Position").setValue([x, y]);
         rowShape.property("Opacity").setValue(params.opacity || 80);
@@ -942,9 +1504,17 @@ function buildChromeFragment(params, targetComp) {
         var closeShape = targetComp.layers.addShape();
         closeShape.name = "WEFX_Chrome_CloseBtn";
         var closeContents = closeShape.property("Contents");
-        addRect(closeContents, "Btn", 16, 14, 0, 0, C_DIALOG_BTN_BG, C_DIALOG_BORDER_D, 1);
-        // X mark inside button (two crossed lines approximated with a rect)
-        addRect(closeContents, "X", 8, 2, 0, 0, [0.5, 0, 0], null, 0);
+        if (v.closeBtn) {
+            // XP Luna: red oval close button
+            addEllipse(closeContents, "Btn", 21, 14, 0, 0, v.closeBtn, null, 0);
+            var cx1 = addRect(closeContents, "X1", 8, 2, 0, 0, [1, 1, 1], null, 0);
+            try { cx1.property("Transform").property("Rotation").setValue(45); } catch (e) {}
+            var cx2 = addRect(closeContents, "X2", 8, 2, 0, 0, [1, 1, 1], null, 0);
+            try { cx2.property("Transform").property("Rotation").setValue(-45); } catch (e) {}
+        } else {
+            addRect(closeContents, "Btn", 16, 14, 0, 0, v.btnBg, v.btnBorderD, 1);
+            addRect(closeContents, "X", 8, 2, 0, 0, [0, 0, 0], null, 0);
+        }
         closeShape.property("Position").setValue([x, y]);
         closeShape.property("Opacity").setValue(params.opacity || 90);
         setLayerTime(closeShape, inSec, outSec, targetComp);
@@ -954,9 +1524,9 @@ function buildChromeFragment(params, targetComp) {
         sbShape.name = "WEFX_Chrome_Scrollbar";
         var sbContents = sbShape.property("Contents");
         var sbH = rngInt(rng, 60, 200);
-        addRect(sbContents, "Track", 16, sbH, 0, 0, [0.9, 0.9, 0.9], C_DIALOG_BORDER_D, 1);
+        addRect(sbContents, "Track", 16, sbH, 0, 0, [0.9, 0.9, 0.9], v.btnBorderD, 1);
         addRect(sbContents, "Thumb", 14, rngInt(rng, 20, 40), 0, rngInt(rng, -sbH / 4, sbH / 4),
-            C_DIALOG_BTN_BG, C_DIALOG_BORDER_D, 1);
+            v.btnBg, v.btnBorderD, 1);
         sbShape.property("Position").setValue([x, y]);
         sbShape.property("Opacity").setValue(params.opacity || 75);
         setLayerTime(sbShape, inSec, outSec, targetComp);
@@ -1131,15 +1701,15 @@ function buildCursor(params, targetComp) {
     var cursorSize = Math.round((params.size || CURSOR_HEIGHT) * sc);
 
     // Windows arrow cursor polygon (scaled to cursorSize)
-    var scale = cursorSize / 22;
+    var scale = cursorSize / 21;
     var cursorVerts = [
         [0 * scale, 0 * scale],
-        [0 * scale, 18 * scale],
-        [4.5 * scale, 14 * scale],
-        [7 * scale, 20 * scale],
-        [9 * scale, 19 * scale],
-        [5.5 * scale, 13 * scale],
-        [11 * scale, 13 * scale]
+        [0 * scale, 21 * scale],
+        [4 * scale, 16 * scale],
+        [7 * scale, 21 * scale],
+        [11 * scale, 14 * scale],
+        [7 * scale, 11 * scale],
+        [7 * scale, 5 * scale]
     ];
 
     function makeCursorLayer(cx, cy, opacity) {
@@ -1754,6 +2324,11 @@ function buildJob(type, inFrame, outFrame, layer, settings, compInfo, rng) {
     }
 
     if (type === "bsod") {
+        job.bsodEra = weightedPick([
+            { value: "xp", weight: 60 },
+            { value: "9x", weight: 40 }
+        ], rng);
+
         job.variant = weightedPick([
             { value: "fullStrip", weight: 40 },
             { value: "corner",    weight: 30 },
@@ -1795,6 +2370,12 @@ function buildJob(type, inFrame, outFrame, layer, settings, compInfo, rng) {
         }
 
     } else if (type === "dialog") {
+        job.dialogVariant = weightedPick([
+            { value: "A", weight: 25 },
+            { value: "B", weight: 50 },
+            { value: "C", weight: 25 }
+        ], rng);
+
         job.title = pickWindowTitle(rng, settings.customTitles || []);
         job.body = pickErrorMessage(rng, settings.customMessages || []);
         job.buttons = rngPick(rng, BUTTON_COMBOS);
@@ -1834,6 +2415,12 @@ function buildJob(type, inFrame, outFrame, layer, settings, compInfo, rng) {
         job.y = rngInt(rng, margin, compInfo.height - DIALOG_HEIGHT - margin) + DIALOG_HEIGHT / 2;
 
     } else if (type === "chrome") {
+        job.dialogVariant = weightedPick([
+            { value: "A", weight: 25 },
+            { value: "B", weight: 50 },
+            { value: "C", weight: 25 }
+        ], rng);
+
         job.fragmentType = weightedPick([
             { value: "titleBar",   weight: 30 },
             { value: "buttonRow",  weight: 20 },
@@ -1929,6 +2516,17 @@ function buildJob(type, inFrame, outFrame, layer, settings, compInfo, rng) {
         job.y = rngInt(rng, 0, compInfo.height);
     }
 
+    // Trails: probabilistic Echo effect on any element
+    var trailSettings = settings.trails || {};
+    var trailChance = (trailSettings.chance != null) ? trailSettings.chance : DEFAULT_TRAILS_CHANCE;
+    if (trailSettings.enabled !== false && rngBool(rng, trailChance / 100)) {
+        job.trails = true;
+        job.trailEchoes = trailSettings.echoes || DEFAULT_TRAILS_ECHOES;
+        job.trailDecay = (trailSettings.decay != null) ? trailSettings.decay : DEFAULT_TRAILS_DECAY;
+    } else {
+        job.trails = false;
+    }
+
     return job;
 }
 
@@ -1974,20 +2572,8 @@ function schedule(settings, compInfo) {
     var chaos = (settings.chaos != null) ? settings.chaos : 100;
     var totalFrames = compInfo.totalFrames;
     var curve = settings.chaosCurve || "flat";
-    var counts = settings.counts || { dialog: 0, bsod: 0, text: 0, cursor: 0, pixel: 0 };
     var rotoMode = settings.rotoMode || "flat";
-
-    // Apply animation style duration modifiers
     var style = settings.animStyle || "xpClassic";
-    var minF = settings.minFrames || FLOOR_FRAMES;
-    var maxF = settings.maxFrames || MAX_FRAMES;
-
-    if (style === "slowBurn") {
-        minF = Math.max(minF, 16);
-        maxF = Math.max(maxF, MAX_FRAMES);
-    } else if (style === "chaosMax") {
-        maxF = Math.min(maxF, 36);
-    }
 
     // Determine element types to spawn
     var typeList = [];  // pre-determined type strings
@@ -1995,13 +2581,13 @@ function schedule(settings, compInfo) {
     var totalCounts = 0;
     var ti;
     for (ti = 0; ti < typeNames.length; ti++) {
-        totalCounts += (counts[typeNames[ti]] || 0);
+        totalCounts += getElementSettings(settings, typeNames[ti]).count;
     }
 
     if (totalCounts > 0) {
         // Exact counts mode: build specified number of each type
         for (ti = 0; ti < typeNames.length; ti++) {
-            var n = counts[typeNames[ti]] || 0;
+            var n = getElementSettings(settings, typeNames[ti]).count;
             for (var ci = 0; ci < n; ci++) {
                 typeList.push(typeNames[ti]);
             }
@@ -2028,11 +2614,7 @@ function schedule(settings, compInfo) {
     // Distribute spawn times
     var spawnTimes = distributeTimes(typeList.length, totalFrames, curve, rng);
 
-    // User-specified element controls
-    var scaleFactor = (settings.elementScale || 100) / 100;
-    var speedFactor = (settings.speedMult || 100) / 100;
-    var opMin = (settings.opacityMin != null) ? settings.opacityMin : 50;
-    var opMax = (settings.opacityMax != null) ? settings.opacityMax : 100;
+    // Global stack controls
     var stackDepth = settings.stackDepth || MAX_STACK_DEPTH;
     var stackOff = settings.stackOffset || STACK_OFFSET_X;
 
@@ -2041,7 +2623,21 @@ function schedule(settings, compInfo) {
     for (var i = 0; i < spawnTimes.length; i++) {
         var inFrame = spawnTimes[i];
         var type = typeList[i];
-        var duration = pickDuration(type, minF, maxF, rng);
+
+        // Per-type settings (chrome inherits from dialog since type starts as "dialog")
+        var es = getElementSettings(settings, type);
+        var typeMinF = es.minFrames;
+        var typeMaxF = es.maxFrames;
+
+        // Apply animation style duration modifiers per-type
+        if (style === "slowBurn") {
+            typeMinF = Math.max(typeMinF, 16);
+            typeMaxF = Math.max(typeMaxF, MAX_FRAMES);
+        } else if (style === "chaosMax") {
+            typeMaxF = Math.min(typeMaxF, 36);
+        }
+
+        var duration = pickDuration(type, typeMinF, typeMaxF, rng);
         var outFrame = Math.min(inFrame + duration, totalFrames);
 
         // Enforce minimum duration after clamping
@@ -2061,12 +2657,12 @@ function schedule(settings, compInfo) {
             job.layer = "over";
         }
 
-        // Apply element controls
-        job.scale = scaleFactor;
-        job.speedMult = speedFactor;
-        job.opacity = clamp(job.opacity, opMin, opMax);
-        job.entryFrames = settings.entryFrames || DEFAULT_ENTRY_FRAMES;
-        job.exitFrames = settings.exitFrames || DEFAULT_EXIT_FRAMES;
+        // Apply per-type element controls
+        job.scale = es.scale / 100;
+        job.speedMult = es.speed / 100;
+        job.opacity = clamp(job.opacity, es.opacityMin, es.opacityMax);
+        job.entryFrames = es.entryFrames;
+        job.exitFrames = es.exitFrames;
         job.stackOffset = stackOff;
 
         jobs.push(job);
@@ -2292,15 +2888,13 @@ function defaultSettings() {
         rotoMode: "split",
         chaosCurve: "flat",
         animStyle: "xpClassic",
-        minFrames: FLOOR_FRAMES,
-        maxFrames: MAX_FRAMES,
-        // Per-type element counts (0 = auto from chaos with equal weights)
-        counts: {
-            dialog: 0,
-            bsod: 0,
-            text: 0,
-            cursor: 0,
-            pixel: 0
+        // Per-element settings (count 0 = auto from chaos with equal weights)
+        elements: {
+            dialog: defaultElementSettings(),
+            bsod: defaultElementSettings(),
+            text: defaultElementSettings(),
+            cursor: defaultElementSettings(),
+            pixel: defaultElementSettings()
         },
         // Overlay settings
         scanlines: {
@@ -2320,15 +2914,16 @@ function defaultSettings() {
             freq: DEFAULT_HEADSCRATCH_FREQ,
             height: DEFAULT_HEADSCRATCH_HEIGHT
         },
-        // Element controls
-        elementScale: DEFAULT_ELEMENT_SCALE,
-        speedMult: DEFAULT_SPEED_MULT,
-        opacityMin: DEFAULT_OPACITY_MIN,
-        opacityMax: DEFAULT_OPACITY_MAX,
+        // Trails (Echo effect)
+        trails: {
+            enabled: true,
+            chance: DEFAULT_TRAILS_CHANCE,
+            echoes: DEFAULT_TRAILS_ECHOES,
+            decay: DEFAULT_TRAILS_DECAY
+        },
+        // Global stack controls
         stackDepth: MAX_STACK_DEPTH,
         stackOffset: STACK_OFFSET_X,
-        entryFrames: DEFAULT_ENTRY_FRAMES,
-        exitFrames: DEFAULT_EXIT_FRAMES,
         // Custom content
         customMessages: [],
         customTitles: [],
@@ -2342,26 +2937,46 @@ function loadSettings(comp) {
     var settings = defaultSettings();
 
     // Known nested-object keys that should be merged, not replaced
-    var nestedKeys = ["counts", "scanlines", "noise", "headScratch"];
+    var nestedKeys = ["scanlines", "noise", "headScratch", "trails", "elements"];
 
     // Scan markers for our data
     for (var i = 1; i <= comp.markerProperty.numKeys; i++) {
         try {
             var data = JSON.parse(comp.markerProperty.keyValue(i).comment);
             if (data._type === "WEFX_SETTINGS") {
+                // Migrate old format (counts, flat fields) to new (elements)
+                migrateSettings(data);
                 for (var key in data) {
                     if (!data.hasOwnProperty(key) || key === "_type") continue;
-                    // Skip deprecated 'mix' field from old saves
-                    if (key === "mix") continue;
+                    // Skip deprecated fields from old saves
+                    if (key === "mix" || key === "counts") continue;
                     // Merge nested objects field-by-field
                     var isNested = false;
                     for (var ni = 0; ni < nestedKeys.length; ni++) {
                         if (key === nestedKeys[ni]) { isNested = true; break; }
                     }
                     if (isNested && typeof data[key] === "object" && settings[key]) {
-                        for (var nk in data[key]) {
-                            if (data[key].hasOwnProperty(nk)) {
-                                settings[key][nk] = data[key][nk];
+                        if (key === "elements") {
+                            // Two-level nested merge: elements.{type}.{field}
+                            for (var typeKey in data[key]) {
+                                if (data[key].hasOwnProperty(typeKey)) {
+                                    if (!settings[key][typeKey]) {
+                                        settings[key][typeKey] = defaultElementSettings();
+                                    }
+                                    if (typeof data[key][typeKey] === "object") {
+                                        for (var fk in data[key][typeKey]) {
+                                            if (data[key][typeKey].hasOwnProperty(fk)) {
+                                                settings[key][typeKey][fk] = data[key][typeKey][fk];
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            for (var nk in data[key]) {
+                                if (data[key].hasOwnProperty(nk)) {
+                                    settings[key][nk] = data[key][nk];
+                                }
                             }
                         }
                     } else {
@@ -2421,21 +3036,32 @@ function settingsFromUI(ui) {
     var curveIdx = ui.chaosCurveDropdown.selection ? ui.chaosCurveDropdown.selection.index : 0;
     var styleIdx = ui.animStyleDropdown.selection  ? ui.animStyleDropdown.selection.index  : 0;
 
+    // Build per-element settings from tabbed UI
+    var typeKeys = ["dialog", "bsod", "text", "cursor", "pixel"];
+    var elements = {};
+    for (var i = 0; i < typeKeys.length; i++) {
+        var t = typeKeys[i];
+        var tab = ui.elemTabs[t];
+        elements[t] = {
+            count: parseInt(tab.count.text, 10) || 0,
+            minFrames: parseInt(tab.minFrames.text, 10) || FLOOR_FRAMES,
+            maxFrames: parseInt(tab.maxFrames.text, 10) || MAX_FRAMES,
+            scale: parseInt(tab.scale.text, 10) || DEFAULT_ELEMENT_SCALE,
+            speed: parseInt(tab.speed.text, 10) || DEFAULT_SPEED_MULT,
+            opacityMin: parseInt(tab.opacMin.text, 10) || DEFAULT_OPACITY_MIN,
+            opacityMax: parseInt(tab.opacMax.text, 10) || DEFAULT_OPACITY_MAX,
+            entryFrames: parseInt(tab.entryFrames.text, 10) || DEFAULT_ENTRY_FRAMES,
+            exitFrames: parseInt(tab.exitFrames.text, 10) || DEFAULT_EXIT_FRAMES
+        };
+    }
+
     return {
         seed: parseInt(ui.seedField.text, 10) || 1984,
         chaos: parseInt(ui.chaosField.text, 10) || 0,
         rotoMode: rotoMap[rotoIdx] || "split",
         chaosCurve: curveMap[curveIdx] || "flat",
         animStyle: styleMap[styleIdx] || "xpClassic",
-        minFrames: parseInt(ui.minFramesField.text, 10) || FLOOR_FRAMES,
-        maxFrames: parseInt(ui.maxFramesField.text, 10) || MAX_FRAMES,
-        counts: {
-            dialog: parseInt(ui.countDialog.text, 10) || 0,
-            bsod:   parseInt(ui.countBsod.text, 10) || 0,
-            text:   parseInt(ui.countText.text, 10) || 0,
-            cursor: parseInt(ui.countCursor.text, 10) || 0,
-            pixel:  parseInt(ui.countPixel.text, 10) || 0
-        },
+        elements: elements,
         scanlines: {
             enabled: ui.slEnabled.value,
             opacity: parseInt(ui.slOpacity.text, 10) || DEFAULT_SCANLINE_OPACITY,
@@ -2453,14 +3079,14 @@ function settingsFromUI(ui) {
             freq: parseInt(ui.hsFreq.text, 10) || DEFAULT_HEADSCRATCH_FREQ,
             height: parseInt(ui.hsHeight.text, 10) || DEFAULT_HEADSCRATCH_HEIGHT
         },
-        elementScale: parseInt(ui.scaleField.text, 10) || DEFAULT_ELEMENT_SCALE,
-        speedMult: parseInt(ui.speedField.text, 10) || DEFAULT_SPEED_MULT,
-        opacityMin: parseInt(ui.opacMinField.text, 10) || DEFAULT_OPACITY_MIN,
-        opacityMax: parseInt(ui.opacMaxField.text, 10) || DEFAULT_OPACITY_MAX,
+        trails: {
+            enabled: ui.trEnabled.value,
+            chance: parseInt(ui.trChance.text, 10) || DEFAULT_TRAILS_CHANCE,
+            echoes: parseInt(ui.trEchoes.text, 10) || DEFAULT_TRAILS_ECHOES,
+            decay: parseInt(ui.trDecay.text, 10) || DEFAULT_TRAILS_DECAY
+        },
         stackDepth: parseInt(ui.stackDepthField.text, 10) || MAX_STACK_DEPTH,
         stackOffset: parseInt(ui.stackOffsetField.text, 10) || STACK_OFFSET_X,
-        entryFrames: parseInt(ui.entryFramesField.text, 10) || DEFAULT_ENTRY_FRAMES,
-        exitFrames: parseInt(ui.exitFramesField.text, 10) || DEFAULT_EXIT_FRAMES,
         customMessages: ui._customMessages || [],
         customTitles: ui._customTitles || [],
         rotoKeywords: ui._rotoKeywords || [],
@@ -2472,16 +3098,23 @@ function settingsFromUI(ui) {
 function applySettingsToUI(ui, settings) {
     ui.seedField.text = String(settings.seed);
     ui.chaosField.text = String(settings.chaos);
-    ui.minFramesField.text = String(settings.minFrames);
-    ui.maxFramesField.text = String(settings.maxFrames);
 
-    // Element counts
-    var cts = settings.counts || {};
-    ui.countDialog.text = String(cts.dialog || 0);
-    ui.countBsod.text   = String(cts.bsod || 0);
-    ui.countText.text   = String(cts.text || 0);
-    ui.countCursor.text = String(cts.cursor || 0);
-    ui.countPixel.text  = String(cts.pixel || 0);
+    // Per-element tab settings
+    var typeKeys = ["dialog", "bsod", "text", "cursor", "pixel"];
+    for (var i = 0; i < typeKeys.length; i++) {
+        var t = typeKeys[i];
+        var es = getElementSettings(settings, t);
+        var tab = ui.elemTabs[t];
+        tab.count.text      = String(es.count);
+        tab.minFrames.text  = String(es.minFrames);
+        tab.maxFrames.text  = String(es.maxFrames);
+        tab.scale.text      = String(es.scale);
+        tab.speed.text      = String(es.speed);
+        tab.opacMin.text    = String(es.opacityMin);
+        tab.opacMax.text    = String(es.opacityMax);
+        tab.entryFrames.text = String(es.entryFrames);
+        tab.exitFrames.text = String(es.exitFrames);
+    }
 
     // Overlay settings
     var sl = settings.scanlines || {};
@@ -2501,15 +3134,15 @@ function applySettingsToUI(ui, settings) {
     ui.hsFreq.text      = String(hs.freq != null ? hs.freq : DEFAULT_HEADSCRATCH_FREQ);
     ui.hsHeight.text    = String(hs.height != null ? hs.height : DEFAULT_HEADSCRATCH_HEIGHT);
 
-    // Element controls
-    ui.scaleField.text       = String(settings.elementScale || DEFAULT_ELEMENT_SCALE);
-    ui.speedField.text       = String(settings.speedMult || DEFAULT_SPEED_MULT);
-    ui.opacMinField.text     = String(settings.opacityMin != null ? settings.opacityMin : DEFAULT_OPACITY_MIN);
-    ui.opacMaxField.text     = String(settings.opacityMax != null ? settings.opacityMax : DEFAULT_OPACITY_MAX);
+    var tr = settings.trails || {};
+    ui.trEnabled.value  = (tr.enabled !== false);
+    ui.trChance.text    = String(tr.chance != null ? tr.chance : DEFAULT_TRAILS_CHANCE);
+    ui.trEchoes.text    = String(tr.echoes != null ? tr.echoes : DEFAULT_TRAILS_ECHOES);
+    ui.trDecay.text     = String(tr.decay != null ? tr.decay : DEFAULT_TRAILS_DECAY);
+
+    // Global stack controls
     ui.stackDepthField.text  = String(settings.stackDepth || MAX_STACK_DEPTH);
     ui.stackOffsetField.text = String(settings.stackOffset || STACK_OFFSET_X);
-    ui.entryFramesField.text = String(settings.entryFrames || DEFAULT_ENTRY_FRAMES);
-    ui.exitFramesField.text  = String(settings.exitFrames || DEFAULT_EXIT_FRAMES);
 
     // Custom content
     ui._customMessages = settings.customMessages || [];
@@ -2546,8 +3179,13 @@ function applySettingsToUI(ui, settings) {
 function generate(settings, forceReplace) {
     wlogOpen();
     wlog("=== GENERATE START ===");
-    wlogObj("Settings", settings, ["seed", "chaos", "rotoMode", "chaosCurve", "animStyle", "minFrames", "maxFrames"]);
-    wlogObj("Counts", settings.counts, ["dialog", "bsod", "text", "cursor", "pixel"]);
+    wlogObj("Settings", settings, ["seed", "chaos", "rotoMode", "chaosCurve", "animStyle"]);
+    var _elCounts = {};
+    var _typeNames = ["dialog", "bsod", "text", "cursor", "pixel"];
+    for (var _ti = 0; _ti < _typeNames.length; _ti++) {
+        _elCounts[_typeNames[_ti]] = getElementSettings(settings, _typeNames[_ti]).count;
+    }
+    wlogObj("Counts", _elCounts, _typeNames);
 
     // 1. Validate active comp
     var comp = app.project.activeItem;
@@ -2600,9 +3238,11 @@ function generate(settings, forceReplace) {
     };
 
     // 5. Check for content — skip if all counts are 0 AND chaos is 0
-    var cts = settings.counts || {};
-    var totalCounts = (cts.dialog || 0) + (cts.bsod || 0) +
-                      (cts.text || 0) + (cts.cursor || 0) + (cts.pixel || 0);
+    var _chkTypes = ["dialog", "bsod", "text", "cursor", "pixel"];
+    var totalCounts = 0;
+    for (var _ci = 0; _ci < _chkTypes.length; _ci++) {
+        totalCounts += getElementSettings(settings, _chkTypes[_ci]).count;
+    }
     if (totalCounts <= 0 && (settings.chaos || 0) <= 0) {
         werr("All element counts are 0 and chaos is 0 — nothing to generate");
         alert("Windows Error FX: Set element counts or chaos level above 0.");
@@ -2681,13 +3321,32 @@ function generate(settings, forceReplace) {
             wlog(jobDesc);
 
             try {
-                if      (job.type === "bsod")   buildBSOD(job, targetComp);
-                else if (job.type === "dialog") buildDialogBox(job, targetComp);
-                else if (job.type === "chrome") buildChromeFragment(job, targetComp);
-                else if (job.type === "text")   buildTextOverlay(job, targetComp);
-                else if (job.type === "cursor") buildCursor(job, targetComp);
-                else if (job.type === "pixel")  buildPixelBlock(job, targetComp);
+                var builtLayers = null;
+                if      (job.type === "bsod")   builtLayers = buildBSOD(job, targetComp);
+                else if (job.type === "dialog") builtLayers = buildDialogBox(job, targetComp);
+                else if (job.type === "chrome") builtLayers = buildChromeFragment(job, targetComp);
+                else if (job.type === "text")   builtLayers = buildTextOverlay(job, targetComp);
+                else if (job.type === "cursor") builtLayers = buildCursor(job, targetComp);
+                else if (job.type === "pixel")  builtLayers = buildPixelBlock(job, targetComp);
                 else    { wwarn("Unknown element type: " + job.type); continue; }
+
+                // Apply trails (Echo effect) if flagged
+                if (job.trails && builtLayers && builtLayers.length > 0) {
+                    // Apply to the first non-null layer (the primary visual)
+                    var trailTarget = builtLayers[0];
+                    for (var tli = 0; tli < builtLayers.length; tli++) {
+                        if (builtLayers[tli] != null) {
+                            trailTarget = builtLayers[tli];
+                            break;
+                        }
+                    }
+                    applyTrailsEffect(trailTarget, {
+                        echoes: job.trailEchoes,
+                        decay: job.trailDecay,
+                        fps: targetComp.frameRate
+                    });
+                }
+
                 builtCount++;
             } catch (buildErr) {
                 errorCount++;
@@ -2747,8 +3406,6 @@ function generate(settings, forceReplace) {
     seedRow.add("statictext", undefined, "SEED");
     var seedField = seedRow.add("edittext", undefined, "1984");
     seedField.preferredSize.width = 70;
-    var randBtn = seedRow.add("button", undefined, "Random");
-    randBtn.preferredSize.width = 60;
 
     // ── Chaos (number field, uncapped) ────────────
     var chaosRow = panel.add("group");
@@ -2761,8 +3418,12 @@ function generate(settings, forceReplace) {
     // ── Roto status ───────────────────────────────
     var rotoStatus = panel.add("statictext", undefined, "Roto: checking...");
 
-    // ── Generate button ───────────────────────────
-    var genBtn = panel.add("button", undefined, "GENERATE");
+    // ── Generate + Randomize buttons ─────────────
+    var btnRow = panel.add("group");
+    btnRow.orientation = "row";
+    var genBtn = btnRow.add("button", undefined, "GENERATE");
+    var randomizeBtn = btnRow.add("button", undefined, "RANDOMIZE");
+    randomizeBtn.preferredSize.width = 85;
 
     // ── Advanced section (collapsible) ────────────
     var advPanel = panel.add("panel", undefined, "ADVANCED");
@@ -2775,25 +3436,90 @@ function generate(settings, forceReplace) {
     var advToggle = panel.add("button", undefined, "Show Advanced");
     advToggle.preferredSize.height = 22;
 
-    // ── Element Counts ────────────────────────────
-    var countGroup = advPanel.add("panel", undefined, "Element Counts (0 = auto)");
-    countGroup.orientation = "column";
-    countGroup.alignChildren = ["fill", "top"];
+    // ── Per-Element Tabbed Controls ──────────────
+    var elemTabs = advPanel.add("tabbedpanel");
+    var tabUI = {};
+    var tabLabels = { dialog: "Dialog", bsod: "BSOD", text: "Text", cursor: "Cursor", pixel: "Pixel" };
+    var tabKeys = ["dialog", "bsod", "text", "cursor", "pixel"];
 
-    function addCountField(parent, label, defaultVal) {
-        var row = parent.add("group");
-        row.orientation = "row";
-        row.add("statictext", undefined, label).preferredSize.width = 55;
-        var field = row.add("edittext", undefined, String(defaultVal));
-        field.preferredSize.width = 40;
-        return field;
+    for (var ti = 0; ti < tabKeys.length; ti++) {
+        var tkey = tabKeys[ti];
+        var tab = elemTabs.add("tab", undefined, tabLabels[tkey]);
+        tab.orientation = "column";
+        tab.alignChildren = ["fill", "top"];
+        tab.margins = 4;
+        tab.spacing = 2;
+
+        // Row 1: Count
+        var r1 = tab.add("group");
+        r1.orientation = "row";
+        r1.add("statictext", undefined, "Count").preferredSize.width = 40;
+        var countF = r1.add("edittext", undefined, "0");
+        countF.preferredSize.width = 35;
+        r1.add("statictext", undefined, "(0 = auto)");
+
+        // Row 2: Min/Max frames
+        var r2 = tab.add("group");
+        r2.orientation = "row";
+        r2.add("statictext", undefined, "Min f").preferredSize.width = 35;
+        var minF = r2.add("edittext", undefined, String(FLOOR_FRAMES));
+        minF.preferredSize.width = 35;
+        r2.add("statictext", undefined, "Max f").preferredSize.width = 35;
+        var maxF = r2.add("edittext", undefined, String(MAX_FRAMES));
+        maxF.preferredSize.width = 35;
+
+        // Row 3: Scale / Speed
+        var r3 = tab.add("group");
+        r3.orientation = "row";
+        r3.add("statictext", undefined, "Scale%").preferredSize.width = 42;
+        var scaleF = r3.add("edittext", undefined, String(DEFAULT_ELEMENT_SCALE));
+        scaleF.preferredSize.width = 35;
+        r3.add("statictext", undefined, "Spd%").preferredSize.width = 32;
+        var speedF = r3.add("edittext", undefined, String(DEFAULT_SPEED_MULT));
+        speedF.preferredSize.width = 35;
+
+        // Row 4: Opacity min-max
+        var r4 = tab.add("group");
+        r4.orientation = "row";
+        r4.add("statictext", undefined, "Opac").preferredSize.width = 35;
+        var opMinF = r4.add("edittext", undefined, String(DEFAULT_OPACITY_MIN));
+        opMinF.preferredSize.width = 30;
+        r4.add("statictext", undefined, "-");
+        var opMaxF = r4.add("edittext", undefined, String(DEFAULT_OPACITY_MAX));
+        opMaxF.preferredSize.width = 30;
+
+        // Row 5: Entry / Exit frames
+        var r5 = tab.add("group");
+        r5.orientation = "row";
+        r5.add("statictext", undefined, "Entry").preferredSize.width = 35;
+        var entryF = r5.add("edittext", undefined, String(DEFAULT_ENTRY_FRAMES));
+        entryF.preferredSize.width = 25;
+        r5.add("statictext", undefined, "Exit").preferredSize.width = 28;
+        var exitF = r5.add("edittext", undefined, String(DEFAULT_EXIT_FRAMES));
+        exitF.preferredSize.width = 25;
+
+        tabUI[tkey] = {
+            count: countF,
+            minFrames: minF,
+            maxFrames: maxF,
+            scale: scaleF,
+            speed: speedF,
+            opacMin: opMinF,
+            opacMax: opMaxF,
+            entryFrames: entryF,
+            exitFrames: exitF
+        };
     }
 
-    var countDialog = addCountField(countGroup, "Dialog", 0);
-    var countBsod   = addCountField(countGroup, "BSOD", 0);
-    var countText   = addCountField(countGroup, "Text", 0);
-    var countCursor = addCountField(countGroup, "Cursor", 0);
-    var countPixel  = addCountField(countGroup, "Pixel", 0);
+    // ── Global Stack Controls ────────────────────
+    var stackRow = advPanel.add("group");
+    stackRow.orientation = "row";
+    stackRow.add("statictext", undefined, "Stack").preferredSize.width = 35;
+    var stackDepthField = stackRow.add("edittext", undefined, String(MAX_STACK_DEPTH));
+    stackDepthField.preferredSize.width = 30;
+    stackRow.add("statictext", undefined, "Offset").preferredSize.width = 35;
+    var stackOffsetField = stackRow.add("edittext", undefined, String(STACK_OFFSET_X));
+    stackOffsetField.preferredSize.width = 30;
 
     // ── Overlays ──────────────────────────────────
     var overlayGroup = advPanel.add("panel", undefined, "Overlays");
@@ -2847,63 +3573,28 @@ function generate(settings, forceReplace) {
     var hsHeight = hsRow.add("edittext", undefined, String(DEFAULT_HEADSCRATCH_HEIGHT));
     hsHeight.preferredSize.width = 35;
 
-    // ── Element Controls ──────────────────────────
-    var elemGroup = advPanel.add("panel", undefined, "Element Controls");
-    elemGroup.orientation = "column";
-    elemGroup.alignChildren = ["fill", "top"];
+    // Trails (Echo effect)
+    var trRow = overlayGroup.add("group");
+    trRow.orientation = "row";
+    var trEnabled = trRow.add("checkbox", undefined, "Trails");
+    trEnabled.value = true;
+    trRow.add("statictext", undefined, "Chance%").preferredSize.width = 50;
+    var trChance = trRow.add("edittext", undefined, String(DEFAULT_TRAILS_CHANCE));
+    trChance.preferredSize.width = 35;
+    trRow.add("statictext", undefined, "Echoes").preferredSize.width = 42;
+    var trEchoes = trRow.add("edittext", undefined, String(DEFAULT_TRAILS_ECHOES));
+    trEchoes.preferredSize.width = 30;
+    trRow.add("statictext", undefined, "Decay%").preferredSize.width = 45;
+    var trDecay = trRow.add("edittext", undefined, String(DEFAULT_TRAILS_DECAY));
+    trDecay.preferredSize.width = 35;
 
-    var scaleRow = elemGroup.add("group");
-    scaleRow.orientation = "row";
-    scaleRow.add("statictext", undefined, "Scale %").preferredSize.width = 55;
-    var scaleField = scaleRow.add("edittext", undefined, String(DEFAULT_ELEMENT_SCALE));
-    scaleField.preferredSize.width = 40;
-    scaleRow.add("statictext", undefined, "Speed %").preferredSize.width = 55;
-    var speedField = scaleRow.add("edittext", undefined, String(DEFAULT_SPEED_MULT));
-    speedField.preferredSize.width = 40;
-
-    var opacRow = elemGroup.add("group");
-    opacRow.orientation = "row";
-    opacRow.add("statictext", undefined, "Opacity").preferredSize.width = 55;
-    var opacMinField = opacRow.add("edittext", undefined, String(DEFAULT_OPACITY_MIN));
-    opacMinField.preferredSize.width = 35;
-    opacRow.add("statictext", undefined, "-");
-    var opacMaxField = opacRow.add("edittext", undefined, String(DEFAULT_OPACITY_MAX));
-    opacMaxField.preferredSize.width = 35;
-
-    var stackRow = elemGroup.add("group");
-    stackRow.orientation = "row";
-    stackRow.add("statictext", undefined, "Stack").preferredSize.width = 35;
-    var stackDepthField = stackRow.add("edittext", undefined, String(MAX_STACK_DEPTH));
-    stackDepthField.preferredSize.width = 30;
-    stackRow.add("statictext", undefined, "Offset").preferredSize.width = 35;
-    var stackOffsetField = stackRow.add("edittext", undefined, String(STACK_OFFSET_X));
-    stackOffsetField.preferredSize.width = 30;
-
-    var entryRow = elemGroup.add("group");
-    entryRow.orientation = "row";
-    entryRow.add("statictext", undefined, "Entry f").preferredSize.width = 45;
-    var entryFramesField = entryRow.add("edittext", undefined, String(DEFAULT_ENTRY_FRAMES));
-    entryFramesField.preferredSize.width = 30;
-    entryRow.add("statictext", undefined, "Exit f").preferredSize.width = 40;
-    var exitFramesField = entryRow.add("edittext", undefined, String(DEFAULT_EXIT_FRAMES));
-    exitFramesField.preferredSize.width = 30;
-
-    // ── Style / Timing / Roto ─────────────────────
+    // ── Style / Roto / Curve ─────────────────────
     var styleRow = advPanel.add("group");
     styleRow.orientation = "row";
     styleRow.add("statictext", undefined, "Style");
     var animStyleDropdown = styleRow.add("dropdownlist", undefined,
         ["XP Classic", "Glitch Heavy", "Slow Burn", "Chaos Maximum"]);
     animStyleDropdown.selection = 0;
-
-    var frameRow = advPanel.add("group");
-    frameRow.orientation = "row";
-    frameRow.add("statictext", undefined, "Min");
-    var minFramesField = frameRow.add("edittext", undefined, "8");
-    minFramesField.preferredSize.width = 40;
-    frameRow.add("statictext", undefined, "Max");
-    var maxFramesField = frameRow.add("edittext", undefined, "96");
-    maxFramesField.preferredSize.width = 40;
 
     var rotoRow = advPanel.add("group");
     rotoRow.orientation = "row";
@@ -2935,27 +3626,19 @@ function generate(settings, forceReplace) {
         seedField: seedField,
         chaosField: chaosField,
         rotoStatus: rotoStatus,
-        // Element counts
-        countDialog: countDialog,
-        countBsod: countBsod,
-        countText: countText,
-        countCursor: countCursor,
-        countPixel: countPixel,
+        // Per-element tabbed controls
+        elemTabs: tabUI,
         // Overlays
         slEnabled: slEnabled, slOpacity: slOpacity,
         slSpacing: slSpacing, slJitter: slJitter,
         noEnabled: noEnabled, noOpacity: noOpacity,
         noScale: noScale, noComplexity: noComplexity,
         hsEnabled: hsEnabled, hsFreq: hsFreq, hsHeight: hsHeight,
-        // Element controls
-        scaleField: scaleField, speedField: speedField,
-        opacMinField: opacMinField, opacMaxField: opacMaxField,
+        trEnabled: trEnabled, trChance: trChance, trEchoes: trEchoes, trDecay: trDecay,
+        // Global stack controls
         stackDepthField: stackDepthField, stackOffsetField: stackOffsetField,
-        entryFramesField: entryFramesField, exitFramesField: exitFramesField,
         // Dropdowns
         animStyleDropdown: animStyleDropdown,
-        minFramesField: minFramesField,
-        maxFramesField: maxFramesField,
         rotoModeDropdown: rotoModeDropdown,
         chaosCurveDropdown: chaosCurveDropdown,
         // Custom content
@@ -2967,8 +3650,9 @@ function generate(settings, forceReplace) {
 
     // ── Event handlers ────────────────────────────
 
-    randBtn.onClick = function() {
-        seedField.text = String(Math.floor(Math.random() * 89999) + 10000);
+    randomizeBtn.onClick = function() {
+        var rs = randomizeSettings();
+        applySettingsToUI(ui, rs);
     };
 
     advToggle.onClick = function() {
@@ -3180,7 +3864,17 @@ thisObj.WEFX = {
     // Roto
     nameMatchesKeyword: nameMatchesKeyword,
     // State
-    defaultSettings: defaultSettings
+    defaultSettings: defaultSettings,
+    defaultElementSettings: defaultElementSettings,
+    getElementSettings: getElementSettings,
+    migrateSettings: migrateSettings,
+    randomizeSettings: randomizeSettings,
+    // Constants (for testing)
+    DIALOG_VARIANTS: DIALOG_VARIANTS,
+    BSOD_LINES_XP: BSOD_LINES_XP,
+    BSOD_LINES_9X: BSOD_LINES_9X,
+    BSOD_CODES: BSOD_CODES,
+    BSOD_EXCEPTIONS: BSOD_EXCEPTIONS
 };
 
 })(this);
