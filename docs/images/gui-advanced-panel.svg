@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="340" height="410" font-family="Segoe UI, Arial, sans-serif" font-size="11">
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="350" font-family="Segoe UI, Arial, sans-serif" font-size="11">
   <defs>
     <linearGradient id="panelBg3" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#3a3a3a"/>
@@ -20,92 +20,80 @@
       <stop offset="0%" stop-color="#4a7a5a"/>
       <stop offset="100%" stop-color="#3a6548"/>
     </linearGradient>
+    <linearGradient id="randBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6a5a8a"/>
+      <stop offset="100%" stop-color="#554570"/>
+    </linearGradient>
   </defs>
   <!-- Panel background -->
-  <rect width="340" height="410" rx="4" fill="url(#panelBg3)" stroke="#555" stroke-width="1"/>
-  <text x="170" y="20" text-anchor="middle" fill="#999" font-size="9" font-weight="bold" letter-spacing="1">OVERLAYS &amp; GLOBAL CONTROLS</text>
+  <rect width="340" height="350" rx="4" fill="url(#panelBg3)" stroke="#555" stroke-width="1"/>
+  <text x="170" y="20" text-anchor="middle" fill="#d0d0d0" font-size="13" font-weight="bold">Overlays</text>
   <!-- Overlays panel -->
-  <rect x="12" y="30" width="316" height="196" rx="3" fill="#2e2e2e" stroke="#555" stroke-width="0.5"/>
-  <text x="24" y="46" fill="#aaa" font-size="10" font-weight="bold">Overlays</text>
+  <rect x="12" y="30" width="316" height="140" rx="3" fill="#2e2e2e" stroke="#555" stroke-width="0.5"/>
   <!-- Scanlines -->
-  <rect x="24" y="54" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
-  <text x="26" y="64" fill="#4a9eff" font-size="10" font-weight="bold">&#x2713;</text>
-  <text x="42" y="64" fill="#ccc" font-size="10">Scanlines</text>
-  <text x="110" y="64" fill="#888" font-size="9">Opacity</text>
-  <rect x="148" y="52" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="155" y="64" fill="#e0e0e0" font-size="10">20</text>
-  <text x="186" y="64" fill="#888" font-size="9">Spacing</text>
-  <rect x="228" y="52" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="238" y="64" fill="#e0e0e0" font-size="10">4</text>
+  <rect x="24" y="40" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="26" y="50" fill="#4a9eff" font-size="10" font-weight="bold">&#x2713;</text>
+  <text x="42" y="50" fill="#ccc" font-size="10">Scanlines</text>
+  <text x="110" y="50" fill="#888" font-size="9">Opacity</text>
+  <rect x="148" y="38" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="155" y="50" fill="#e0e0e0" font-size="10">20</text>
+  <text x="186" y="50" fill="#888" font-size="9">Spacing</text>
+  <rect x="228" y="38" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="238" y="50" fill="#e0e0e0" font-size="10">4</text>
   <!-- Jitter -->
-  <rect x="40" y="72" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
-  <text x="58" y="82" fill="#999" font-size="10">Scanline Jitter</text>
+  <rect x="40" y="58" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="58" y="68" fill="#999" font-size="10">Scanline Jitter</text>
   <!-- Noise -->
-  <rect x="24" y="90" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
-  <text x="26" y="100" fill="#4a9eff" font-size="10" font-weight="bold">&#x2713;</text>
-  <text x="42" y="100" fill="#ccc" font-size="10">Noise</text>
-  <text x="90" y="100" fill="#888" font-size="9">Opacity</text>
-  <rect x="130" y="88" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="140" y="100" fill="#e0e0e0" font-size="10">8</text>
-  <text x="168" y="100" fill="#888" font-size="9">Scale</text>
-  <rect x="198" y="88" width="36" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="204" y="100" fill="#e0e0e0" font-size="10">100</text>
+  <rect x="24" y="76" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="26" y="86" fill="#4a9eff" font-size="10" font-weight="bold">&#x2713;</text>
+  <text x="42" y="86" fill="#ccc" font-size="10">Noise</text>
+  <text x="90" y="86" fill="#888" font-size="9">Opacity</text>
+  <rect x="130" y="74" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="140" y="86" fill="#e0e0e0" font-size="10">8</text>
+  <text x="168" y="86" fill="#888" font-size="9">Scale</text>
+  <rect x="198" y="74" width="36" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="204" y="86" fill="#e0e0e0" font-size="10">100</text>
   <!-- Complexity -->
-  <text x="40" y="118" fill="#888" font-size="9">Complexity</text>
-  <rect x="98" y="106" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="108" y="118" fill="#e0e0e0" font-size="10">5</text>
+  <text x="40" y="104" fill="#888" font-size="9">Complexity</text>
+  <rect x="98" y="92" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="108" y="104" fill="#e0e0e0" font-size="10">5</text>
   <!-- Head Scratch -->
-  <rect x="24" y="126" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
-  <text x="42" y="136" fill="#999" font-size="10">Head Scratch</text>
-  <text x="120" y="136" fill="#888" font-size="9">Freq</text>
-  <rect x="146" y="124" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="153" y="136" fill="#e0e0e0" font-size="10">20</text>
-  <text x="184" y="136" fill="#888" font-size="9">Height</text>
-  <rect x="218" y="124" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="228" y="136" fill="#e0e0e0" font-size="10">2</text>
-  <!-- Trails (all on one row) -->
-  <rect x="24" y="148" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
-  <text x="26" y="158" fill="#4a9eff" font-size="10" font-weight="bold">&#x2713;</text>
-  <text x="42" y="158" fill="#ccc" font-size="10">Trails</text>
-  <text x="82" y="158" fill="#888" font-size="9">Chance%</text>
-  <rect x="126" y="146" width="28" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="132" y="158" fill="#e0e0e0" font-size="10">20</text>
-  <text x="160" y="158" fill="#888" font-size="9">Echoes</text>
-  <rect x="196" y="146" width="24" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="202" y="158" fill="#e0e0e0" font-size="10">4</text>
-  <text x="226" y="158" fill="#888" font-size="9">Decay%</text>
-  <rect x="268" y="146" width="28" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="274" y="158" fill="#e0e0e0" font-size="10">50</text>
-  <!-- Dropdowns section -->
-  <text x="24" y="192" fill="#888" font-size="9">Style</text>
-  <rect x="60" y="180" width="120" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="68" y="193" fill="#e0e0e0" font-size="10">XP Classic</text>
-  <text x="166" y="193" fill="#777" font-size="9">&#x25BE;</text>
-  <!-- Roto row with Behind% -->
-  <text x="24" y="214" fill="#888" font-size="9">Roto</text>
-  <rect x="60" y="202" width="100" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="68" y="215" fill="#e0e0e0" font-size="10">Split</text>
-  <text x="148" y="215" fill="#777" font-size="9">&#x25BE;</text>
-  <text x="172" y="215" fill="#888" font-size="9">Behind%</text>
-  <rect x="220" y="202" width="34" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="228" y="215" fill="#e0e0e0" font-size="10">50</text>
-  <!-- Curve -->
-  <text x="24" y="236" fill="#888" font-size="9">Curve</text>
-  <rect x="60" y="224" width="120" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
-  <text x="68" y="237" fill="#e0e0e0" font-size="10">Flat</text>
-  <text x="166" y="237" fill="#777" font-size="9">&#x25BE;</text>
+  <rect x="24" y="112" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="42" y="122" fill="#999" font-size="10">Head Scratch</text>
+  <text x="120" y="122" fill="#888" font-size="9">Freq</text>
+  <rect x="146" y="110" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="153" y="122" fill="#e0e0e0" font-size="10">20</text>
+  <text x="184" y="122" fill="#888" font-size="9">Height</text>
+  <rect x="218" y="110" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="228" y="122" fill="#e0e0e0" font-size="10">2</text>
+  <!-- Trails -->
+  <rect x="24" y="134" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="26" y="144" fill="#4a9eff" font-size="10" font-weight="bold">&#x2713;</text>
+  <text x="42" y="144" fill="#ccc" font-size="10">Trails</text>
+  <text x="82" y="144" fill="#888" font-size="9">Chance%</text>
+  <rect x="126" y="132" width="28" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="132" y="144" fill="#e0e0e0" font-size="10">20</text>
+  <text x="160" y="144" fill="#888" font-size="9">Echoes</text>
+  <rect x="196" y="132" width="24" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="202" y="144" fill="#e0e0e0" font-size="10">4</text>
+  <text x="226" y="144" fill="#888" font-size="9">Decay%</text>
+  <rect x="268" y="132" width="28" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="274" y="144" fill="#e0e0e0" font-size="10">50</text>
   <!-- Custom Messages -->
-  <rect x="16" y="252" width="308" height="24" rx="3" fill="url(#btnBg3)" stroke="#666" stroke-width="0.5"/>
-  <text x="170" y="268" text-anchor="middle" fill="#ccc" font-size="10">Custom Messages...</text>
+  <rect x="16" y="182" width="308" height="24" rx="3" fill="url(#btnBg3)" stroke="#666" stroke-width="0.5"/>
+  <text x="170" y="198" text-anchor="middle" fill="#ccc" font-size="10">Custom Messages...</text>
   <!-- Export Assets -->
-  <rect x="16" y="282" width="308" height="24" rx="3" fill="url(#exportBg)" stroke="#5a8a6a" stroke-width="0.5"/>
-  <text x="170" y="298" text-anchor="middle" fill="#ccc" font-size="10">Export Assets...</text>
+  <rect x="16" y="212" width="308" height="24" rx="3" fill="url(#exportBg)" stroke="#5a8a6a" stroke-width="0.5"/>
+  <text x="170" y="228" text-anchor="middle" fill="#ccc" font-size="10">Export Assets...</text>
+  <!-- RANDOMIZE -->
+  <rect x="16" y="248" width="308" height="28" rx="3" fill="url(#randBg)" stroke="#7a6a9a" stroke-width="0.5"/>
+  <text x="170" y="267" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">RANDOMIZE</text>
   <!-- Action row -->
-  <rect x="16" y="318" width="144" height="26" rx="3" fill="url(#regenBg)" stroke="#5a7ab5" stroke-width="0.5"/>
-  <text x="88" y="336" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">REGENERATE</text>
-  <rect x="168" y="318" width="144" height="26" rx="3" fill="url(#clearBg)" stroke="#a55a5a" stroke-width="0.5"/>
-  <text x="240" y="336" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">CLEAR ALL</text>
+  <rect x="16" y="284" width="148" height="26" rx="3" fill="url(#regenBg)" stroke="#5a7ab5" stroke-width="0.5"/>
+  <text x="90" y="302" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">REGENERATE</text>
+  <rect x="172" y="284" width="148" height="26" rx="3" fill="url(#clearBg)" stroke="#a55a5a" stroke-width="0.5"/>
+  <text x="246" y="302" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">CLEAR ALL</text>
   <!-- Show Log -->
-  <rect x="16" y="356" width="308" height="24" rx="3" fill="url(#btnBg3)" stroke="#666" stroke-width="0.5"/>
-  <text x="170" y="372" text-anchor="middle" fill="#ccc" font-size="10">Show Log</text>
+  <rect x="16" y="318" width="308" height="24" rx="3" fill="url(#btnBg3)" stroke="#666" stroke-width="0.5"/>
+  <text x="170" y="334" text-anchor="middle" fill="#ccc" font-size="10">Show Log</text>
 </svg>

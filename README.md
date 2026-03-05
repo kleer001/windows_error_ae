@@ -39,7 +39,7 @@ Generates Windows error dialogs, BSOD panels, corrupted text, cursor artifacts, 
 2. Open the **Windows Error FX** panel.
 3. Enter a **seed** (or hit **RANDOMIZE** for a full random setup).
 4. Set **chaos** (start around 50-100).
-5. Hit **GENERATE**.
+5. Hit **REGENERATE**.
 
 A pre-comp with error windows, BSOD panels, cursors, glitch text, pixel corruption, and freeze strips appears in your comp. Change the seed for a different look. Same seed = same result every time.
 
@@ -51,7 +51,7 @@ A pre-comp with error windows, BSOD panels, cursors, glitch text, pixel corrupti
   <img src="docs/images/gui-main-panel.svg" alt="Main panel" width="320"/>
 </p>
 
-Enter a seed, set your chaos level, choose a roto layer (or leave on **Auto-detect**), and hit **GENERATE**. The **RANDOMIZE** button randomizes all settings at once — seed, chaos, per-element controls, overlays, style, and curve — for quick experimentation.
+Enter a seed, set your chaos level, and choose a roto layer (or leave on **Auto-detect**).
 
 ### Per-Element Tabs
 
@@ -73,10 +73,21 @@ A tabbed panel gives independent control over each of the 6 element types (Dialo
 
 Stack Depth and Offset (for dialog cascade stacking) remain global controls below the tabs.
 
-### Overlays & Global Controls
+### Global Settings
+
+Between the main controls and the element tabs, a grouped panel provides global behavior settings:
+
+| Control | What it does |
+|---|---|
+| **Element Layering** | How elements interact with roto layers (Split / All Over / All Under / Flat) |
+| **Behind %** | Probability of elements going behind the roto subject (0 = all over, 100 = all under) |
+| **Style** | Animation personality: XP Classic, Glitch Heavy, Slow Burn, Chaos Maximum |
+| **Animation Curves** | Time distribution: Flat, Build, Peak, Burst, Random |
+
+### Overlays & Actions
 
 <p align="center">
-  <img src="docs/images/gui-advanced-panel.svg" alt="Overlays and global controls" width="340"/>
+  <img src="docs/images/gui-advanced-panel.svg" alt="Overlays and actions" width="340"/>
 </p>
 
 | Control | What it does |
@@ -85,19 +96,16 @@ Stack Depth and Offset (for dialog cascade stacking) remain global controls belo
 | **Noise** | Fractal noise grain overlay |
 | **Head Scratch** | Horizontal line artifacts |
 | **Trails** | Echo/ghost trail effect on random elements |
-| **Style** | Animation personality: XP Classic, Glitch Heavy, Slow Burn, Chaos Maximum |
-| **Roto** | How elements interact with roto layers (Split / All Over / All Under / Flat) |
-| **Behind %** | Probability of elements going behind the roto subject (0 = all over, 100 = all under) |
-| **Curve** | Time distribution: Flat, Build, Peak, Burst, Random |
 | **Custom Messages** | Add your own error messages (applies to BSOD and text elements) |
 | **Export Assets** | Decode built-in PNGs into a project folder for customization |
-| **REGENERATE** | Replaces existing effect without confirmation |
-| **CLEAR ALL** | Removes all generated elements |
+| **RANDOMIZE** | Randomizes all settings at once — seed, chaos, per-element controls, overlays, style, and curves |
+| **REGENERATE** | Generates (or replaces) the effect in the active comp |
+| **CLEAR ALL** | Removes all generated elements (with confirmation) |
 | **Show Log** | View the generation log file for debugging |
 
 ## Roto Layers
 
-Use the **Roto** dropdown in the main panel to explicitly select a roto layer, or leave it on **Auto-detect** to find layers by name. Auto-detect looks for names containing **roto**, **matte**, **cutout**, **subject**, or **fg**. In **Split** mode, the **Behind %** slider controls how often elements go behind vs. in front of your subject. No roto layers? Everything composites flat.
+Use the **Roto** dropdown in the main panel to explicitly select a roto layer, or leave it on **Auto-detect** to find layers by name. Auto-detect looks for names containing **roto**, **matte**, **cutout**, **subject**, or **fg**. The **Element Layering** control determines how elements interact with roto layers — in **Split** mode, the **Behind %** slider controls how often elements go behind vs. in front of your subject. No roto layers? Set Element Layering to **Flat**.
 
 ## Logging
 
@@ -167,7 +175,7 @@ The Style dropdown changes the personality of element animations:
 </details>
 
 <details>
-<summary><strong>Chaos Curve</strong></summary>
+<summary><strong>Animation Curves</strong></summary>
 
 Controls *when* elements appear across your timeline:
 
@@ -182,9 +190,9 @@ Per-element curve overrides let different types follow different distributions (
 </details>
 
 <details>
-<summary><strong>Roto Mode</strong></summary>
+<summary><strong>Element Layering</strong></summary>
 
-Controls how elements interact with your roto subject:
+The **Element Layering** dropdown controls how elements interact with your roto subject:
 
 - **Split** — Elements randomly appear above and below the subject. The **Behind %** slider controls the probability (0% = all in front, 50% = even split, 100% = all behind)
 - **All Over** — Everything composites in front of the subject
@@ -237,7 +245,7 @@ You can replace or supplement the built-in dialog and cursor images with your ow
 1. Click **Export Assets...** to decode all 38 built-in PNGs (36 dialogs + 2 cursors) into a `WindowsErrorFX_Custom` folder in your AE project bin
 2. The PNGs are also written to `Documents/WindowsErrorFX/custom/` on disk — edit them in any image editor
 3. Re-import your modified PNGs into the `WindowsErrorFX_Custom` folder, or add entirely new ones
-4. On the next **GENERATE**, custom dialog PNGs are randomly mixed in alongside the built-in set (50/50 chance per dialog)
+4. On the next **REGENERATE**, custom dialog PNGs are randomly mixed in alongside the built-in set (50/50 chance per dialog)
 
 The custom folder is never deleted by **CLEAR ALL** — it's yours to manage. Delete `WindowsErrorFX_Custom` from the project bin to go back to built-in assets only.
 

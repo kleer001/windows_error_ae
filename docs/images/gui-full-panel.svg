@@ -1,0 +1,286 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="350" height="930" font-family="Segoe UI, Arial, sans-serif" font-size="11">
+  <defs>
+    <linearGradient id="panelBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a3a3a"/>
+      <stop offset="100%" stop-color="#2b2b2b"/>
+    </linearGradient>
+    <linearGradient id="randBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6a5a8a"/>
+      <stop offset="100%" stop-color="#554570"/>
+    </linearGradient>
+    <linearGradient id="btnBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#505050"/>
+      <stop offset="100%" stop-color="#3c3c3c"/>
+    </linearGradient>
+    <linearGradient id="regenBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a6fa5"/>
+      <stop offset="100%" stop-color="#3a5a8a"/>
+    </linearGradient>
+    <linearGradient id="clearBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8a4a4a"/>
+      <stop offset="100%" stop-color="#703a3a"/>
+    </linearGradient>
+    <linearGradient id="exportBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a7a5a"/>
+      <stop offset="100%" stop-color="#3a6548"/>
+    </linearGradient>
+    <linearGradient id="globalBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#362e2e"/>
+      <stop offset="100%" stop-color="#2f2828"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Panel background -->
+  <rect width="350" height="930" rx="6" fill="#2b2b2b"/>
+  <rect x="5" y="5" width="340" height="920" rx="4" fill="url(#panelBg)" stroke="#555" stroke-width="1"/>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- HEADER + CORE CONTROLS                  -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <text x="175" y="32" text-anchor="middle" fill="#e0e0e0" font-size="14" font-weight="bold" letter-spacing="1.5">WINDOWS ERROR FX</text>
+  <line x1="20" y1="42" x2="330" y2="42" stroke="#555" stroke-width="0.5"/>
+
+  <!-- Seed -->
+  <text x="24" y="66" fill="#b0b0b0" font-size="10" font-weight="bold">SEED</text>
+  <rect x="60" y="52" width="72" height="20" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="68" y="66" fill="#e0e0e0" font-size="11">1984</text>
+
+  <!-- Chaos -->
+  <text x="24" y="96" fill="#b0b0b0" font-size="10" font-weight="bold">CHAOS</text>
+  <rect x="66" y="82" width="52" height="20" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="74" y="96" fill="#e0e0e0" font-size="11">100</text>
+  <text x="124" y="96" fill="#777" font-size="9">(0 = off, 100 = normal, 500+ = insane)</text>
+
+  <!-- Simulated Resolution -->
+  <text x="24" y="122" fill="#b0b0b0" font-size="10">Simulated Resolution:</text>
+  <rect x="142" y="108" width="108" height="20" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="150" y="122" fill="#e0e0e0" font-size="10">720p (1280x720)</text>
+  <text x="236" y="122" fill="#777" font-size="9">&#x25BE;</text>
+
+  <!-- Roto layer picker -->
+  <text x="24" y="148" fill="#b0b0b0" font-size="10">Roto:</text>
+  <rect x="56" y="134" width="164" height="20" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="64" y="148" fill="#e0e0e0" font-size="10">Auto-detect</text>
+  <text x="206" y="148" fill="#777" font-size="9">&#x25BE;</text>
+  <text x="230" y="148" fill="#8a8" font-size="9">2 roto</text>
+
+  <line x1="20" y1="162" x2="330" y2="162" stroke="#555" stroke-width="0.5"/>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- GLOBAL SETTINGS PANEL (desaturated red) -->
+  <!-- Element Layering + Style + Anim Curves  -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <rect x="16" y="170" width="318" height="76" rx="3" fill="url(#globalBg)" stroke="#5e5353" stroke-width="0.5"/>
+
+  <!-- Row 1: Element Layering -->
+  <text x="28" y="190" fill="#b0a0a0" font-size="10" font-weight="bold">Element Layering</text>
+  <rect x="148" y="178" width="84" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="156" y="191" fill="#e0e0e0" font-size="10">Split</text>
+  <text x="220" y="191" fill="#777" font-size="9">&#x25BE;</text>
+  <text x="244" y="191" fill="#a09090" font-size="9">Behind%</text>
+  <rect x="296" y="178" width="34" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="304" y="191" fill="#e0e0e0" font-size="10">50</text>
+
+  <!-- Row 2: Style -->
+  <text x="28" y="212" fill="#b0a0a0" font-size="10" font-weight="bold">Style</text>
+  <rect x="148" y="200" width="120" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="156" y="213" fill="#e0e0e0" font-size="10">XP Classic</text>
+  <text x="254" y="213" fill="#777" font-size="9">&#x25BE;</text>
+
+  <!-- Row 3: Animation Curves -->
+  <text x="28" y="234" fill="#b0a0a0" font-size="10" font-weight="bold">Animation Curves</text>
+  <rect x="148" y="222" width="120" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="156" y="235" fill="#e0e0e0" font-size="10">Flat</text>
+  <text x="254" y="235" fill="#777" font-size="9">&#x25BE;</text>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- ELEMENTS SECTION                        -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <text x="24" y="264" fill="#d0d0d0" font-size="13" font-weight="bold">Elements</text>
+
+  <!-- Tab panel frame -->
+  <rect x="16" y="272" width="318" height="308" rx="3" fill="#2a2a2a" stroke="#555" stroke-width="0.5"/>
+
+  <!-- Tab buttons -->
+  <rect x="18" y="274" width="56" height="22" rx="2" fill="#3a3a3a" stroke="#666" stroke-width="0.5"/>
+  <text x="46" y="289" text-anchor="middle" fill="#4a9eff" font-size="10" font-weight="bold">Dialog</text>
+  <rect x="76" y="274" width="50" height="22" rx="2" fill="#333"/>
+  <text x="101" y="289" text-anchor="middle" fill="#999" font-size="10">BSOD</text>
+  <rect x="128" y="274" width="52" height="22" rx="2" fill="#333"/>
+  <text x="154" y="289" text-anchor="middle" fill="#999" font-size="10">Cursor</text>
+  <rect x="182" y="274" width="44" height="22" rx="2" fill="#333"/>
+  <text x="204" y="289" text-anchor="middle" fill="#999" font-size="10">Pixel</text>
+  <rect x="228" y="274" width="52" height="22" rx="2" fill="#333"/>
+  <text x="254" y="289" text-anchor="middle" fill="#999" font-size="10">Freeze</text>
+
+  <!-- Active tab underline -->
+  <rect x="18" y="295" width="56" height="2" fill="#4a9eff"/>
+
+  <!-- Tab content area -->
+  <rect x="20" y="300" width="310" height="240" rx="2" fill="#323232" stroke="#444" stroke-width="0.5"/>
+
+  <!-- Row 1: Count -->
+  <text x="32" y="322" fill="#b0b0b0" font-size="10">Count</text>
+  <rect x="76" y="308" width="40" height="19" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="84" y="322" fill="#e0e0e0" font-size="11">0</text>
+  <text x="122" y="322" fill="#777" font-size="9">(0 = auto from chaos)</text>
+
+  <!-- Row 2: Min/Max frames -->
+  <text x="32" y="350" fill="#b0b0b0" font-size="10">Min f</text>
+  <rect x="66" y="336" width="40" height="19" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="74" y="350" fill="#e0e0e0" font-size="11">8</text>
+  <text x="116" y="350" fill="#b0b0b0" font-size="10">Max f</text>
+  <rect x="152" y="336" width="40" height="19" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="160" y="350" fill="#e0e0e0" font-size="11">96</text>
+
+  <!-- Row 3: Scale / Speed / Jitter -->
+  <text x="32" y="378" fill="#b0b0b0" font-size="10">Scale%</text>
+  <rect x="78" y="364" width="40" height="19" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="86" y="378" fill="#e0e0e0" font-size="11">100</text>
+  <text x="128" y="378" fill="#b0b0b0" font-size="10">Spd%</text>
+  <rect x="166" y="364" width="40" height="19" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="174" y="378" fill="#e0e0e0" font-size="11">100</text>
+  <text x="216" y="378" fill="#b0b0b0" font-size="10">Jit</text>
+  <rect x="238" y="364" width="36" height="19" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="246" y="378" fill="#e0e0e0" font-size="11">0</text>
+
+  <!-- Row 4: Opacity -->
+  <text x="32" y="406" fill="#b0b0b0" font-size="10">Opac</text>
+  <rect x="66" y="392" width="36" height="19" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="74" y="406" fill="#e0e0e0" font-size="11">50</text>
+  <text x="108" y="406" fill="#777" font-size="11">-</text>
+  <rect x="118" y="392" width="36" height="19" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="123" y="406" fill="#e0e0e0" font-size="11">100</text>
+
+  <!-- Row 5: Entry / Exit -->
+  <text x="32" y="434" fill="#b0b0b0" font-size="10">Entry</text>
+  <rect x="66" y="420" width="32" height="19" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="76" y="434" fill="#e0e0e0" font-size="11">3</text>
+  <text x="106" y="434" fill="#b0b0b0" font-size="10">Exit</text>
+  <rect x="134" y="420" width="32" height="19" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="144" y="434" fill="#e0e0e0" font-size="11">2</text>
+
+  <!-- Dashed divider -->
+  <line x1="32" y1="448" x2="316" y2="448" stroke="#555" stroke-width="0.5" stroke-dasharray="4,3"/>
+
+  <!-- Override: Trails -->
+  <rect x="32" y="458" width="10" height="10" rx="1" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="48" y="468" fill="#999" font-size="10">Override Trails</text>
+  <text x="152" y="468" fill="#666" font-size="9" font-style="italic">Ch% Ech Dc%</text>
+
+  <!-- Override: Roto -->
+  <rect x="32" y="478" width="10" height="10" rx="1" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="48" y="488" fill="#999" font-size="10">Override Roto</text>
+  <text x="152" y="488" fill="#666" font-size="9" font-style="italic">[Over/Under]</text>
+
+  <!-- Override: Curve -->
+  <rect x="32" y="498" width="10" height="10" rx="1" fill="none" stroke="#888" stroke-width="1"/>
+  <text x="48" y="508" fill="#999" font-size="10">Override Curve</text>
+  <text x="152" y="508" fill="#666" font-size="9" font-style="italic">[Flat/Build/...]</text>
+
+  <!-- Note -->
+  <text x="32" y="530" fill="#555" font-size="8" font-style="italic">Custom Messages override available on BSOD tab</text>
+
+  <!-- Stack controls (global, below tab content but inside frame) -->
+  <text x="32" y="562" fill="#b0b0b0" font-size="10">Stack</text>
+  <rect x="64" y="548" width="32" height="19" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="72" y="562" fill="#e0e0e0" font-size="11">8</text>
+  <text x="106" y="562" fill="#b0b0b0" font-size="10">Offset</text>
+  <rect x="144" y="548" width="32" height="19" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="152" y="562" fill="#e0e0e0" font-size="11">10</text>
+  <text x="186" y="562" fill="#666" font-size="9" font-style="italic">(global)</text>
+
+  <line x1="20" y1="590" x2="330" y2="590" stroke="#555" stroke-width="0.5"/>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- OVERLAYS SECTION                        -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <text x="24" y="608" fill="#d0d0d0" font-size="13" font-weight="bold">Overlays</text>
+
+  <rect x="16" y="616" width="318" height="128" rx="3" fill="#2e2e2e" stroke="#555" stroke-width="0.5"/>
+
+  <!-- Scanlines -->
+  <rect x="28" y="624" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="30" y="634" fill="#4a9eff" font-size="10" font-weight="bold">&#x2713;</text>
+  <text x="46" y="634" fill="#ccc" font-size="10">Scanlines</text>
+  <text x="114" y="634" fill="#888" font-size="9">Opacity</text>
+  <rect x="152" y="622" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="159" y="634" fill="#e0e0e0" font-size="10">20</text>
+  <text x="190" y="634" fill="#888" font-size="9">Spacing</text>
+  <rect x="232" y="622" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="242" y="634" fill="#e0e0e0" font-size="10">4</text>
+
+  <!-- Scanline Jitter -->
+  <rect x="44" y="642" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="62" y="652" fill="#999" font-size="10">Scanline Jitter</text>
+
+  <!-- Noise -->
+  <rect x="28" y="660" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="30" y="670" fill="#4a9eff" font-size="10" font-weight="bold">&#x2713;</text>
+  <text x="46" y="670" fill="#ccc" font-size="10">Noise</text>
+  <text x="94" y="670" fill="#888" font-size="9">Opacity</text>
+  <rect x="134" y="658" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="144" y="670" fill="#e0e0e0" font-size="10">8</text>
+  <text x="172" y="670" fill="#888" font-size="9">Scale</text>
+  <rect x="202" y="658" width="36" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="208" y="670" fill="#e0e0e0" font-size="10">100</text>
+
+  <!-- Complexity -->
+  <text x="44" y="688" fill="#888" font-size="9">Complexity</text>
+  <rect x="102" y="676" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="112" y="688" fill="#e0e0e0" font-size="10">5</text>
+
+  <!-- Head Scratch -->
+  <rect x="28" y="698" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="46" y="708" fill="#999" font-size="10">Head Scratch</text>
+  <text x="124" y="708" fill="#888" font-size="9">Freq</text>
+  <rect x="150" y="696" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="157" y="708" fill="#e0e0e0" font-size="10">20</text>
+  <text x="188" y="708" fill="#888" font-size="9">Height</text>
+  <rect x="222" y="696" width="32" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="232" y="708" fill="#e0e0e0" font-size="10">2</text>
+
+  <!-- Trails -->
+  <rect x="28" y="718" width="12" height="12" rx="2" fill="#1e1e1e" stroke="#666" stroke-width="0.5"/>
+  <text x="30" y="728" fill="#4a9eff" font-size="10" font-weight="bold">&#x2713;</text>
+  <text x="46" y="728" fill="#ccc" font-size="10">Trails</text>
+  <text x="86" y="728" fill="#888" font-size="9">Chance%</text>
+  <rect x="130" y="716" width="28" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="136" y="728" fill="#e0e0e0" font-size="10">20</text>
+  <text x="164" y="728" fill="#888" font-size="9">Echoes</text>
+  <rect x="200" y="716" width="24" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="206" y="728" fill="#e0e0e0" font-size="10">4</text>
+  <text x="230" y="728" fill="#888" font-size="9">Decay%</text>
+  <rect x="272" y="716" width="28" height="16" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="278" y="728" fill="#e0e0e0" font-size="10">50</text>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- ACTIONS                                 -->
+  <!-- ═══════════════════════════════════════ -->
+
+  <!-- Custom Messages -->
+  <rect x="20" y="758" width="310" height="24" rx="3" fill="url(#btnBg)" stroke="#666" stroke-width="0.5"/>
+  <text x="175" y="774" text-anchor="middle" fill="#ccc" font-size="10">Custom Messages...</text>
+
+  <!-- Export Assets -->
+  <rect x="20" y="788" width="310" height="24" rx="3" fill="url(#exportBg)" stroke="#5a8a6a" stroke-width="0.5"/>
+  <text x="175" y="804" text-anchor="middle" fill="#ccc" font-size="10">Export Assets...</text>
+
+  <!-- RANDOMIZE (full width, above action row) -->
+  <rect x="20" y="824" width="310" height="28" rx="3" fill="url(#randBg)" stroke="#7a6a9a" stroke-width="0.5"/>
+  <text x="175" y="843" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">RANDOMIZE</text>
+
+  <!-- REGENERATE / CLEAR ALL -->
+  <rect x="20" y="860" width="148" height="26" rx="3" fill="url(#regenBg)" stroke="#5a7ab5" stroke-width="0.5"/>
+  <text x="94" y="878" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">REGENERATE</text>
+  <rect x="176" y="860" width="154" height="26" rx="3" fill="url(#clearBg)" stroke="#a55a5a" stroke-width="0.5"/>
+  <text x="253" y="878" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">CLEAR ALL</text>
+
+  <!-- Show Log -->
+  <rect x="20" y="894" width="310" height="24" rx="3" fill="url(#btnBg)" stroke="#666" stroke-width="0.5"/>
+  <text x="175" y="910" text-anchor="middle" fill="#ccc" font-size="10">Show Log</text>
+</svg>

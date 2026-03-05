@@ -4198,7 +4198,7 @@ function generate(settings, forceReplace) {
     // ── Virtual resolution dropdown ─────────────────
     var resRow = panel.add("group");
     resRow.orientation = "row";
-    resRow.add("statictext", undefined, "Resolution:");
+    resRow.add("statictext", undefined, "Simulated Resolution:");
     var resDrop = resRow.add("dropdownlist", undefined, []);
     for (var ri = 0; ri < VIRTUAL_RESOLUTIONS.length; ri++) {
         resDrop.add("item", VIRTUAL_RESOLUTIONS[ri].label);
@@ -4215,19 +4215,43 @@ function generate(settings, forceReplace) {
     var rotoStatus = rotoPickRow.add("statictext", undefined, "");
     rotoStatus.preferredSize.width = 80;
 
-    // ── Generate + Randomize buttons ─────────────
-    var btnRow = panel.add("group");
-    btnRow.orientation = "row";
-    var genBtn = btnRow.add("button", undefined, "GENERATE");
-    var randomizeBtn = btnRow.add("button", undefined, "RANDOMIZE");
-    randomizeBtn.preferredSize.width = 85;
-
     // ── Controls panel ────────────────────────────
     var advPanel = panel.add("panel", undefined, "");
     advPanel.orientation = "column";
     advPanel.alignChildren = ["fill", "top"];
     advPanel.margins = 8;
     advPanel.spacing = 4;
+
+    // ── Global Settings: Element Layering, Style, Animation Curves ──
+    var globalPanel = advPanel.add("panel", undefined, "");
+    globalPanel.orientation = "column";
+    globalPanel.alignChildren = ["fill", "top"];
+    globalPanel.margins = 6;
+    globalPanel.spacing = 2;
+
+    var layeringRow = globalPanel.add("group");
+    layeringRow.orientation = "row";
+    layeringRow.add("statictext", undefined, "Element Layering");
+    var rotoModeDropdown = layeringRow.add("dropdownlist", undefined,
+        ["Split", "All Over", "All Under", "Flat"]);
+    rotoModeDropdown.selection = 0;
+    layeringRow.add("statictext", undefined, "Behind%");
+    var rotoBehindField = layeringRow.add("edittext", undefined, "50");
+    rotoBehindField.preferredSize.width = 30;
+
+    var styleRow = globalPanel.add("group");
+    styleRow.orientation = "row";
+    styleRow.add("statictext", undefined, "Style");
+    var animStyleDropdown = styleRow.add("dropdownlist", undefined,
+        ["XP Classic", "Glitch Heavy", "Slow Burn", "Chaos Maximum"]);
+    animStyleDropdown.selection = 0;
+
+    var curveRow = globalPanel.add("group");
+    curveRow.orientation = "row";
+    curveRow.add("statictext", undefined, "Animation Curves");
+    var chaosCurveDropdown = curveRow.add("dropdownlist", undefined,
+        ["Flat", "Build", "Peak", "Burst", "Random"]);
+    chaosCurveDropdown.selection = 0;
 
     // ── Per-Element Tabbed Controls ──────────────
     var elemTabs = advPanel.add("tabbedpanel");
@@ -4522,38 +4546,14 @@ function generate(settings, forceReplace) {
     var trDecay = trRow.add("edittext", undefined, String(DEFAULT_TRAILS_DECAY));
     trDecay.preferredSize.width = 35;
 
-    // ── Style / Roto / Curve ─────────────────────
-    var styleRow = advPanel.add("group");
-    styleRow.orientation = "row";
-    styleRow.add("statictext", undefined, "Style");
-    var animStyleDropdown = styleRow.add("dropdownlist", undefined,
-        ["XP Classic", "Glitch Heavy", "Slow Burn", "Chaos Maximum"]);
-    animStyleDropdown.selection = 0;
-
-    var rotoRow = advPanel.add("group");
-    rotoRow.orientation = "row";
-    rotoRow.add("statictext", undefined, "Roto");
-    var rotoModeDropdown = rotoRow.add("dropdownlist", undefined,
-        ["Split", "All Over", "All Under", "Flat"]);
-    rotoModeDropdown.selection = 0;
-    rotoRow.add("statictext", undefined, "Behind%");
-    var rotoBehindField = rotoRow.add("edittext", undefined, "50");
-    rotoBehindField.preferredSize.width = 30;
-
-    var curveRow = advPanel.add("group");
-    curveRow.orientation = "row";
-    curveRow.add("statictext", undefined, "Curve");
-    var chaosCurveDropdown = curveRow.add("dropdownlist", undefined,
-        ["Flat", "Build", "Peak", "Burst", "Random"]);
-    chaosCurveDropdown.selection = 0;
-
     // Custom messages button
     var customBtn = advPanel.add("button", undefined, "Custom Messages...");
 
     // Export built-in assets button
     var exportBtn = advPanel.add("button", undefined, "Export Assets...");
 
-    // Regenerate, Clear, and Log buttons
+    // Randomize, Regenerate, Clear, and Log buttons
+    var randomizeBtn = advPanel.add("button", undefined, "RANDOMIZE");
     var actionRow = advPanel.add("group");
     actionRow.orientation = "row";
     var regenBtn = actionRow.add("button", undefined, "REGENERATE");
@@ -4621,15 +4621,6 @@ function generate(settings, forceReplace) {
     randomizeBtn.onClick = function() {
         var rs = randomizeSettings();
         applySettingsToUI(ui, rs);
-    };
-
-    genBtn.onClick = function() {
-        refreshRotoDropdown(ui);
-        var settings = settingsFromUI(ui);
-        var count = generate(settings, false);
-        if (count != null) {
-            rotoStatus.text = count + " elems";
-        }
     };
 
     regenBtn.onClick = function() {
