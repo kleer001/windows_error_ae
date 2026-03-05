@@ -822,6 +822,137 @@ function getOrCreateAssetFolder() {
 }
 
 /**
+ * Get or create the WindowsErrorFX_Custom folder in the AE project bin.
+ * This is the user-controlled folder for custom assets.
+ * @returns {FolderItem}
+ */
+function getOrCreateCustomFolder() {
+    var folderName = "WindowsErrorFX_Custom";
+    for (var i = 1; i <= app.project.numItems; i++) {
+        var item = app.project.item(i);
+        if (item instanceof FolderItem && item.name === folderName) {
+            return item;
+        }
+    }
+    return app.project.items.addFolder(folderName);
+}
+
+/**
+ * Find the WindowsErrorFX_Custom folder if it exists (does not create).
+ * @returns {FolderItem|null}
+ */
+function findCustomFolder() {
+    for (var i = 1; i <= app.project.numItems; i++) {
+        var item = app.project.item(i);
+        if (item instanceof FolderItem && item.name === "WindowsErrorFX_Custom") {
+            return item;
+        }
+    }
+    return null;
+}
+
+/**
+ * Export all built-in dialog + cursor PNGs to disk and import into
+ * the WindowsErrorFX_Custom folder, giving users a starting point
+ * to customize/replace/add assets.
+ * @returns {number} Count of exported assets
+ */
+function exportBuiltInAssets() {
+    var customFolder = getOrCreateCustomFolder();
+    var sep = (Folder.myDocuments.fsName.indexOf("/") !== -1) ? "/" : "\\";
+    var dirPath = Folder.myDocuments.fsName + sep + "WindowsErrorFX" + sep + "custom";
+    var dir = new Folder(dirPath);
+    if (!dir.exists) dir.create();
+    if (!dir.exists) {
+        werr("exportBuiltInAssets: cannot create dir: " + dirPath);
+        return 0;
+    }
+
+    var count = 0;
+
+    // Export dialog PNGs
+    for (var i = 0; i < DIALOG_CATALOG.length; i++) {
+        var entry = DIALOG_CATALOG[i];
+        var b64 = DIALOG_PNG_DATA[entry.id];
+        if (!b64) continue;
+        var filename = "dialog_" + entry.id;
+        var filePath = dirPath + sep + filename + ".png";
+        var f = new File(filePath);
+        if (!f.exists) {
+            var binary = b64decode(b64);
+            f.encoding = "BINARY";
+            if (f.open("w")) {
+                f.write(binary);
+                f.close();
+            }
+        }
+        try {
+            var io = new ImportOptions(f);
+            io.importAs = ImportAsType.FOOTAGE;
+            io.sequence = false;
+            var item = app.project.importFile(io);
+            item.name = filename;
+            item.parentFolder = customFolder;
+            count++;
+        } catch (e) {
+            wwarn("exportBuiltInAssets: import failed for " + filename + ": " + e.toString());
+        }
+    }
+
+    // Export cursor PNGs
+    var cursorPairs = [
+        { name: "cursor_arrow", b64: CURSOR_ARROW_B64 },
+        { name: "cursor_hand", b64: CURSOR_HAND_B64 }
+    ];
+    for (var ci = 0; ci < cursorPairs.length; ci++) {
+        var cp = cursorPairs[ci];
+        if (!cp.b64) continue;
+        var cPath = dirPath + sep + cp.name + ".png";
+        var cf = new File(cPath);
+        if (!cf.exists) {
+            var cBin = b64decode(cp.b64);
+            cf.encoding = "BINARY";
+            if (cf.open("w")) {
+                cf.write(cBin);
+                cf.close();
+            }
+        }
+        try {
+            var cio = new ImportOptions(cf);
+            cio.importAs = ImportAsType.FOOTAGE;
+            cio.sequence = false;
+            var cItem = app.project.importFile(cio);
+            cItem.name = cp.name;
+            cItem.parentFolder = customFolder;
+            count++;
+        } catch (e) {
+            wwarn("exportBuiltInAssets: cursor import failed: " + e.toString());
+        }
+    }
+
+    wlog("exportBuiltInAssets: exported " + count + " assets");
+    return count;
+}
+
+/**
+ * Apply position jitter (wiggle expression) to a layer.
+ * @param {Layer} layer    Target AE layer
+ * @param {number} jitterPct  Jitter intensity (0-200, 0=off)
+ * @param {number} compScale  Virtual resolution multiplier
+ */
+function applyJitter(layer, jitterPct, compScale) {
+    if (!jitterPct || jitterPct <= 0) return;
+    var freq = 4 + (jitterPct / 100) * 8;    // 4-12 Hz
+    var amp = (jitterPct / 100) * 30 * (compScale || 1);  // 0-30px scaled
+    try {
+        layer.property("Position").expression =
+            "wiggle(" + freq.toFixed(1) + "," + amp.toFixed(1) + ")";
+    } catch (e) {
+        wwarn("applyJitter failed: " + e.toString());
+    }
+}
+
+/**
  * Build an Error icon: red circle + white X (two rotated rects).
  * contents: shape layer Contents; size: icon bounding box; cx,cy: center.
  */
@@ -1094,7 +1225,8 @@ function defaultElementSettings() {
         rotoForce: null,
         curve: null,
         customMessages: null,
-        customTitles: null
+        customTitles: null,
+        jitter: 0
     };
 }
 
@@ -1122,7 +1254,8 @@ function getElementSettings(settings, type) {
         rotoForce: src.rotoForce || null,
         curve: src.curve || null,
         customMessages: src.customMessages || null,
-        customTitles: src.customTitles || null
+        customTitles: src.customTitles || null,
+        jitter: (src.jitter != null) ? src.jitter : defaults.jitter
     };
 }
 
@@ -1136,9 +1269,18 @@ function migrateSettings(raw) {
     if (!raw) return raw;
     // Backfill virtualRes if missing (any format)
     if (raw.virtualRes == null) raw.virtualRes = DEFAULT_VIRTUAL_RES_INDEX;
-    // Already new format — but backfill freeze if missing
+    // Backfill rotoBehindPct if missing (any format)
+    if (raw.rotoBehindPct == null) raw.rotoBehindPct = 50;
+    // Already new format — but backfill freeze and jitter if missing
     if (raw.elements) {
         if (!raw.elements.freeze) raw.elements.freeze = defaultElementSettings();
+        // Backfill jitter on all element types
+        var _jitterTypes = ["dialog", "bsod", "cursor", "pixel", "freeze"];
+        for (var ji = 0; ji < _jitterTypes.length; ji++) {
+            if (raw.elements[_jitterTypes[ji]] && raw.elements[_jitterTypes[ji]].jitter == null) {
+                raw.elements[_jitterTypes[ji]].jitter = 0;
+            }
+        }
         return raw;
     }
     // Detect old format: has counts or flat minFrames
@@ -1222,7 +1364,8 @@ function randomizeSettings() {
             rotoForce: (Math.random() < 0.3) ? ((Math.random() < 0.5) ? "over" : "under") : null,
             curve: (Math.random() < 0.3) ? curves[Math.floor(Math.random() * curves.length)] : null,
             customMessages: null,
-            customTitles: null
+            customTitles: null,
+            jitter: Math.floor(Math.random() * 100)
         };
         elements[t] = el;
     }
@@ -1260,6 +1403,7 @@ function randomizeSettings() {
         },
         stackDepth: Math.floor(Math.random() * 12) + 3,
         stackOffset: Math.floor(Math.random() * 20) + 5,
+        rotoBehindPct: Math.floor(Math.random() * 101),
         customMessages: [],
         customTitles: [],
         rotoKeywords: [],
@@ -1511,7 +1655,14 @@ function buildDialogBox(params, targetComp) {
     layers.push(nullLayer);
 
     // 2. Pre-rendered dialog PNG (replaces shape layer + all text layers)
-    var footage = params._wefxGetFootage ? params._wefxGetFootage(params.catalogId) : null;
+    var useCustom = params._customAssets && params._customAssets.length > 0
+        && rngBool(rng, 0.5);
+    var footage;
+    if (useCustom) {
+        footage = rngPick(rng, params._customAssets);
+    } else {
+        footage = params._wefxGetFootage ? params._wefxGetFootage(params.catalogId) : null;
+    }
     if (footage) {
         var chrome = targetComp.layers.add(footage);
         chrome.name = "WEFX_Dialog";
@@ -2595,22 +2746,15 @@ function pickDuration(type, minFrames, maxFrames, rng) {
  * Assign "over" or "under" layer based on type and roto mode.
  * Roto interaction matrix from spec.
  */
-function assignLayer(type, rotoMode, rng, forceLayer) {
+function assignLayer(type, rotoMode, rng, forceLayer, behindPct) {
     if (forceLayer === "over") return "over";
     if (forceLayer === "under") return "under";
     if (rotoMode === "flat" || rotoMode === "allOver") return "over";
     if (rotoMode === "allUnder") return "under";
 
-    // Split mode: weighted by type
-    if (type === "bsod")   return rngBool(rng, 0.80) ? "under" : "over";
-    if (type === "dialog") return rngBool(rng, 0.50) ? "over"  : "under";
-
-
-    if (type === "cursor") return rngBool(rng, 0.90) ? "over"  : "under";
-    if (type === "pixel")  return rngBool(rng, 0.50) ? "over"  : "under";
-    if (type === "freeze") return rngBool(rng, 0.50) ? "over"  : "under";
-
-    return "over";
+    // Split mode: use global behind percentage
+    var pct = (behindPct != null) ? behindPct : 50;
+    return rngBool(rng, pct / 100) ? "under" : "over";
 }
 
 /**
@@ -3030,7 +3174,8 @@ function schedule(settings, compInfo) {
         }
 
         var rotoForce = es.rotoForce || null;
-        var layerAssign = assignLayer(type, rotoMode, rng, rotoForce);
+        var behindPct = (settings.rotoBehindPct != null) ? settings.rotoBehindPct : 50;
+        var layerAssign = assignLayer(type, rotoMode, rng, rotoForce, behindPct);
         var job = buildJob(type, inFrame, outFrame, layerAssign, settings, compInfo, rng);
 
 
@@ -3041,6 +3186,7 @@ function schedule(settings, compInfo) {
         job.entryFrames = es.entryFrames;
         job.exitFrames = es.exitFrames;
         job.stackOffset = stackOff;
+        job.jitter = es.jitter || 0;
 
         jobs.push(job);
     }
@@ -3355,6 +3501,8 @@ function defaultSettings() {
         stackOffset: STACK_OFFSET_X,
         // Virtual resolution
         virtualRes: DEFAULT_VIRTUAL_RES_INDEX,
+        // Roto behind percentage (0 = all over, 100 = all under)
+        rotoBehindPct: 50,
         // Custom content
         customMessages: [],
         customTitles: [],
@@ -3484,6 +3632,7 @@ function settingsFromUI(ui) {
             opacityMax: parseInt(tab.opacMax.text, 10) || DEFAULT_OPACITY_MAX,
             entryFrames: parseInt(tab.entryFrames.text, 10) || DEFAULT_ENTRY_FRAMES,
             exitFrames: parseInt(tab.exitFrames.text, 10) || DEFAULT_EXIT_FRAMES,
+            jitter: parseInt(tab.jitter.text, 10) || 0,
             // Per-element overrides (null = inherit global)
             trails: (tab.trailsOverride && tab.trailsOverride.value) ? {
                 enabled: true,
@@ -3533,10 +3682,12 @@ function settingsFromUI(ui) {
         },
         stackDepth: parseInt(ui.stackDepthField.text, 10) || MAX_STACK_DEPTH,
         stackOffset: parseInt(ui.stackOffsetField.text, 10) || STACK_OFFSET_X,
+        rotoBehindPct: parseInt(ui.rotoBehindField.text, 10) || 0,
         customMessages: ui._customMessages || [],
         customTitles: ui._customTitles || [],
         rotoKeywords: ui._rotoKeywords || [],
-        rotoLayerNames: ui._rotoLayerNames || []
+        rotoLayerNames: (ui.rotoPickDropdown && ui.rotoPickDropdown.selection && ui.rotoPickDropdown.selection.index > 0)
+            ? [ui.rotoPickDropdown.selection.text] : []
     };
 }
 
@@ -3564,6 +3715,7 @@ function applySettingsToUI(ui, settings) {
         tab.opacMax.text    = String(es.opacityMax);
         tab.entryFrames.text = String(es.entryFrames);
         tab.exitFrames.text = String(es.exitFrames);
+        tab.jitter.text     = String(es.jitter);
 
         // Per-element overrides
         if (tab.trailsOverride) {
@@ -3632,11 +3784,29 @@ function applySettingsToUI(ui, settings) {
     ui.stackDepthField.text  = String(settings.stackDepth || MAX_STACK_DEPTH);
     ui.stackOffsetField.text = String(settings.stackOffset || STACK_OFFSET_X);
 
+    // Behind percentage
+    ui.rotoBehindField.text = String((settings.rotoBehindPct != null) ? settings.rotoBehindPct : 50);
+
+    // Roto layer picker
+    if (ui.rotoPickDropdown && settings.rotoLayerNames && settings.rotoLayerNames.length > 0) {
+        var rotoName = settings.rotoLayerNames[0];
+        var found = false;
+        for (var rpi = 0; rpi < ui.rotoPickDropdown.items.length; rpi++) {
+            if (ui.rotoPickDropdown.items[rpi].text === rotoName) {
+                ui.rotoPickDropdown.selection = rpi;
+                found = true;
+                break;
+            }
+        }
+        if (!found) ui.rotoPickDropdown.selection = 0;
+    } else if (ui.rotoPickDropdown) {
+        ui.rotoPickDropdown.selection = 0;
+    }
+
     // Custom content
     ui._customMessages = settings.customMessages || [];
     ui._customTitles = settings.customTitles || [];
     ui._rotoKeywords = settings.rotoKeywords || [];
-    ui._rotoLayerNames = settings.rotoLayerNames || [];
 
     // Dropdowns
     var rotoMap  = ["split", "allOver", "allUnder", "flat"];
@@ -3704,7 +3874,20 @@ function generate(settings, forceReplace) {
     }
 
     // 3. Detect roto layers
-    var rotoLayers = detectRotoLayers(comp, ROTO_KEYWORDS, settings.rotoKeywords || []);
+    var rotoLayers;
+    if (settings.rotoLayerNames && settings.rotoLayerNames.length > 0) {
+        rotoLayers = [];
+        for (var rni = 0; rni < settings.rotoLayerNames.length; rni++) {
+            for (var rli = 1; rli <= comp.numLayers; rli++) {
+                if (comp.layers[rli].name === settings.rotoLayerNames[rni]) {
+                    rotoLayers.push(comp.layers[rli]);
+                }
+            }
+        }
+        wlog("Roto: " + rotoLayers.length + " layer(s) from explicit selection");
+    } else {
+        rotoLayers = detectRotoLayers(comp, ROTO_KEYWORDS, settings.rotoKeywords || []);
+    }
     var rotoMode = settings.rotoMode || "split";
     wlog("Roto detection: found " + rotoLayers.length + " layer(s)");
     for (var ri = 0; ri < rotoLayers.length; ri++) {
@@ -3829,6 +4012,18 @@ function generate(settings, forceReplace) {
         }
         wlog("Assets ready (arrow=" + !!_wefxArrowFootage + ", hand=" + !!_wefxHandFootage + ")");
 
+        // 7.6. Scan for custom asset folder
+        var customAssets = [];
+        var customFolder = findCustomFolder();
+        if (customFolder) {
+            for (var cai = 1; cai <= customFolder.numItems; cai++) {
+                if (customFolder.item(cai) instanceof FootageItem) {
+                    customAssets.push(customFolder.item(cai));
+                }
+            }
+            wlog("Custom assets found: " + customAssets.length);
+        }
+
         // 8. Build each element
         wlog("Building " + jobs.length + " elements...");
         for (var i = 0; i < jobs.length; i++) {
@@ -3838,6 +4033,7 @@ function generate(settings, forceReplace) {
             // Pass footage references to dialog and cursor jobs
             if (job.type === "dialog") {
                 job._wefxGetFootage = _wefxGetFootage;
+                job._customAssets = customAssets;
             } else if (job.type === "cursor") {
                 job._wefxArrowFootage = _wefxArrowFootage;
                 job._wefxHandFootage = _wefxHandFootage;
@@ -3922,6 +4118,11 @@ function generate(settings, forceReplace) {
                     });
                 }
 
+                // Apply jitter expression if enabled for this element type
+                if (job.jitter > 0 && builtLayers && builtLayers.length > 0) {
+                    applyJitter(builtLayers[0], job.jitter, compScale);
+                }
+
                 builtCount++;
             } catch (buildErr) {
                 errorCount++;
@@ -4004,8 +4205,15 @@ function generate(settings, forceReplace) {
     }
     resDrop.selection = DEFAULT_VIRTUAL_RES_INDEX;
 
-    // ── Roto status ───────────────────────────────
-    var rotoStatus = panel.add("statictext", undefined, "Roto: checking...");
+    // ── Roto layer picker ────────────────────────────
+    var rotoPickRow = panel.add("group");
+    rotoPickRow.orientation = "row";
+    rotoPickRow.add("statictext", undefined, "Roto:");
+    var rotoPickDropdown = rotoPickRow.add("dropdownlist", undefined, ["Auto-detect"]);
+    rotoPickDropdown.selection = 0;
+    rotoPickDropdown.preferredSize.width = 160;
+    var rotoStatus = rotoPickRow.add("statictext", undefined, "");
+    rotoStatus.preferredSize.width = 80;
 
     // ── Generate + Randomize buttons ─────────────
     var btnRow = panel.add("group");
@@ -4014,16 +4222,12 @@ function generate(settings, forceReplace) {
     var randomizeBtn = btnRow.add("button", undefined, "RANDOMIZE");
     randomizeBtn.preferredSize.width = 85;
 
-    // ── Advanced section (collapsible) ────────────
-    var advPanel = panel.add("panel", undefined, "ADVANCED");
+    // ── Controls panel ────────────────────────────
+    var advPanel = panel.add("panel", undefined, "");
     advPanel.orientation = "column";
     advPanel.alignChildren = ["fill", "top"];
     advPanel.margins = 8;
     advPanel.spacing = 4;
-    advPanel.visible = false;
-
-    var advToggle = panel.add("button", undefined, "Show Advanced");
-    advToggle.preferredSize.height = 22;
 
     // ── Per-Element Tabbed Controls ──────────────
     var elemTabs = advPanel.add("tabbedpanel");
@@ -4057,7 +4261,7 @@ function generate(settings, forceReplace) {
         var maxF = r2.add("edittext", undefined, String(MAX_FRAMES));
         maxF.preferredSize.width = 35;
 
-        // Row 3: Scale / Speed
+        // Row 3: Scale / Speed / Jitter
         var r3 = tab.add("group");
         r3.orientation = "row";
         r3.add("statictext", undefined, "Scale%").preferredSize.width = 42;
@@ -4066,6 +4270,9 @@ function generate(settings, forceReplace) {
         r3.add("statictext", undefined, "Spd%").preferredSize.width = 32;
         var speedF = r3.add("edittext", undefined, String(DEFAULT_SPEED_MULT));
         speedF.preferredSize.width = 35;
+        r3.add("statictext", undefined, "Jit").preferredSize.width = 20;
+        var jitterF = r3.add("edittext", undefined, "0");
+        jitterF.preferredSize.width = 30;
 
         // Row 4: Opacity min-max
         var r4 = tab.add("group");
@@ -4173,6 +4380,7 @@ function generate(settings, forceReplace) {
             maxFrames: maxF,
             scale: scaleF,
             speed: speedF,
+            jitter: jitterF,
             opacMin: opMinF,
             opacMax: opMaxF,
             entryFrames: entryF,
@@ -4328,6 +4536,9 @@ function generate(settings, forceReplace) {
     var rotoModeDropdown = rotoRow.add("dropdownlist", undefined,
         ["Split", "All Over", "All Under", "Flat"]);
     rotoModeDropdown.selection = 0;
+    rotoRow.add("statictext", undefined, "Behind%");
+    var rotoBehindField = rotoRow.add("edittext", undefined, "50");
+    rotoBehindField.preferredSize.width = 30;
 
     var curveRow = advPanel.add("group");
     curveRow.orientation = "row";
@@ -4338,6 +4549,9 @@ function generate(settings, forceReplace) {
 
     // Custom messages button
     var customBtn = advPanel.add("button", undefined, "Custom Messages...");
+
+    // Export built-in assets button
+    var exportBtn = advPanel.add("button", undefined, "Export Assets...");
 
     // Regenerate, Clear, and Log buttons
     var actionRow = advPanel.add("group");
@@ -4352,6 +4566,8 @@ function generate(settings, forceReplace) {
         seedField: seedField,
         chaosField: chaosField,
         rotoStatus: rotoStatus,
+        rotoPickDropdown: rotoPickDropdown,
+        rotoBehindField: rotoBehindField,
         // Per-element tabbed controls
         elemTabs: tabUI,
         // Overlays
@@ -4375,6 +4591,31 @@ function generate(settings, forceReplace) {
         _rotoLayerNames: []
     };
 
+    // ── Helper: refresh roto layer dropdown ─────────
+    function refreshRotoDropdown(ui) {
+        var dd = ui.rotoPickDropdown;
+        var prevSelection = (dd.selection) ? dd.selection.text : null;
+        dd.removeAll();
+        dd.add("item", "Auto-detect");
+        var comp = null;
+        try { comp = app.project.activeItem; } catch (e) {}
+        if (comp && comp instanceof CompItem) {
+            for (var li = 1; li <= comp.numLayers; li++) {
+                dd.add("item", comp.layers[li].name);
+            }
+        }
+        // Restore previous selection if still valid
+        if (prevSelection && prevSelection !== "Auto-detect") {
+            for (var ri = 1; ri < dd.items.length; ri++) {
+                if (dd.items[ri].text === prevSelection) {
+                    dd.selection = ri;
+                    return;
+                }
+            }
+        }
+        dd.selection = 0;
+    }
+
     // ── Event handlers ────────────────────────────
 
     randomizeBtn.onClick = function() {
@@ -4382,25 +4623,21 @@ function generate(settings, forceReplace) {
         applySettingsToUI(ui, rs);
     };
 
-    advToggle.onClick = function() {
-        advPanel.visible = !advPanel.visible;
-        advToggle.text = advPanel.visible ? "Hide Advanced" : "Show Advanced";
-        panel.layout.layout(true);
-    };
-
     genBtn.onClick = function() {
+        refreshRotoDropdown(ui);
         var settings = settingsFromUI(ui);
         var count = generate(settings, false);
         if (count != null) {
-            rotoStatus.text = "Generated " + count + " elements.";
+            rotoStatus.text = count + " elems";
         }
     };
 
     regenBtn.onClick = function() {
+        refreshRotoDropdown(ui);
         var settings = settingsFromUI(ui);
         var count = generate(settings, true);
         if (count != null) {
-            rotoStatus.text = "Regenerated " + count + " elements.";
+            rotoStatus.text = count + " elems";
         }
     };
 
@@ -4526,24 +4763,34 @@ function generate(settings, forceReplace) {
         }
     };
 
+    exportBtn.onClick = function() {
+        try {
+            var exported = exportBuiltInAssets();
+            alert("Exported " + exported + " assets to WindowsErrorFX_Custom folder.");
+        } catch (e) {
+            alert("Export failed: " + e.toString());
+        }
+    };
+
     // ── Load existing settings if available ───────
     wlog("Panel init: loading settings...");
     try {
         var comp = app.project.activeItem;
         if (comp && comp instanceof CompItem) {
             wlog("Panel init: active comp \"" + comp.name + "\" " + comp.width + "x" + comp.height);
+            refreshRotoDropdown(ui);
             var saved = loadSettings(comp);
             applySettingsToUI(ui, saved);
             wlog("Panel init: settings loaded (seed=" + saved.seed + " chaos=" + saved.chaos + ")");
             var roto = detectRotoLayers(comp, ROTO_KEYWORDS, []);
-            rotoStatus.text = "Roto layers: " + roto.length + " detected";
+            rotoStatus.text = roto.length + " roto";
             wlog("Panel init: " + roto.length + " roto layers detected");
         } else {
-            rotoStatus.text = "No active composition.";
+            rotoStatus.text = "No comp";
             wlog("Panel init: no active comp");
         }
     } catch (e) {
-        rotoStatus.text = "Ready.";
+        rotoStatus.text = "Ready";
         werr("Panel init failed: " + e.toString());
     }
     wlog("Panel init complete.");

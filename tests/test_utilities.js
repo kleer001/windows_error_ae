@@ -183,6 +183,7 @@ assert(des.rotoForce === null, "defaultElementSettings rotoForce = null");
 assert(des.curve === null, "defaultElementSettings curve = null");
 assert(des.customMessages === null, "defaultElementSettings customMessages = null");
 assert(des.customTitles === null, "defaultElementSettings customTitles = null");
+assert(des.jitter === 0, "defaultElementSettings jitter = 0");
 
 // --- getElementSettings ---
 // Full settings with elements
@@ -238,6 +239,19 @@ assert(gesNoOv.rotoForce === null, "getElementSettings bsod rotoForce null when 
 assert(gesNoOv.curve === null, "getElementSettings bsod curve null when not set");
 assert(gesNoOv.customMessages === null, "getElementSettings bsod customMessages null when not set");
 assert(gesNoOv.customTitles === null, "getElementSettings bsod customTitles null when not set");
+
+// --- getElementSettings jitter ---
+var jitterSettings = ctx.defaultSettings();
+jitterSettings.elements.cursor.jitter = 75;
+var gesJitter = ctx.getElementSettings(jitterSettings, "cursor");
+assert(gesJitter.jitter === 75, "getElementSettings jitter override = 75");
+var gesJitterDefault = ctx.getElementSettings(jitterSettings, "dialog");
+assert(gesJitterDefault.jitter === 0, "getElementSettings jitter defaults to 0");
+// Jitter = 0 should not be treated as falsy
+var jitterZero = ctx.defaultSettings();
+jitterZero.elements.dialog.jitter = 0;
+var gesJZ = ctx.getElementSettings(jitterZero, "dialog");
+assert(gesJZ.jitter === 0, "getElementSettings jitter=0 not treated as falsy");
 
 // --- migrateSettings ---
 // Old format → new
@@ -451,6 +465,54 @@ assert(migratedZero.virtualRes === 0, "migrateSettings preserves virtualRes = 0 
 var rsVR = ctx.randomizeSettings();
 assert(rsVR.virtualRes != null, "randomizeSettings includes virtualRes");
 assert(rsVR.virtualRes >= 0 && rsVR.virtualRes < 5, "randomizeSettings virtualRes in valid range 0-4");
+
+// --- defaultSettings includes rotoBehindPct ---
+var dsBP = ctx.defaultSettings();
+assert(dsBP.rotoBehindPct === 50, "defaultSettings rotoBehindPct = 50");
+
+// --- migrateSettings backfills rotoBehindPct ---
+var oldNoBP = { elements: { dialog: {}, bsod: {}, cursor: {}, pixel: {}, freeze: {} } };
+var migratedBP = ctx.migrateSettings(oldNoBP);
+assert(migratedBP.rotoBehindPct === 50, "migrateSettings backfills rotoBehindPct = 50");
+
+// migrateSettings preserves existing rotoBehindPct
+var hasBP = { rotoBehindPct: 80, elements: { dialog: {}, bsod: {}, cursor: {}, pixel: {}, freeze: {} } };
+var migratedBPKeep = ctx.migrateSettings(hasBP);
+assert(migratedBPKeep.rotoBehindPct === 80, "migrateSettings preserves existing rotoBehindPct = 80");
+
+// migrateSettings handles rotoBehindPct=0 correctly (not treated as falsy)
+var bpZero = { rotoBehindPct: 0, elements: { dialog: {}, bsod: {}, cursor: {}, pixel: {}, freeze: {} } };
+var migratedBPZero = ctx.migrateSettings(bpZero);
+assert(migratedBPZero.rotoBehindPct === 0, "migrateSettings preserves rotoBehindPct = 0 (not treated as falsy)");
+
+// --- migrateSettings backfills jitter ---
+var oldNoJitter = { elements: { dialog: { count: 3 }, bsod: {}, cursor: {}, pixel: {}, freeze: {} } };
+var migratedJitter = ctx.migrateSettings(oldNoJitter);
+assert(migratedJitter.elements.dialog.jitter === 0, "migrateSettings backfills dialog jitter = 0");
+assert(migratedJitter.elements.bsod.jitter === 0, "migrateSettings backfills bsod jitter = 0");
+assert(migratedJitter.elements.cursor.jitter === 0, "migrateSettings backfills cursor jitter = 0");
+assert(migratedJitter.elements.pixel.jitter === 0, "migrateSettings backfills pixel jitter = 0");
+assert(migratedJitter.elements.freeze.jitter === 0, "migrateSettings backfills freeze jitter = 0");
+
+// migrateSettings preserves existing jitter
+var hasJitter = { elements: { dialog: { jitter: 50 }, bsod: {}, cursor: {}, pixel: {}, freeze: {} } };
+var migratedJK = ctx.migrateSettings(hasJitter);
+assert(migratedJK.elements.dialog.jitter === 50, "migrateSettings preserves existing jitter = 50");
+
+// --- randomizeSettings includes rotoBehindPct ---
+var rsBP = ctx.randomizeSettings();
+assert(rsBP.rotoBehindPct != null, "randomizeSettings includes rotoBehindPct");
+assert(rsBP.rotoBehindPct >= 0 && rsBP.rotoBehindPct <= 100, "randomizeSettings rotoBehindPct in 0-100");
+
+// --- randomizeSettings includes jitter per element ---
+var rsJit = ctx.randomizeSettings();
+var jitTypes = ["dialog", "bsod", "cursor", "pixel", "freeze"];
+for (var jti = 0; jti < jitTypes.length; jti++) {
+    assert(rsJit.elements[jitTypes[jti]].jitter != null,
+        "randomizeSettings " + jitTypes[jti] + " has jitter");
+    assert(rsJit.elements[jitTypes[jti]].jitter >= 0 && rsJit.elements[jitTypes[jti]].jitter < 100,
+        "randomizeSettings " + jitTypes[jti] + " jitter in 0-99");
+}
 
 console.log("Utilities: " + passed + " passed, " + failed + " failed");
 module.exports = { passed: passed, failed: failed };

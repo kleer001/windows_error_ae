@@ -198,23 +198,53 @@ for (var i = 0; i < 100; i++) {
         "assignLayer allUnder always returns 'under'");
 }
 
-// Split mode: BSOD is mostly under
-var rngSB = ctx.createRNG(42);
-var bsodUnder = 0;
+// Split mode: default behindPct (50) gives ~50/50
+var rngS50 = ctx.createRNG(42);
+var splitUnder50 = 0;
 for (var i = 0; i < 1000; i++) {
-    if (ctx.assignLayer("bsod", "split", rngSB) === "under") bsodUnder++;
+    if (ctx.assignLayer("dialog", "split", rngS50, null, 50) === "under") splitUnder50++;
 }
-assert(bsodUnder > 600,
-    "assignLayer split: BSOD mostly under (80% expected, got " + (bsodUnder / 10).toFixed(1) + "%)");
+assert(Math.abs(splitUnder50 - 500) < 100,
+    "assignLayer split behindPct=50: ~50% under (got " + (splitUnder50 / 10).toFixed(1) + "%)");
 
-// Split mode: cursor mostly over
-var rngSC = ctx.createRNG(42);
-var cursorOver = 0;
-for (var i = 0; i < 1000; i++) {
-    if (ctx.assignLayer("cursor", "split", rngSC) === "over") cursorOver++;
+// behindPct=0: always "over"
+var rngB0 = ctx.createRNG(42);
+for (var i = 0; i < 100; i++) {
+    assert(ctx.assignLayer("bsod", "split", rngB0, null, 0) === "over",
+        "assignLayer behindPct=0 always over");
 }
-assert(cursorOver > 700,
-    "assignLayer split: cursor mostly over (90% expected, got " + (cursorOver / 10).toFixed(1) + "%)");
+
+// behindPct=100: always "under"
+var rngB100 = ctx.createRNG(42);
+for (var i = 0; i < 100; i++) {
+    assert(ctx.assignLayer("cursor", "split", rngB100, null, 100) === "under",
+        "assignLayer behindPct=100 always under");
+}
+
+// behindPct=30: ~30% under
+var rngB30 = ctx.createRNG(42);
+var under30 = 0;
+for (var i = 0; i < 1000; i++) {
+    if (ctx.assignLayer("dialog", "split", rngB30, null, 30) === "under") under30++;
+}
+assert(Math.abs(under30 - 300) < 100,
+    "assignLayer behindPct=30: ~30% under (got " + (under30 / 10).toFixed(1) + "%)");
+
+// behindPct=null defaults to 50
+var rngBNull = ctx.createRNG(42);
+var underNull = 0;
+for (var i = 0; i < 1000; i++) {
+    if (ctx.assignLayer("dialog", "split", rngBNull, null, null) === "under") underNull++;
+}
+assert(Math.abs(underNull - 500) < 100,
+    "assignLayer split null behindPct defaults to ~50% under (got " + (underNull / 10).toFixed(1) + "%)");
+
+// forceLayer still overrides behindPct
+var rngForce = ctx.createRNG(42);
+assert(ctx.assignLayer("dialog", "split", rngForce, "over", 100) === "over",
+    "assignLayer forceLayer 'over' overrides behindPct=100");
+assert(ctx.assignLayer("dialog", "split", rngForce, "under", 0) === "under",
+    "assignLayer forceLayer 'under' overrides behindPct=0");
 
 
 // ── buildJob ──────────────────────────────────────────
@@ -1418,6 +1448,63 @@ assert(avgDurSlow > avgDurNorm,
         assert(catalogIds[job.catalogId] === true,
             "catalogId exists in DIALOG_CATALOG: " + job.catalogId);
     }
+})();
+
+
+// --- schedule() puts jitter on jobs ---
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.elements.dialog.count = 3;
+    s.elements.dialog.jitter = 75;
+    s.elements.cursor.count = 2;
+    s.elements.cursor.jitter = 0;
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type === "dialog") {
+            assert(jobs[i].jitter === 75,
+                "schedule: dialog job.jitter = 75 (got " + jobs[i].jitter + ")");
+        }
+        if (jobs[i].type === "cursor") {
+            assert(jobs[i].jitter === 0,
+                "schedule: cursor job.jitter = 0 (got " + jobs[i].jitter + ")");
+        }
+    }
+})();
+
+// --- schedule() passes rotoBehindPct to assignLayer ---
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.chaos = 100;
+    s.rotoMode = "split";
+    s.rotoBehindPct = 0;
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    for (var i = 0; i < jobs.length; i++) {
+        assert(jobs[i].layer === "over",
+            "schedule behindPct=0: all jobs over (got " + jobs[i].layer + " for " + jobs[i].type + ")");
+    }
+})();
+
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.chaos = 100;
+    s.rotoMode = "split";
+    s.rotoBehindPct = 100;
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    var allUnder = true;
+    for (var i = 0; i < jobs.length; i++) {
+        // forceLayer overrides may cause some to be different
+        if (!jobs[i].type) continue;
+        var es = ctx.getElementSettings(s, jobs[i].type);
+        if (es.rotoForce) continue;
+        if (jobs[i].layer !== "under") allUnder = false;
+    }
+    assert(allUnder, "schedule behindPct=100: non-forced jobs all under");
 })();
 
 
