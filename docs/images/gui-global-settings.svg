@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="96" font-family="Segoe UI, Arial, sans-serif" font-size="11">
+  <defs>
+    <linearGradient id="globalBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#362e2e"/>
+      <stop offset="100%" stop-color="#2f2828"/>
+    </linearGradient>
+  </defs>
+  <!-- Panel background -->
+  <rect width="340" height="96" rx="4" fill="url(#globalBg)" stroke="#5e5353" stroke-width="1"/>
+  <!-- Row 1: Element Layering -->
+  <text x="16" y="22" fill="#b0a0a0" font-size="10" font-weight="bold">Element Layering</text>
+  <rect x="132" y="8" width="90" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="140" y="21" fill="#e0e0e0" font-size="10">Split</text>
+  <text x="210" y="21" fill="#777" font-size="9">&#x25BE;</text>
+  <text x="234" y="21" fill="#a09090" font-size="9">Behind%</text>
+  <rect x="286" y="8" width="34" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="294" y="21" fill="#e0e0e0" font-size="10">50</text>
+  <!-- Row 2: Style -->
+  <text x="16" y="48" fill="#b0a0a0" font-size="10" font-weight="bold">Style</text>
+  <rect x="132" y="34" width="120" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="140" y="47" fill="#e0e0e0" font-size="10">XP Classic</text>
+  <text x="238" y="47" fill="#777" font-size="9">&#x25BE;</text>
+  <!-- Row 3: Animation Curves -->
+  <text x="16" y="74" fill="#b0a0a0" font-size="10" font-weight="bold">Animation Curves</text>
+  <rect x="132" y="60" width="120" height="18" rx="2" fill="#1e1e1e" stroke="#555" stroke-width="0.5"/>
+  <text x="140" y="73" fill="#e0e0e0" font-size="10">Flat</text>
+  <text x="238" y="73" fill="#777" font-size="9">&#x25BE;</text>
+</svg>

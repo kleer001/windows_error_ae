@@ -75,7 +75,11 @@ Stack Depth and Offset (for dialog cascade stacking) remain global controls belo
 
 ### Global Settings
 
-Between the main controls and the element tabs, a grouped panel provides global behavior settings:
+<p align="center">
+  <img src="docs/images/gui-global-settings.svg" alt="Global settings panel" width="340"/>
+</p>
+
+Below the roto picker, a grouped panel controls how elements behave globally:
 
 | Control | What it does |
 |---|---|
