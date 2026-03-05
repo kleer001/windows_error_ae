@@ -53,6 +53,21 @@ A pre-comp with error windows, BSOD panels, cursors, glitch text, pixel corrupti
 
 Enter a seed, set your chaos level, and choose a roto layer (or leave on **Auto-detect**).
 
+### Global Settings
+
+<p align="center">
+  <img src="docs/images/gui-global-settings.svg" alt="Global settings panel" width="340"/>
+</p>
+
+Below the roto picker, a grouped panel controls how elements behave globally:
+
+| Control | What it does |
+|---|---|
+| **Element Layering** | How elements interact with roto layers (Split / All Over / All Under / Flat) |
+| **Behind %** | Probability of elements going behind the roto subject (0 = all over, 100 = all under) |
+| **Style** | Animation personality: XP Classic, Glitch Heavy, Slow Burn, Chaos Maximum |
+| **Animation Curves** | Time distribution: Flat, Build, Peak, Burst, Random |
+
 ### Per-Element Tabs
 
 <p align="center">
@@ -72,21 +87,6 @@ A tabbed panel gives independent control over each of the 6 element types (Dialo
 | **Entry / Exit** | Fade-in and fade-out frames |
 
 Stack Depth and Offset (for dialog cascade stacking) remain global controls below the tabs.
-
-### Global Settings
-
-<p align="center">
-  <img src="docs/images/gui-global-settings.svg" alt="Global settings panel" width="340"/>
-</p>
-
-Below the roto picker, a grouped panel controls how elements behave globally:
-
-| Control | What it does |
-|---|---|
-| **Element Layering** | How elements interact with roto layers (Split / All Over / All Under / Flat) |
-| **Behind %** | Probability of elements going behind the roto subject (0 = all over, 100 = all under) |
-| **Style** | Animation personality: XP Classic, Glitch Heavy, Slow Burn, Chaos Maximum |
-| **Animation Curves** | Time distribution: Flat, Build, Peak, Burst, Random |
 
 ### Overlays & Actions
 
