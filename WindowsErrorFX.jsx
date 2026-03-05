@@ -164,8 +164,8 @@ var C_PIXEL_COLORS    = [
 ];
 
 // ── Fonts ────────────────────────────────────────────────────────
-var FONT_MONO = "Courier New";
-var FONT_UI   = "Arial";
+var FONT_MONO = "CourierNewPSMT";
+var FONT_UI   = "ArialMT";
 
 // ── Font sizes ───────────────────────────────────────────────────
 var FSIZE_BSOD         = 13;
@@ -344,8 +344,8 @@ var DIALOG_VARIANTS = {
 };
 
 // ── BSOD fonts ──────────────────────────────────────────────
-var FONT_BSOD      = "Lucida Console";     // XP era
-var FONT_BSOD_9X   = "Courier New";        // Win 9x fallback
+var FONT_BSOD      = "CourierNewPSMT";      // XP era (PostScript name; Lucida Console is Windows-only)
+var FONT_BSOD_9X   = "CourierNewPSMT";     // Win 9x (PostScript name)
 
 // ── Geometry extras ─────────────────────────────────────────
 var GEO_ICON_SIZE  = 32;
@@ -2226,9 +2226,11 @@ function buildFreezeStrip(job, targetComp) {
         // Enable time remapping and freeze on a single frame
         dup.timeRemapEnabled = true;
         var tr = dup.property("ADBE Time Remapping");
-        // Remove default keyframes, set constant value
-        while (tr.numKeys > 0) tr.removeKey(1);
-        tr.setValue(freezeTimeSec);
+        // Set all existing keyframes to the freeze time (don't remove them —
+        // removing all keyframes hides the property and breaks setValue)
+        for (var ki = tr.numKeys; ki >= 1; ki--) {
+            tr.setValueAtTime(tr.keyTime(ki), freezeTimeSec);
+        }
 
         // Apply rectangular mask for the strip
         var mask = dup.property("ADBE Mask Parade").addProperty("ADBE Mask Atom");
@@ -3715,10 +3717,16 @@ function generate(settings, forceReplace) {
     wlog("Effective rotoMode: " + rotoMode);
 
     // 3.5. Find primary footage layer for pixel corruption variants
+    // Skip roto layers — they're alpha mattes, not source footage
     var footageLayer = null;
     for (var fi = 1; fi <= comp.numLayers; fi++) {
         var fl = comp.layers[fi];
-        if (fl.name.indexOf("WEFX_") !== 0 &&
+        var isRoto = false;
+        for (var rli = 0; rli < rotoLayers.length; rli++) {
+            if (rotoLayers[rli].index === fl.index) { isRoto = true; break; }
+        }
+        if (!isRoto &&
+            fl.name.indexOf("WEFX_") !== 0 &&
             !(fl instanceof ShapeLayer) &&
             fl.adjustmentLayer !== true &&
             fl.nullLayer !== true) {
@@ -3861,15 +3869,18 @@ function generate(settings, forceReplace) {
             else if (job.type === "pixel")  jobDesc += " behavior=" + (job.behavior || "?");
             else if (job.type === "freeze") jobDesc += " behavior=" + (job.behavior || "?") + " freezeF=" + (job.freezeFrame || 0);
 
-            jobDesc += " @(" + Math.round(job.x) + "," + Math.round(job.y) + ")";
+            if (job.type !== "freeze") {
+                jobDesc += " @(" + Math.round(job.x) + "," + Math.round(job.y) + ")";
+            }
             wlog(jobDesc);
+
+            // Track layer count before building so we can clean up on failure
+            var layersBefore = targetComp.numLayers;
 
             try {
                 var builtLayers = null;
                 if      (job.type === "bsod")   builtLayers = buildBSOD(job, targetComp);
                 else if (job.type === "dialog") builtLayers = buildDialogBox(job, targetComp);
-
-
                 else if (job.type === "cursor") builtLayers = buildCursor(job, targetComp);
                 else if (job.type === "pixel")  builtLayers = buildPixelBlock(job, targetComp);
                 else if (job.type === "freeze") {
@@ -3916,7 +3927,11 @@ function generate(settings, forceReplace) {
                 errorCount++;
                 werr("Builder FAILED for job " + (i + 1) + " (" + job.type + "): " +
                      buildErr.toString() + " [line " + (buildErr.line || "?") + "]");
-                // Continue to next element — don't let one failure kill the whole run
+                // Remove any orphaned layers created before the error
+                var orphanCount = targetComp.numLayers - layersBefore;
+                for (var oi = 0; oi < orphanCount; oi++) {
+                    try { targetComp.layer(1).remove(); } catch (e) {}
+                }
             }
         }
 

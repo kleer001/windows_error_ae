@@ -240,7 +240,7 @@ var textProp = textLayer.property("Source Text");
 var textDoc  = textProp.value;
 
 textDoc.text      = "Hello World";
-textDoc.font      = "Courier New";
+textDoc.font      = "CourierNewPSMT";  // Must use PostScript name, not display name
 textDoc.fontSize  = 14;
 textDoc.fillColor = [1, 1, 1];  // white
 textDoc.applyFill = true;
