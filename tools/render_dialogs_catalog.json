@@ -1,0 +1,49 @@
+[
+  {"id": "A_error_0",    "variant": "A", "icon": "error",    "title": "System Error",                 "body": "This application has performed an illegal operation and will be shut down.",          "buttons": ["Close", "Details >>"]},
+  {"id": "A_error_1",    "variant": "A", "icon": "error",    "title": "Fatal Error",                  "body": "A fatal exception has occurred at 0x0028C001.",                                       "buttons": ["OK"]},
+  {"id": "A_error_2",    "variant": "A", "icon": "error",    "title": "Application Error",            "body": "Runtime Error! Program has generated errors and will be closed by Windows.",          "buttons": ["OK", "Cancel"]},
+
+  {"id": "A_warning_0",  "variant": "A", "icon": "warning",  "title": "Warning",                      "body": "Insufficient system resources exist to complete the requested service.",               "buttons": ["OK"]},
+  {"id": "A_warning_1",  "variant": "A", "icon": "warning",  "title": "System Restore",               "body": "The system has recovered from a serious error.",                                      "buttons": ["OK", "Help"]},
+  {"id": "A_warning_2",  "variant": "A", "icon": "warning",  "title": "Windows Protection Error",     "body": "Windows has encountered a critical error and needs to restart.",                      "buttons": ["Retry", "Cancel"]},
+
+  {"id": "A_question_0", "variant": "A", "icon": "question", "title": "Confirm",                      "body": "Are you sure you want to terminate the current application?",                         "buttons": ["Yes", "No"]},
+  {"id": "A_question_1", "variant": "A", "icon": "question", "title": "Explorer.exe",                 "body": "The file or directory is corrupted and unreadable.",                                  "buttons": ["Abort", "Retry", "Ignore"]},
+  {"id": "A_question_2", "variant": "A", "icon": "question", "title": "License Wizard",               "body": "Not enough memory to complete this operation.",                                       "buttons": ["OK"]},
+
+  {"id": "A_none_0",     "variant": "A", "icon": "none",     "title": "Error",                        "body": "An unexpected error has occurred.",                                                   "buttons": ["OK"]},
+  {"id": "A_none_1",     "variant": "A", "icon": "none",     "title": "Not Responding",               "body": "Error loading operating system.",                                                     "buttons": ["OK", "Cancel"]},
+  {"id": "A_none_2",     "variant": "A", "icon": "none",     "title": "Runtime Exception",            "body": "Stack overflow.",                                                                    "buttons": ["OK"]},
+
+  {"id": "B_error_0",    "variant": "B", "icon": "error",    "title": "System Error",                 "body": "The instruction at 0x00000000 referenced memory at 0x00000000. The memory could not be read.", "buttons": ["OK"]},
+  {"id": "B_error_1",    "variant": "B", "icon": "error",    "title": "Application Error",            "body": "Access violation at address 0x77F52F12 in module kernel32.dll.",                      "buttons": ["OK", "Cancel"]},
+  {"id": "B_error_2",    "variant": "B", "icon": "error",    "title": "Fatal Error",                  "body": "The procedure entry point could not be located in the dynamic link library.",         "buttons": ["OK"]},
+
+  {"id": "B_warning_0",  "variant": "B", "icon": "warning",  "title": "Warning",                      "body": "Windows has encountered a critical error and needs to restart.",                      "buttons": ["OK"]},
+  {"id": "B_warning_1",  "variant": "B", "icon": "warning",  "title": "System Restore",               "body": "Insufficient system resources exist to complete the requested service.",               "buttons": ["Retry", "Cancel"]},
+  {"id": "B_warning_2",  "variant": "B", "icon": "warning",  "title": "Windows Protection Error",     "body": "The system has recovered from a serious error.",                                      "buttons": ["OK", "Help"]},
+
+  {"id": "B_question_0", "variant": "B", "icon": "question", "title": "Confirm",                      "body": "Click OK to terminate the program.",                                                  "buttons": ["OK"]},
+  {"id": "B_question_1", "variant": "B", "icon": "question", "title": "Explorer.exe",                 "body": "Not enough memory to complete this operation.",                                       "buttons": ["Yes", "No"]},
+  {"id": "B_question_2", "variant": "B", "icon": "question", "title": "License Wizard",               "body": "The file or directory is corrupted and unreadable.",                                  "buttons": ["Abort", "Retry", "Ignore"]},
+
+  {"id": "B_none_0",     "variant": "B", "icon": "none",     "title": "Error",                        "body": "An unexpected error has occurred.",                                                   "buttons": ["OK"]},
+  {"id": "B_none_1",     "variant": "B", "icon": "none",     "title": "Not Responding",               "body": "Error loading operating system.",                                                     "buttons": ["OK", "Cancel"]},
+  {"id": "B_none_2",     "variant": "B", "icon": "none",     "title": "Microsoft Visual C++ Runtime", "body": "Runtime Error! Program has generated errors and will be closed by Windows.",          "buttons": ["OK"]},
+
+  {"id": "C_error_0",    "variant": "C", "icon": "error",    "title": "System Error",                 "body": "Cannot find the file or one of its components. Make sure the path and filename are correct.", "buttons": ["OK"]},
+  {"id": "C_error_1",    "variant": "C", "icon": "error",    "title": "Application Error",            "body": "A fatal exception has occurred at 0x0028C001.",                                       "buttons": ["OK", "Cancel"]},
+  {"id": "C_error_2",    "variant": "C", "icon": "error",    "title": "Fatal Error",                  "body": "The instruction at 0x004A2D10 referenced memory at 0x00000000. The memory could not be read.", "buttons": ["OK"]},
+
+  {"id": "C_warning_0",  "variant": "C", "icon": "warning",  "title": "Warning",                      "body": "Windows has encountered a critical error and needs to restart.",                      "buttons": ["OK"]},
+  {"id": "C_warning_1",  "variant": "C", "icon": "warning",  "title": "System Restore",               "body": "The system has recovered from a serious error.",                                      "buttons": ["OK", "Help"]},
+  {"id": "C_warning_2",  "variant": "C", "icon": "warning",  "title": "Windows Protection Error",     "body": "Insufficient system resources exist to complete the requested service.",               "buttons": ["Retry", "Cancel"]},
+
+  {"id": "C_question_0", "variant": "C", "icon": "question", "title": "Confirm",                      "body": "Are you sure you want to continue?",                                                 "buttons": ["Yes", "No"]},
+  {"id": "C_question_1", "variant": "C", "icon": "question", "title": "Explorer.exe",                 "body": "The file or directory is corrupted and unreadable.",                                  "buttons": ["OK"]},
+  {"id": "C_question_2", "variant": "C", "icon": "question", "title": "License Wizard",               "body": "Not enough memory to complete this operation.",                                       "buttons": ["Abort", "Retry", "Ignore"]},
+
+  {"id": "C_none_0",     "variant": "C", "icon": "none",     "title": "Error",                        "body": "An unexpected error has occurred.",                                                   "buttons": ["OK"]},
+  {"id": "C_none_1",     "variant": "C", "icon": "none",     "title": "Not Responding",               "body": "Stack overflow.",                                                                    "buttons": ["OK", "Cancel"]},
+  {"id": "C_none_2",     "variant": "C", "icon": "none",     "title": "Runtime Exception",            "body": "Error loading operating system.",                                                     "buttons": ["OK"]}
+]

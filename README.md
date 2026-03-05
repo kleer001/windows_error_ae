@@ -10,7 +10,7 @@ A ScriptUI panel for Adobe After Effects that generates Windows 9x/XP error aest
 
 ## What It Does
 
-Generates native AE shape layers and text layers that look like Windows error dialogs, BSOD panels, corrupted text, cursor artifacts, and pixel corruption. Everything composites over (and optionally behind) your footage using auto-detected roto layers.
+Generates Windows error dialogs, BSOD panels, corrupted text, cursor artifacts, pixel corruption, and freeze strips over your footage. Dialogs use pre-rendered PNGs (embedded in the script) for fast generation with pixel-perfect title bar gradients. All other elements are native AE shape/text layers. Everything composites over (and optionally behind) your footage using auto-detected roto layers.
 
 - **Seeded randomness** — same seed always produces the same layout
 - **Chaos slider** — controls density from subtle glitches to total system failure
@@ -40,7 +40,7 @@ Generates native AE shape layers and text layers that look like Windows error di
 4. Set **chaos** (start around 50-100).
 5. Hit **GENERATE**.
 
-A pre-comp with error windows, BSOD panels, cursors, and glitch text appears in your comp. Change the seed for a different look. Same seed = same result every time.
+A pre-comp with error windows, BSOD panels, cursors, glitch text, pixel corruption, and freeze strips appears in your comp. Change the seed for a different look. Same seed = same result every time.
 
 ## Panel Layout
 
@@ -58,7 +58,7 @@ The main panel is always visible. Enter a seed, set your chaos level, and hit **
   <img src="docs/images/gui-element-tabs.svg" alt="Per-element tabbed controls" width="340"/>
 </p>
 
-Inside Advanced, a tabbed panel gives independent control over each of the 5 element types. Each tab has:
+Inside Advanced, a tabbed panel gives independent control over each of the 6 element types (Dialog, BSOD, Cursor, Pixel, Freeze). Each tab has:
 
 | Field | What it does |
 |---|---|
@@ -86,7 +86,7 @@ Stack Depth and Offset (for dialog cascade stacking) remain global controls belo
 | **Style** | Animation personality: XP Classic, Glitch Heavy, Slow Burn, Chaos Maximum |
 | **Roto** | How elements interact with roto layers (Split / All Over / All Under / Flat) |
 | **Curve** | Time distribution: Flat, Build, Peak, Burst, Random |
-| **Custom Messages** | Add your own error messages and window titles |
+| **Custom Messages** | Add your own error messages (applies to BSOD and text elements) |
 | **REGENERATE** | Replaces existing effect without confirmation |
 | **CLEAR ALL** | Removes all generated elements |
 | **Show Log** | View the generation log file for debugging |
@@ -104,7 +104,7 @@ Each generate writes a log to `Documents/WindowsErrorFX/WindowsErrorFX.log`. The
 <details>
 <summary><strong>Seed &amp; Determinism</strong></summary>
 
-Every generated layout is driven by a single integer **seed**. The same seed with the same settings always produces the exact same arrangement of error windows, BSOD panels, text, cursors, and pixel blocks.
+Every generated layout is driven by a single integer **seed**. The same seed with the same settings always produces the exact same arrangement of error windows, BSOD panels, text, cursors, pixel blocks, and freeze strips.
 
 - Change the seed to get a completely different layout
 - Write down a seed you like — you can recreate it any time
@@ -132,7 +132,7 @@ The formula is non-linear (power curve), so low values stay subtle and high valu
 <details>
 <summary><strong>Per-Element Tabs</strong></summary>
 
-Inside Advanced, five tabs (Dialog, BSOD, Text, Cursor, Pixel) give you independent control over each element type:
+Inside Advanced, five tabs (Dialog, BSOD, Cursor, Pixel, Freeze) give you independent control over each element type (Text elements use global settings):
 
 - **Count** — Exact number to spawn. Set to `0` for auto (chaos-based). Example: set Dialog to 5, Cursor to 0, and everything else to 0 to get only 5 error windows.
 - **Min / Max f** — Duration range in frames. Elements will last between these values.
@@ -145,7 +145,7 @@ Inside Advanced, five tabs (Dialog, BSOD, Text, Cursor, Pixel) give you independ
 - **Override Trails** — Set trails (echo effect) independently for this element type. Unchecked = use global trails setting.
 - **Override Roto** — Force this element type to always appear Over or Under the roto subject, regardless of the global roto mode.
 - **Override Curve** — Use a different time distribution curve for this element type.
-- **Custom Messages** — (Dialog and BSOD only) Set custom error text specific to this element type.
+- **Custom Messages** — (BSOD only) Set custom error text specific to this element type. Dialog text is baked into pre-rendered images.
 
 </details>
 
@@ -215,12 +215,12 @@ Per-element trail overrides let you give specific types their own trail settings
 <details>
 <summary><strong>Custom Messages</strong></summary>
 
-Add your own error messages and window titles via the **Custom Messages** button in Advanced. Messages are mixed into the random pool — the more you add, the more often they appear.
+Add your own error messages via the **Custom Messages** button in Advanced. Messages are mixed into the random pool for BSOD and text elements — the more you add, the more often they appear.
 
-- **Global custom messages** apply to all dialogs and BSOD elements
-- **Per-element custom messages** (via the Override checkbox in Dialog/BSOD tabs) apply only to that element type and override the global pool
+- **Global custom messages** apply to BSOD and text elements
+- **Per-element custom messages** (via the Override checkbox in the BSOD tab) apply only to BSOD and override the global pool
 
-The Dialog tab also supports custom window titles. BSOD custom messages are appended as additional text lines.
+Dialog text is pre-rendered into embedded PNG images and cannot be customized. Dialogs draw from a catalog of 36 curated error messages across 3 visual variants (9x, 2000, XP).
 
 </details>
 

@@ -21,16 +21,19 @@ A single-file `.jsx` ScriptUI panel script that:
 ```
 windows-error-fx/
 ├── CLAUDE.md                              ← You are here
-├── WindowsErrorFX.jsx                     ← The plugin (single deliverable file, TO BE CREATED)
+├── WindowsErrorFX.jsx                     ← The plugin (single deliverable file)
 ├── ae-extendscript-reference.md           ← ExtendScript/AE API knowledge base ⭐
 ├── windows-error-fx-spec.md               ← Element visual design reference
 ├── windows-error-fx-animation-spec.md     ← Element animation behaviors reference
 ├── windows-error-fx-config-spec.md        ← UI panel + user config reference
 ├── code-architecture-spec.md              ← Code structure + function signatures reference
 ├── qa-checklist.md                        ← Manual QA checklist for AE testing
-├── docs/                                  ← Additional docs
-├── src/                                   ← Placeholder (main.py stub)
-├── tests/                                 ← Placeholder (test_main.py stub)
+├── docs/images/fidelity-reference.md      ← Pixel-perfect visual specs for dialogs, BSODs, cursors
+├── tests/run_tests.js                     ← Test runner (node tests/run_tests.js)
+├── tests/test_harness.js                  ← Node.js VM sandbox that evals the JSX
+├── tests/test_prng.js                     ← PRNG tests
+├── tests/test_utilities.js                ← Utility/settings/message pool tests
+├── tests/test_scheduler.js                ← Scheduler tests (largest suite)
 └── README.md                              ← User-facing install + usage guide
 ```
 
@@ -72,27 +75,37 @@ The spec documents are **informed suggestions** — they provide design directio
 The file is structured in this order — do not reorganize:
 
 ```
-1. CONSTANTS         — colors, fonts, defaults (editable by power users)
-2. PRNG              — seeded random number generator
-3. AE UTILITIES      — helper functions for common AE operations
-4. ELEMENT BUILDERS  — one function per element type
-   - buildBSOD()
-   - buildDialogBox()
-   - buildChromeFragment()
-   - buildTextOverlay()
-   - buildCursor()
-   - buildPixelBlock()
-   - buildScanLines()
-5. SCHEDULER         — distributes elements across timeline per chaos level
-6. COMPOSITOR        — handles roto detection and OVER/UNDER pre-comp assembly
-7. UI                — ScriptUI panel definition and event handlers
-8. INIT              — entry point, panel creation
+ 0. LOGGING           — wlog(), wwarn(), werr(), file-based logging
+ 1. CONSTANTS         — colors, fonts, defaults, message pools, dialog variants, blend weights
+ 2. PRNG              — mulberry32 seeded RNG + helpers
+ 3. AE UTILITIES      — calcCompScale, shape helpers, keyframe helpers, icon builders,
+                         message pickers, per-element settings helpers (defaultElementSettings,
+                         getElementSettings, migrateSettings, randomizeSettings)
+ 4. ELEMENT BUILDERS  — one function per element type
+    - buildBSOD()
+    - buildDialogBox()
+    - buildChromeFragment()
+    - buildTextOverlay()
+    - buildCursor()
+    - buildPixelBlock()
+    - buildFreezeStrip()
+ 5. GLOBAL OVERLAYS   — buildScanLines(), buildNoise(), buildHeadScratch()
+ 6. SCHEDULER         — pure logic (no AE API), calcElementCount, distributeTimes,
+                         pickElementType, pickDuration, assignLayer, buildJob,
+                         assignDialogStacks, schedule
+ 7. ROTO DETECTOR     — nameMatchesKeyword(), detectRotoLayers()
+ 8. COMPOSITOR        — createPreCompStructure(), findExistingEffect(), clearEffect()
+ 9. STATE MANAGER     — defaultSettings(), loadSettings(), saveSettings(),
+                         settingsFromUI(), applySettingsToUI()
+10. MAIN GENERATOR    — generate() orchestrator
+11. UI                — ScriptUI panel (IIFE, guarded by typeof Panel check)
 ```
 
 Each builder function signature follows this pattern:
 ```javascript
-function buildBSOD(comp, seed, startFrame, duration, options) {
-    // returns: the created layer or layer group
+function buildBSOD(params, targetComp) {
+    // params: ElementJob from scheduler
+    // returns: array of created layers
 }
 ```
 

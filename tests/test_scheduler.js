@@ -129,21 +129,21 @@ assert(ctx.distributeTimes(0, 240, "flat", rng0).length === 0,
 
 // ── pickElementType ──────────────────────────────────
 
-var mix = { dialog: 75, bsod: 50, text: 75, cursor: 50, pixel: 25 };
+var mix = { dialog: 75, bsod: 50, cursor: 50, pixel: 25 };
 var rngMix = ctx.createRNG(42);
-var typeCounts = { dialog: 0, bsod: 0, text: 0, cursor: 0, pixel: 0 };
+var typeCounts = { dialog: 0, bsod: 0, cursor: 0, pixel: 0 };
 for (var i = 0; i < 10000; i++) {
     var t = ctx.pickElementType(mix, rngMix);
     typeCounts[t] = (typeCounts[t] || 0) + 1;
 }
 assert(typeCounts.dialog > typeCounts.pixel,
     "pickElementType: dialog (wt 75) more frequent than pixel (wt 25)");
-assert(typeCounts.dialog > 0 && typeCounts.bsod > 0 && typeCounts.text > 0 &&
+assert(typeCounts.dialog > 0 && typeCounts.bsod > 0 &&
        typeCounts.cursor > 0 && typeCounts.pixel > 0,
     "pickElementType: all types produced");
 
 // Disabled type should produce 0
-var mixDisabled = { dialog: 100, bsod: 0, text: 0, cursor: 0, pixel: 0 };
+var mixDisabled = { dialog: 100, bsod: 0, cursor: 0, pixel: 0 };
 var rngD = ctx.createRNG(42);
 var onlyDialog = true;
 for (var i = 0; i < 1000; i++) {
@@ -194,15 +194,8 @@ for (var i = 0; i < 100; i++) {
 
 // AllUnder mode
 for (var i = 0; i < 100; i++) {
-    assert(ctx.assignLayer("text", "allUnder", rngL) === "under",
+    assert(ctx.assignLayer("dialog", "allUnder", rngL) === "under",
         "assignLayer allUnder always returns 'under'");
-}
-
-// Split mode: chrome is always over
-var rngS = ctx.createRNG(42);
-for (var i = 0; i < 100; i++) {
-    assert(ctx.assignLayer("chrome", "split", rngS) === "over",
-        "assignLayer split: chrome always over");
 }
 
 // Split mode: BSOD is mostly under
@@ -237,17 +230,15 @@ var settings = ctx.defaultSettings();
 
 var rngJ = ctx.createRNG(42);
 var dialogJob = ctx.buildJob("dialog", 10, 50, "over", settings, compInfo, rngJ);
-assert(dialogJob.type === "dialog" || dialogJob.type === "chrome",
-    "buildJob dialog returns dialog or chrome type");
+assert(dialogJob.type === "dialog",
+    "buildJob dialog returns dialog type");
 assert(dialogJob.inFrame === 10, "buildJob sets inFrame correctly");
 assert(dialogJob.outFrame === 50, "buildJob sets outFrame correctly");
 assert(typeof dialogJob.x === "number", "buildJob sets x position");
 assert(typeof dialogJob.y === "number", "buildJob sets y position");
-if (dialogJob.type === "dialog") {
-    assert(typeof dialogJob.title === "string", "buildJob dialog has title");
-    assert(typeof dialogJob.body === "string", "buildJob dialog has body");
-    assert(Array.isArray(dialogJob.buttons), "buildJob dialog has buttons array");
-}
+assert(typeof dialogJob.title === "string", "buildJob dialog has title");
+assert(typeof dialogJob.body === "string", "buildJob dialog has body");
+assert(Array.isArray(dialogJob.buttons), "buildJob dialog has buttons array");
 
 var rngJ2 = ctx.createRNG(42);
 var bsodJob = ctx.buildJob("bsod", 0, 100, "under", settings, compInfo, rngJ2);
@@ -261,15 +252,240 @@ var cursorJob = ctx.buildJob("cursor", 20, 60, "over", settings, compInfo, rngJ3
 assert(cursorJob.type === "cursor", "buildJob cursor type is correct");
 assert(typeof cursorJob.behavior === "string", "buildJob cursor has behavior");
 
-var rngJ4 = ctx.createRNG(42);
-var textJob = ctx.buildJob("text", 5, 30, "over", settings, compInfo, rngJ4);
-assert(textJob.type === "text", "buildJob text type is correct");
-assert(Array.isArray(textJob.lines), "buildJob text has lines array");
-
 var rngJ5 = ctx.createRNG(42);
 var pixelJob = ctx.buildJob("pixel", 0, 10, "over", settings, compInfo, rngJ5);
 assert(pixelJob.type === "pixel", "buildJob pixel type is correct");
 assert(typeof pixelJob.behavior === "string", "buildJob pixel has behavior");
+
+// ── Pixel corruption sub-variant tests ───────────────
+
+// All 5 new behaviors appear across many pixel jobs
+(function() {
+    var ci = { duration: 60, frameRate: 24, width: 1920, height: 1080, totalFrames: 1440 };
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.chaos = 0;
+    s.elements.pixel = ctx.defaultElementSettings();
+    s.elements.pixel.count = 200;
+    s.elements.dialog = ctx.defaultElementSettings();
+    s.elements.dialog.count = 0;
+    s.elements.bsod = ctx.defaultElementSettings();
+    s.elements.bsod.count = 0;
+    s.elements.cursor = ctx.defaultElementSettings();
+    s.elements.cursor.count = 0;
+    var jobs = ctx.schedule(s, ci);
+    var behaviorCounts = {};
+    for (var i = 0; i < jobs.length; i++) {
+        var b = jobs[i].behavior;
+        behaviorCounts[b] = (behaviorCounts[b] || 0) + 1;
+    }
+    var validBehaviors = ["microScatter", "rowSmear", "blockDisplace", "scanlineShift", "hTear"];
+    var allValid = true;
+    for (var i = 0; i < jobs.length; i++) {
+        var found = false;
+        for (var vi = 0; vi < validBehaviors.length; vi++) {
+            if (jobs[i].behavior === validBehaviors[vi]) { found = true; break; }
+        }
+        if (!found) { allValid = false; break; }
+    }
+    assert(allValid, "pixel behaviors: all jobs have one of 5 valid behaviors");
+    // All 5 behaviors should appear with 200 jobs
+    for (var vi = 0; vi < validBehaviors.length; vi++) {
+        assert((behaviorCounts[validBehaviors[vi]] || 0) > 0,
+            "pixel behaviors: " + validBehaviors[vi] + " appears (count=" +
+            (behaviorCounts[validBehaviors[vi]] || 0) + ")");
+    }
+    // Old behaviors should never appear
+    assert(!behaviorCounts["flash"], "pixel behaviors: no 'flash' (old)");
+    assert(!behaviorCounts["stutterHold"], "pixel behaviors: no 'stutterHold' (old)");
+    assert(!behaviorCounts["blockCrawl"], "pixel behaviors: no 'blockCrawl' (old)");
+})();
+
+// microScatter: clusterSize field validation
+(function() {
+    var ci = { duration: 60, frameRate: 24, width: 1920, height: 1080, totalFrames: 1440 };
+    var s = ctx.defaultSettings();
+    for (var seed = 1; seed <= 500; seed++) {
+        var rng = ctx.createRNG(seed);
+        var job = ctx.buildJob("pixel", 0, 100, "over", s, ci, rng);
+        if (job.behavior === "microScatter") {
+            assert(job.clusterSize >= 5 && job.clusterSize <= 15,
+                "microScatter: clusterSize in [5,15] (got " + job.clusterSize + ")");
+            assert(job.clusterSize === Math.round(job.clusterSize),
+                "microScatter: clusterSize is integer");
+            break;
+        }
+    }
+})();
+
+// rowSmear: field validation
+(function() {
+    var ci = { duration: 60, frameRate: 24, width: 1920, height: 1080, totalFrames: 1440 };
+    var s = ctx.defaultSettings();
+    for (var seed = 1; seed <= 500; seed++) {
+        var rng = ctx.createRNG(seed);
+        var job = ctx.buildJob("pixel", 0, 100, "over", s, ci, rng);
+        if (job.behavior === "rowSmear") {
+            assert(job.stripHeight >= 1 && job.stripHeight <= 5,
+                "rowSmear: stripHeight in [1,5] (got " + job.stripHeight + ")");
+            assert(job.smearRows >= 3 && job.smearRows <= 20,
+                "rowSmear: smearRows in [3,20] (got " + job.smearRows + ")");
+            break;
+        }
+    }
+})();
+
+// blockDisplace: field validation
+(function() {
+    var ci = { duration: 60, frameRate: 24, width: 1920, height: 1080, totalFrames: 1440 };
+    var s = ctx.defaultSettings();
+    for (var seed = 1; seed <= 500; seed++) {
+        var rng = ctx.createRNG(seed);
+        var job = ctx.buildJob("pixel", 0, 100, "over", s, ci, rng);
+        if (job.behavior === "blockDisplace") {
+            assert(job.blockW >= 20 && job.blockW <= 80,
+                "blockDisplace: blockW in [20,80] (got " + job.blockW + ")");
+            assert(job.blockH >= 10 && job.blockH <= 60,
+                "blockDisplace: blockH in [10,60] (got " + job.blockH + ")");
+            assert(job.offsetX >= -100 && job.offsetX <= 100,
+                "blockDisplace: offsetX in [-100,100] (got " + job.offsetX + ")");
+            assert(job.offsetY >= -100 && job.offsetY <= 100,
+                "blockDisplace: offsetY in [-100,100] (got " + job.offsetY + ")");
+            break;
+        }
+    }
+})();
+
+// scanlineShift: field validation
+(function() {
+    var ci = { duration: 60, frameRate: 24, width: 1920, height: 1080, totalFrames: 1440 };
+    var s = ctx.defaultSettings();
+    for (var seed = 1; seed <= 500; seed++) {
+        var rng = ctx.createRNG(seed);
+        var job = ctx.buildJob("pixel", 0, 100, "over", s, ci, rng);
+        if (job.behavior === "scanlineShift") {
+            assert(job.bandHeight >= 3 && job.bandHeight <= 15,
+                "scanlineShift: bandHeight in [3,15] (got " + job.bandHeight + ")");
+            assert((job.shiftPx >= 5 && job.shiftPx <= 30) || (job.shiftPx >= -30 && job.shiftPx <= -5),
+                "scanlineShift: shiftPx in [5,30] or [-30,-5] (got " + job.shiftPx + ")");
+            assert(job.bandCount >= 1 && job.bandCount <= 4,
+                "scanlineShift: bandCount in [1,4] (got " + job.bandCount + ")");
+            break;
+        }
+    }
+})();
+
+// hTear: field validation
+(function() {
+    var ci = { duration: 60, frameRate: 24, width: 1920, height: 1080, totalFrames: 1440 };
+    var s = ctx.defaultSettings();
+    for (var seed = 1; seed <= 500; seed++) {
+        var rng = ctx.createRNG(seed);
+        var job = ctx.buildJob("pixel", 0, 100, "over", s, ci, rng);
+        if (job.behavior === "hTear") {
+            assert(job.tearH >= 1 && job.tearH <= 2,
+                "hTear: tearH in [1,2] (got " + job.tearH + ")");
+            assert(job.tearW >= Math.round(ci.width / 2) && job.tearW <= ci.width,
+                "hTear: tearW in [compW/2, compW] (got " + job.tearW + ")");
+            assert(Array.isArray(job.tearColor) && job.tearColor.length === 3,
+                "hTear: tearColor is [r,g,b] array");
+            break;
+        }
+    }
+})();
+
+// Pixel determinism: same seed = same pixel jobs
+(function() {
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var s = ctx.defaultSettings();
+    s.seed = 123;
+    s.chaos = 0;
+    s.elements.pixel = ctx.defaultElementSettings();
+    s.elements.pixel.count = 20;
+    s.elements.dialog = ctx.defaultElementSettings();
+    s.elements.dialog.count = 0;
+    s.elements.bsod = ctx.defaultElementSettings();
+    s.elements.bsod.count = 0;
+    s.elements.cursor = ctx.defaultElementSettings();
+    s.elements.cursor.count = 0;
+    var jobs1 = ctx.schedule(s, ci);
+    var jobs2 = ctx.schedule(s, ci);
+    assert(jobs1.length === jobs2.length, "pixel determinism: same count");
+    var allMatch = true;
+    for (var i = 0; i < jobs1.length; i++) {
+        if (jobs1[i].behavior !== jobs2[i].behavior ||
+            jobs1[i].x !== jobs2[i].x ||
+            jobs1[i].y !== jobs2[i].y) {
+            allMatch = false;
+            break;
+        }
+    }
+    assert(allMatch, "pixel determinism: same seed = same pixel jobs");
+})();
+
+// Weight distribution: approximate check
+(function() {
+    var ci = { duration: 60, frameRate: 24, width: 1920, height: 1080, totalFrames: 1440 };
+    var s = ctx.defaultSettings();
+    s.seed = 99;
+    s.chaos = 0;
+    s.elements.pixel = ctx.defaultElementSettings();
+    s.elements.pixel.count = 500;
+    s.elements.dialog = ctx.defaultElementSettings();
+    s.elements.dialog.count = 0;
+    s.elements.bsod = ctx.defaultElementSettings();
+    s.elements.bsod.count = 0;
+    s.elements.cursor = ctx.defaultElementSettings();
+    s.elements.cursor.count = 0;
+    var jobs = ctx.schedule(s, ci);
+    var bc = {};
+    for (var i = 0; i < jobs.length; i++) {
+        bc[jobs[i].behavior] = (bc[jobs[i].behavior] || 0) + 1;
+    }
+    // microScatter (30%) should be most common
+    assert((bc.microScatter || 0) > (bc.hTear || 0),
+        "pixel weights: microScatter (30%) > hTear (15%) (" +
+        (bc.microScatter || 0) + " vs " + (bc.hTear || 0) + ")");
+    assert((bc.microScatter || 0) > (bc.scanlineShift || 0),
+        "pixel weights: microScatter (30%) > scanlineShift (15%) (" +
+        (bc.microScatter || 0) + " vs " + (bc.scanlineShift || 0) + ")");
+})();
+
+// All pixel jobs have common fields (opacity, x, y)
+(function() {
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.chaos = 0;
+    s.elements.pixel = ctx.defaultElementSettings();
+    s.elements.pixel.count = 20;
+    s.elements.dialog = ctx.defaultElementSettings();
+    s.elements.dialog.count = 0;
+    s.elements.bsod = ctx.defaultElementSettings();
+    s.elements.bsod.count = 0;
+    s.elements.cursor = ctx.defaultElementSettings();
+    s.elements.cursor.count = 0;
+    var jobs = ctx.schedule(s, ci);
+    var allHaveCommon = true;
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].opacity == null || jobs[i].x == null || jobs[i].y == null) {
+            allHaveCommon = false;
+            break;
+        }
+    }
+    assert(allHaveCommon, "pixel common fields: all jobs have opacity, x, y");
+    // Old fields should NOT be present
+    var noOldFields = true;
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].blockCount != null || jobs[i].crawlRadius != null ||
+            jobs[i].crawlInterval != null || jobs[i].colors != null ||
+            jobs[i].w != null || jobs[i].h != null) {
+            noOldFields = false;
+            break;
+        }
+    }
+    assert(noOldFields, "pixel old fields: no blockCount/crawlRadius/crawlInterval/colors/w/h");
+})();
 
 
 // ── assignDialogStacks ────────────────────────────────
@@ -340,7 +556,6 @@ schedSettingsExact.seed = 42;
 schedSettingsExact.chaos = 100;
 schedSettingsExact.elements.dialog.count = 3;
 schedSettingsExact.elements.bsod.count = 2;
-schedSettingsExact.elements.text.count = 0;
 schedSettingsExact.elements.cursor.count = 1;
 schedSettingsExact.elements.pixel.count = 0;
 var jobsExact = ctx.schedule(schedSettingsExact, compInfo);
@@ -349,8 +564,6 @@ assert(jobsExact.length === 6, "schedule: exact counts mode produces 3+2+0+1+0 =
 var exactTypeCounts = {};
 for (var ei = 0; ei < jobsExact.length; ei++) {
     var et = jobsExact[ei].type;
-    // chrome is a sub-type of dialog
-    if (et === "chrome") et = "dialog";
     exactTypeCounts[et] = (exactTypeCounts[et] || 0) + 1;
 }
 assert((exactTypeCounts.dialog || 0) === 3,
@@ -359,8 +572,7 @@ assert((exactTypeCounts.bsod || 0) === 2,
     "schedule exact: 2 bsod (got " + (exactTypeCounts.bsod || 0) + ")");
 assert((exactTypeCounts.cursor || 0) === 1,
     "schedule exact: 1 cursor (got " + (exactTypeCounts.cursor || 0) + ")");
-assert((exactTypeCounts.text || 0) === 0,
-    "schedule exact: 0 text (got " + (exactTypeCounts.text || 0) + ")");
+
 assert((exactTypeCounts.pixel || 0) === 0,
     "schedule exact: 0 pixel (got " + (exactTypeCounts.pixel || 0) + ")");
 
@@ -479,7 +691,7 @@ assert(avgDurSlow > avgDurNorm,
 // ── dialogVariant on dialog jobs ──────────────────────────
 (function() {
     var compInfo = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
-    var settings = { seed: 42, chaos: 100, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic", elements: { dialog: { count: 20 }, bsod: { count: 0 }, text: { count: 0 }, cursor: { count: 0 }, pixel: { count: 0 } } };
+    var settings = { seed: 42, chaos: 100, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic", elements: { dialog: { count: 20 }, bsod: { count: 0 }, cursor: { count: 0 }, pixel: { count: 0 } } };
     var jobs = ctx.schedule(settings, compInfo);
     var dialogJobs = [];
     for (var i = 0; i < jobs.length; i++) {
@@ -499,28 +711,10 @@ assert(avgDurSlow > avgDurNorm,
     assert(variantCounts.B >= variantCounts.C, "dialogVariant: B >= C (B=" + variantCounts.B + " C=" + variantCounts.C + ")");
 })();
 
-// ── dialogVariant on chrome jobs ──────────────────────────
-(function() {
-    var compInfo = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
-    var settings = { seed: 99, chaos: 100, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic", elements: { dialog: { count: 40 }, bsod: { count: 0 }, text: { count: 0 }, cursor: { count: 0 }, pixel: { count: 0 } } };
-    var jobs = ctx.schedule(settings, compInfo);
-    var chromeJobs = [];
-    for (var i = 0; i < jobs.length; i++) {
-        if (jobs[i].type === "chrome") chromeJobs.push(jobs[i]);
-    }
-    assert(chromeJobs.length > 0, "chrome dialogVariant: has chrome jobs");
-    var allHaveVariant = true;
-    for (var i = 0; i < chromeJobs.length; i++) {
-        var v = chromeJobs[i].dialogVariant;
-        if (v !== "A" && v !== "B" && v !== "C") { allHaveVariant = false; break; }
-    }
-    assert(allHaveVariant, "chrome dialogVariant: all chrome jobs have variant A/B/C");
-})();
-
 // ── bsodEra on bsod jobs ─────────────────────────────────
 (function() {
     var compInfo = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
-    var settings = { seed: 42, chaos: 100, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic", elements: { dialog: { count: 0 }, bsod: { count: 20 }, text: { count: 0 }, cursor: { count: 0 }, pixel: { count: 0 } } };
+    var settings = { seed: 42, chaos: 100, rotoMode: "flat", chaosCurve: "flat", animStyle: "xpClassic", elements: { dialog: { count: 0 }, bsod: { count: 20 }, cursor: { count: 0 }, pixel: { count: 0 } } };
     var jobs = ctx.schedule(settings, compInfo);
     var bsodJobs = [];
     for (var i = 0; i < jobs.length; i++) {
@@ -645,14 +839,14 @@ assert(avgDurSlow > avgDurNorm,
         elements: {
             dialog: { count: 10, minFrames: 20, maxFrames: 40 },
             bsod: { count: 10, minFrames: 50, maxFrames: 80 },
-            text: { count: 0 }, cursor: { count: 0 }, pixel: { count: 0 }
+            cursor: { count: 0 }, pixel: { count: 0 }
         }
     };
     var jobs = ctx.schedule(settings, compInfo);
     var dialogDurs = [], bsodDurs = [];
     for (var i = 0; i < jobs.length; i++) {
         var dur = jobs[i].outFrame - jobs[i].inFrame;
-        if (jobs[i].type === "dialog" || jobs[i].type === "chrome") dialogDurs.push(dur);
+        if (jobs[i].type === "dialog") dialogDurs.push(dur);
         else if (jobs[i].type === "bsod") bsodDurs.push(dur);
     }
     // Average bsod duration should be > dialog duration
@@ -672,12 +866,12 @@ assert(avgDurSlow > avgDurNorm,
         elements: {
             dialog: { count: 5, scale: 200, speed: 50 },
             bsod: { count: 5, scale: 75, speed: 150 },
-            text: { count: 0 }, cursor: { count: 0 }, pixel: { count: 0 }
+            cursor: { count: 0 }, pixel: { count: 0 }
         }
     };
     var jobs = ctx.schedule(settings, compInfo);
     for (var i = 0; i < jobs.length; i++) {
-        if (jobs[i].type === "dialog" || jobs[i].type === "chrome") {
+        if (jobs[i].type === "dialog") {
             assert(jobs[i].scale === 2.0,
                 "per-type scale: dialog scale = 2.0 (got " + jobs[i].scale + ")");
             assert(jobs[i].speedMult === 0.5,
@@ -734,11 +928,11 @@ assert(avgDurSlow > avgDurNorm,
     assert(jobs.length === 10, "rotoForce schedule: 10 jobs total");
     var allDialogsUnder = true;
     for (var i = 0; i < jobs.length; i++) {
-        if ((jobs[i].type === "dialog" || jobs[i].type === "chrome") && jobs[i].layer !== "under") {
+        if ((jobs[i].type === "dialog") && jobs[i].layer !== "under") {
             allDialogsUnder = false;
         }
     }
-    assert(allDialogsUnder, "rotoForce: all dialog/chrome jobs forced under");
+    assert(allDialogsUnder, "rotoForce: all dialog jobs forced under");
     // BSOD should have mix of over/under in split mode (at least some of each over multiple seeds)
 })();
 
@@ -757,14 +951,14 @@ assert(avgDurSlow > avgDurNorm,
     var jobs = ctx.schedule(s, ci);
     var dialogTrails = 0, bsodTrails = 0;
     for (var i = 0; i < jobs.length; i++) {
-        if ((jobs[i].type === "dialog" || jobs[i].type === "chrome") && jobs[i].trails) dialogTrails++;
+        if ((jobs[i].type === "dialog") && jobs[i].trails) dialogTrails++;
         if (jobs[i].type === "bsod" && jobs[i].trails) bsodTrails++;
     }
     assert(dialogTrails > 0, "per-element trails: dialog has trails when override enabled (got " + dialogTrails + ")");
     assert(bsodTrails === 0, "per-element trails: bsod has no trails when global disabled (got " + bsodTrails + ")");
     // Check trail settings values
     for (var i = 0; i < jobs.length; i++) {
-        if ((jobs[i].type === "dialog" || jobs[i].type === "chrome") && jobs[i].trails) {
+        if ((jobs[i].type === "dialog") && jobs[i].trails) {
             assert(jobs[i].trailEchoes === 8, "per-element trails: dialog echoes = 8");
             assert(jobs[i].trailDecay === 30, "per-element trails: dialog decay = 30");
             break;
@@ -831,7 +1025,7 @@ assert(avgDurSlow > avgDurNorm,
     // Collect spawn frames per type
     var dialogFrames = [], bsodFrames = [];
     for (var i = 0; i < jobs.length; i++) {
-        if (jobs[i].type === "dialog" || jobs[i].type === "chrome") dialogFrames.push(jobs[i].inFrame);
+        if (jobs[i].type === "dialog") dialogFrames.push(jobs[i].inFrame);
         if (jobs[i].type === "bsod") bsodFrames.push(jobs[i].inFrame);
     }
 
@@ -878,6 +1072,352 @@ assert(avgDurSlow > avgDurNorm,
         }
     }
     assert(allMatch, "determinism w/ overrides: identical jobs across runs");
+})();
+
+
+// ── Freeze strip tests ──────────────────────────────
+
+// Freeze jobs appear in high-chaos auto mode
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.chaos = 200;  // high chaos for more elements
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    var freezeJobs = [];
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type === "freeze") freezeJobs.push(jobs[i]);
+    }
+    assert(freezeJobs.length > 0, "freeze jobs appear at high chaos");
+})();
+
+// Freeze with explicit count
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 100;
+    s.elements.freeze.count = 10;
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    var freezeCount = 0;
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type === "freeze") freezeCount++;
+    }
+    assert(freezeCount === 10, "freeze explicit count=10 produces 10 freeze jobs (got " + freezeCount + ")");
+})();
+
+// Freeze behavior is "single" or "cluster"
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.elements.freeze.count = 30;
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    var singles = 0, clusters = 0;
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type !== "freeze") continue;
+        if (jobs[i].behavior === "single") singles++;
+        else if (jobs[i].behavior === "cluster") clusters++;
+        else assert(false, "freeze job has unknown behavior: " + jobs[i].behavior);
+    }
+    assert(singles > 0, "freeze produces single behavior (" + singles + ")");
+    assert(clusters > 0, "freeze produces cluster behavior (" + clusters + ")");
+})();
+
+// Freeze single: stripHeight in range, stripY valid
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.elements.freeze.count = 50;
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type !== "freeze" || jobs[i].behavior !== "single") continue;
+        assert(jobs[i].stripHeight >= ctx.C_FREEZE_MIN_HEIGHT && jobs[i].stripHeight <= ctx.C_FREEZE_MAX_HEIGHT,
+            "freeze single stripHeight in [1,64] (got " + jobs[i].stripHeight + ")");
+        assert(jobs[i].stripY >= 0 && jobs[i].stripY + jobs[i].stripHeight <= ci.height,
+            "freeze single stripY within bounds (y=" + jobs[i].stripY + " h=" + jobs[i].stripHeight + ")");
+    }
+})();
+
+// Freeze cluster: strips array valid
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.elements.freeze.count = 50;
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type !== "freeze" || jobs[i].behavior !== "cluster") continue;
+        var strips = jobs[i].strips;
+        assert(strips != null && strips.length >= 1, "freeze cluster has strips array");
+        assert(strips.length <= ctx.C_FREEZE_CLUSTER_MAX, "freeze cluster strips <= " + ctx.C_FREEZE_CLUSTER_MAX);
+        for (var si = 0; si < strips.length; si++) {
+            assert(strips[si].height >= ctx.C_FREEZE_MIN_HEIGHT && strips[si].height <= ctx.C_FREEZE_MAX_HEIGHT,
+                "freeze cluster strip[" + si + "] height in range (got " + strips[si].height + ")");
+            assert(strips[si].y >= 0 && strips[si].y + strips[si].height <= ci.height,
+                "freeze cluster strip[" + si + "] within bounds (y=" + strips[si].y + " h=" + strips[si].height + ")");
+        }
+        // Verify strips don't overlap
+        for (var si = 1; si < strips.length; si++) {
+            assert(strips[si].y >= strips[si - 1].y + strips[si - 1].height,
+                "freeze cluster strips don't overlap (strip " + si + " y=" + strips[si].y +
+                " vs prev end=" + (strips[si - 1].y + strips[si - 1].height) + ")");
+        }
+    }
+})();
+
+// Freeze freezeFrame in valid range
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.elements.freeze.count = 30;
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type !== "freeze") continue;
+        assert(jobs[i].freezeFrame >= 0 && jobs[i].freezeFrame <= ci.totalFrames - 1,
+            "freeze freezeFrame in [0," + (ci.totalFrames - 1) + "] (got " + jobs[i].freezeFrame + ")");
+    }
+})();
+
+// Freeze opacity in 85-100 (before per-element clamping) — after clamping, within element bounds
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.elements.freeze.count = 30;
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type !== "freeze") continue;
+        assert(jobs[i].opacity >= 50 && jobs[i].opacity <= 100,
+            "freeze opacity in clamped range (got " + jobs[i].opacity + ")");
+    }
+})();
+
+// Freeze determinism
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 777;
+    s.elements.freeze.count = 15;
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var jobs1 = ctx.schedule(s, ci);
+    var jobs2 = ctx.schedule(s, ci);
+    assert(jobs1.length === jobs2.length, "freeze determinism: same job count");
+    var allMatch = true;
+    for (var i = 0; i < jobs1.length; i++) {
+        if (jobs1[i].type !== jobs2[i].type ||
+            jobs1[i].behavior !== jobs2[i].behavior ||
+            jobs1[i].inFrame !== jobs2[i].inFrame ||
+            jobs1[i].freezeFrame !== jobs2[i].freezeFrame) {
+            allMatch = false;
+            break;
+        }
+    }
+    assert(allMatch, "freeze determinism: identical jobs with same seed");
+})();
+
+// Freeze weight distribution (~60/40 single/cluster)
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.elements.freeze.count = 200;
+    var ci = { duration: 30, frameRate: 24, width: 1920, height: 1080, totalFrames: 720 };
+    var jobs = ctx.schedule(s, ci);
+    var singles = 0, clusters = 0;
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type !== "freeze") continue;
+        if (jobs[i].behavior === "single") singles++;
+        else if (jobs[i].behavior === "cluster") clusters++;
+    }
+    var total = singles + clusters;
+    var singlePct = total > 0 ? (singles / total * 100) : 0;
+    assert(singlePct > 40 && singlePct < 80,
+        "freeze single% ≈ 60 (got " + singlePct.toFixed(1) + "% of " + total + ")");
+})();
+
+// Freeze per-element overrides (rotoForce, curve)
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.elements.freeze.count = 10;
+    s.elements.freeze.rotoForce = "under";
+    s.elements.freeze.curve = "build";
+    s.rotoMode = "split";
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type !== "freeze") continue;
+        assert(jobs[i].layer === "under",
+            "freeze rotoForce=under forces all to under layer");
+    }
+})();
+
+// Freeze has entryFrames and exitFrames
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.elements.freeze.count = 5;
+    s.elements.freeze.entryFrames = 2;
+    s.elements.freeze.exitFrames = 1;
+    var ci = { duration: 10, frameRate: 24, width: 1920, height: 1080, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type !== "freeze") continue;
+        assert(jobs[i].entryFrames === 2, "freeze entryFrames = 2");
+        assert(jobs[i].exitFrames === 1, "freeze exitFrames = 1");
+    }
+})();
+
+// Freeze with small comp height — cluster strips stay within bounds
+(function() {
+    var s = ctx.defaultSettings();
+    s.seed = 42;
+    s.elements.freeze.count = 20;
+    var ci = { duration: 10, frameRate: 24, width: 640, height: 100, totalFrames: 240 };
+    var jobs = ctx.schedule(s, ci);
+    for (var i = 0; i < jobs.length; i++) {
+        if (jobs[i].type !== "freeze") continue;
+        if (jobs[i].behavior === "single") {
+            assert(jobs[i].stripY + jobs[i].stripHeight <= ci.height,
+                "freeze single within small comp (y=" + jobs[i].stripY + " h=" + jobs[i].stripHeight + ")");
+        } else if (jobs[i].behavior === "cluster") {
+            for (var si = 0; si < jobs[i].strips.length; si++) {
+                assert(jobs[i].strips[si].y + jobs[i].strips[si].height <= ci.height,
+                    "freeze cluster strip within small comp");
+            }
+        }
+    }
+})();
+
+// Freeze assignLayer: freeze type gets "over" or "under" in split mode
+(function() {
+    var rng = ctx.createRNG(42);
+    var overs = 0, unders = 0;
+    for (var i = 0; i < 100; i++) {
+        var l = ctx.assignLayer("freeze", "split", rng, null);
+        if (l === "over") overs++;
+        else if (l === "under") unders++;
+    }
+    assert(overs > 0 && unders > 0, "freeze assignLayer split: produces both over and under");
+    assert(Math.abs(overs - 50) < 25, "freeze assignLayer split: ~50/50 distribution (over=" + overs + ")");
+})();
+
+// Freeze pickDuration uses FLOOR_FREEZE_STRIP
+(function() {
+    var rng = ctx.createRNG(42);
+    for (var i = 0; i < 50; i++) {
+        var dur = ctx.pickDuration("freeze", 1, 100, rng);
+        assert(dur >= ctx.FLOOR_FREEZE_STRIP, "freeze pickDuration >= FLOOR_FREEZE_STRIP (" + dur + ")");
+    }
+})();
+
+
+// ── Pre-rendered dialog catalog ID tests ────────────────
+(function() {
+    var rng = ctx.createRNG(42);
+    var ci = { width: 1920, height: 1080, frameRate: 24, totalFrames: 240 };
+    var settings = ctx.defaultSettings();
+
+    // Dialog jobs produce valid catalogId
+    var catalogIdPattern = /^[ABC]_(error|warning|question|none)_[012]$/;
+    for (var i = 0; i < 50; i++) {
+        var job = ctx.buildJob("dialog", 10, 100, "over", settings, ci, rng);
+        assert(typeof job.catalogId === "string", "dialog job has catalogId string");
+        assert(catalogIdPattern.test(job.catalogId),
+            "dialog catalogId matches pattern: " + job.catalogId);
+        // catalogId variant must match job.dialogVariant
+        assert(job.catalogId.charAt(0) === job.dialogVariant,
+            "catalogId variant matches dialogVariant: " + job.catalogId + " vs " + job.dialogVariant);
+    }
+})();
+
+// Dialog catalogId is deterministic for same seed
+(function() {
+    var ci = { width: 1920, height: 1080, frameRate: 24, totalFrames: 240 };
+    var settings = ctx.defaultSettings();
+
+    var rng1 = ctx.createRNG(123);
+    var job1 = ctx.buildJob("dialog", 10, 100, "over", settings, ci, rng1);
+
+    var rng2 = ctx.createRNG(123);
+    var job2 = ctx.buildJob("dialog", 10, 100, "over", settings, ci, rng2);
+
+    assert(job1.catalogId === job2.catalogId,
+        "catalogId deterministic: " + job1.catalogId + " === " + job2.catalogId);
+})();
+
+// Info icon maps to question in catalogId
+(function() {
+    // Run enough iterations to find an info icon (weight 0, but question is in catalog)
+    // Since info is not in the icon weight list, catalogIcon maps icon="info" to "question"
+    // We need to verify the mapping logic handles the icon values correctly
+    var ci = { width: 1920, height: 1080, frameRate: 24, totalFrames: 240 };
+    var settings = ctx.defaultSettings();
+    var rng = ctx.createRNG(42);
+    var foundError = false, foundWarning = false, foundQuestion = false, foundNone = false;
+    for (var i = 0; i < 200; i++) {
+        var job = ctx.buildJob("dialog", 10, 100, "over", settings, ci, rng);
+        if (job.catalogId.indexOf("_error_") !== -1) foundError = true;
+        if (job.catalogId.indexOf("_warning_") !== -1) foundWarning = true;
+        if (job.catalogId.indexOf("_question_") !== -1) foundQuestion = true;
+        if (job.catalogId.indexOf("_none_") !== -1) foundNone = true;
+        // Verify no "info" appears in catalogId
+        assert(job.catalogId.indexOf("_info_") === -1,
+            "catalogId never contains _info_: " + job.catalogId);
+    }
+    assert(foundError, "catalogId covers error icon");
+    assert(foundWarning, "catalogId covers warning icon");
+    assert(foundQuestion, "catalogId covers question icon");
+    assert(foundNone, "catalogId covers none icon");
+})();
+
+// Cursor jobs produce cursorVariant
+(function() {
+    var rng = ctx.createRNG(42);
+    var ci = { width: 1920, height: 1080, frameRate: 24, totalFrames: 240 };
+    var settings = ctx.defaultSettings();
+    var arrows = 0, hands = 0;
+    for (var i = 0; i < 100; i++) {
+        var job = ctx.buildJob("cursor", 10, 100, "over", settings, ci, rng);
+        assert(job.cursorVariant === "arrow" || job.cursorVariant === "hand",
+            "cursor cursorVariant is arrow or hand: " + job.cursorVariant);
+        if (job.cursorVariant === "arrow") arrows++;
+        else hands++;
+    }
+    // ~70/30 split, allow wide margin
+    assert(arrows > 40, "cursor arrow variant > 40% (" + arrows + ")");
+    assert(hands > 10, "cursor hand variant > 10% (" + hands + ")");
+})();
+
+// Dialog jobs still have title, body, buttons (for backwards compat)
+(function() {
+    var rng = ctx.createRNG(42);
+    var ci = { width: 1920, height: 1080, frameRate: 24, totalFrames: 240 };
+    var settings = ctx.defaultSettings();
+    var job = ctx.buildJob("dialog", 10, 100, "over", settings, ci, rng);
+    assert(typeof job.title === "string" && job.title.length > 0, "dialog still has title");
+    assert(typeof job.body === "string" && job.body.length > 0, "dialog still has body");
+    assert(job.buttons && job.buttons.length > 0, "dialog still has buttons");
+})();
+
+// catalogId references valid catalog entries
+(function() {
+    var catalog = ctx.DIALOG_CATALOG;
+    assert(catalog && catalog.length === 36, "DIALOG_CATALOG has 36 entries");
+
+    var catalogIds = {};
+    for (var i = 0; i < catalog.length; i++) {
+        catalogIds[catalog[i].id] = true;
+    }
+
+    var rng = ctx.createRNG(99);
+    var ci = { width: 1920, height: 1080, frameRate: 24, totalFrames: 240 };
+    var settings = ctx.defaultSettings();
+    for (var i = 0; i < 100; i++) {
+        var job = ctx.buildJob("dialog", 10, 100, "over", settings, ci, rng);
+        assert(catalogIds[job.catalogId] === true,
+            "catalogId exists in DIALOG_CATALOG: " + job.catalogId);
+    }
 })();
 
 

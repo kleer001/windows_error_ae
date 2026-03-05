@@ -135,7 +135,7 @@ assert(ds.animStyle === "xpClassic", "defaultSettings animStyle = xpClassic");
 assert(ds.elements != null, "defaultSettings has elements object");
 assert(ds.elements.dialog.count === 0, "defaultSettings elements.dialog.count = 0");
 assert(ds.elements.bsod.count === 0, "defaultSettings elements.bsod.count = 0");
-assert(ds.elements.text.count === 0, "defaultSettings elements.text.count = 0");
+
 assert(ds.elements.cursor.count === 0, "defaultSettings elements.cursor.count = 0");
 assert(ds.elements.pixel.count === 0, "defaultSettings elements.pixel.count = 0");
 assert(ds.elements.dialog.minFrames === 8, "defaultSettings elements.dialog.minFrames = 8");
@@ -243,7 +243,7 @@ assert(gesNoOv.customTitles === null, "getElementSettings bsod customTitles null
 // Old format → new
 var oldFmt = {
     seed: 42, chaos: 80,
-    counts: { dialog: 5, bsod: 3, text: 0, cursor: 0, pixel: 0 },
+    counts: { dialog: 5, bsod: 3, cursor: 0, pixel: 0 },
     minFrames: 10, maxFrames: 80,
     elementScale: 120, speedMult: 90,
     opacityMin: 60, opacityMax: 95,
@@ -302,7 +302,7 @@ assert(rs.trails != null, "randomizeSettings has trails");
 assert(rs.stackDepth >= 3, "randomizeSettings stackDepth >= 3");
 
 // Override fields exist on each element (null or valid object/string)
-var rsTypes = ["dialog", "bsod", "text", "cursor", "pixel"];
+var rsTypes = ["dialog", "bsod", "cursor", "pixel"];
 for (var rti = 0; rti < rsTypes.length; rti++) {
     var rt = rsTypes[rti];
     var rel = rs.elements[rt];
@@ -335,6 +335,122 @@ for (var rri = 0; rri < 20; rri++) {
 assert(anyTrails, "randomizeSettings produces at least one trails override in 20 runs");
 assert(anyRoto, "randomizeSettings produces at least one rotoForce override in 20 runs");
 assert(anyCurve, "randomizeSettings produces at least one curve override in 20 runs");
+
+// --- Freeze element in settings ---
+
+// defaultSettings includes freeze
+var dsFrz = ctx.defaultSettings();
+assert(dsFrz.elements.freeze != null, "defaultSettings includes freeze element");
+assert(dsFrz.elements.freeze.count === 0, "defaultSettings freeze count = 0");
+assert(dsFrz.elements.freeze.minFrames > 0, "defaultSettings freeze minFrames > 0");
+assert(dsFrz.elements.freeze.maxFrames > 0, "defaultSettings freeze maxFrames > 0");
+
+// getElementSettings works for freeze
+var gesFrz = ctx.getElementSettings(dsFrz, "freeze");
+assert(gesFrz.count === 0, "getElementSettings freeze default count = 0");
+assert(gesFrz.scale === ctx.defaultElementSettings().scale, "getElementSettings freeze default scale");
+assert(gesFrz.trails === null, "getElementSettings freeze default trails = null");
+assert(gesFrz.rotoForce === null, "getElementSettings freeze default rotoForce = null");
+assert(gesFrz.curve === null, "getElementSettings freeze default curve = null");
+
+// getElementSettings with freeze overrides
+var frzOverride = ctx.defaultSettings();
+frzOverride.elements.freeze.count = 10;
+frzOverride.elements.freeze.rotoForce = "under";
+frzOverride.elements.freeze.curve = "burst";
+var gesFrzOv = ctx.getElementSettings(frzOverride, "freeze");
+assert(gesFrzOv.count === 10, "getElementSettings freeze override count = 10");
+assert(gesFrzOv.rotoForce === "under", "getElementSettings freeze override rotoForce = under");
+assert(gesFrzOv.curve === "burst", "getElementSettings freeze override curve = burst");
+
+// migrateSettings: old format gets freeze added
+var oldFmtFrz = {
+    seed: 99, chaos: 50,
+    counts: { dialog: 2 },
+    minFrames: 12, maxFrames: 60
+};
+var migratedFrz = ctx.migrateSettings(oldFmtFrz);
+assert(migratedFrz.elements.freeze != null, "migrateSettings old format adds freeze");
+assert(migratedFrz.elements.freeze.count === 0, "migrateSettings old format freeze count = 0");
+
+// migrateSettings: new format without freeze key gets it backfilled
+var newNoFreeze = ctx.defaultSettings();
+delete newNoFreeze.elements.freeze;
+var migratedNoFrz = ctx.migrateSettings(newNoFreeze);
+assert(migratedNoFrz.elements.freeze != null, "migrateSettings backfills missing freeze");
+assert(migratedNoFrz.elements.freeze.count === 0, "migrateSettings backfill freeze count = 0");
+
+// randomizeSettings includes freeze
+var rsFrz = ctx.randomizeSettings();
+assert(rsFrz.elements.freeze != null, "randomizeSettings has freeze element");
+assert(rsFrz.elements.freeze.count >= 0, "randomizeSettings freeze count >= 0");
+assert(rsFrz.elements.freeze.minFrames > 0, "randomizeSettings freeze minFrames > 0");
+assert(rsFrz.elements.freeze.scale >= 50, "randomizeSettings freeze scale >= 50");
+
+// Freeze constants exported
+assert(ctx.C_FREEZE_MIN_HEIGHT === 1, "C_FREEZE_MIN_HEIGHT = 1");
+assert(ctx.C_FREEZE_MAX_HEIGHT === 64, "C_FREEZE_MAX_HEIGHT = 64");
+assert(ctx.C_FREEZE_CLUSTER_MIN === 2, "C_FREEZE_CLUSTER_MIN = 2");
+assert(ctx.C_FREEZE_CLUSTER_MAX === 5, "C_FREEZE_CLUSTER_MAX = 5");
+assert(ctx.C_FREEZE_CLUSTER_BAND === 200, "C_FREEZE_CLUSTER_BAND = 200");
+assert(ctx.C_FREEZE_CLUSTER_GAP_MIN === 2, "C_FREEZE_CLUSTER_GAP_MIN = 2");
+assert(ctx.C_FREEZE_CLUSTER_GAP_MAX === 20, "C_FREEZE_CLUSTER_GAP_MAX = 20");
+assert(ctx.FLOOR_FREEZE_STRIP === 2, "FLOOR_FREEZE_STRIP = 2");
+
+// ── Virtual Resolution ──────────────────────────────
+
+// --- VIRTUAL_RESOLUTIONS constant exported ---
+assert(ctx.VIRTUAL_RESOLUTIONS != null, "VIRTUAL_RESOLUTIONS exported");
+assert(ctx.VIRTUAL_RESOLUTIONS.length === 5, "VIRTUAL_RESOLUTIONS has 5 presets");
+assert(ctx.VIRTUAL_RESOLUTIONS[0].w === 640, "VIRTUAL_RESOLUTIONS[0] = 640x480");
+assert(ctx.VIRTUAL_RESOLUTIONS[0].h === 480, "VIRTUAL_RESOLUTIONS[0] h = 480");
+assert(ctx.VIRTUAL_RESOLUTIONS[1].w === 800, "VIRTUAL_RESOLUTIONS[1] = 800x600");
+assert(ctx.VIRTUAL_RESOLUTIONS[4].w === 0, "VIRTUAL_RESOLUTIONS[4] (Native) w = 0");
+assert(ctx.VIRTUAL_RESOLUTIONS[4].h === 0, "VIRTUAL_RESOLUTIONS[4] (Native) h = 0");
+assert(ctx.DEFAULT_VIRTUAL_RES_INDEX === 2, "DEFAULT_VIRTUAL_RES_INDEX = 2 (1024x768)");
+
+// --- calcCompScale ---
+// 1920px comp
+assert(ctx.calcCompScale(1920, 0) === 3.0, "calcCompScale(1920, 0) = 3.0 (640x480)");
+assert(ctx.calcCompScale(1920, 1) === 2.4, "calcCompScale(1920, 1) = 2.4 (800x600)");
+assert(ctx.calcCompScale(1920, 2) === 1920 / 1024, "calcCompScale(1920, 2) = 1.875 (1024x768)");
+assert(ctx.calcCompScale(1920, 3) === 1.5, "calcCompScale(1920, 3) = 1.5 (1280x1024)");
+assert(ctx.calcCompScale(1920, 4) === 1.0, "calcCompScale(1920, 4) = 1.0 (native)");
+
+// 4K comp
+assert(ctx.calcCompScale(3840, 0) === 6.0, "calcCompScale(3840, 0) = 6.0 (640x480 @ 4K)");
+assert(ctx.calcCompScale(3840, 1) === 4.8, "calcCompScale(3840, 1) = 4.8 (800x600 @ 4K)");
+
+// Edge cases
+assert(ctx.calcCompScale(1920, undefined) === 1.0, "calcCompScale with undefined index returns 1.0");
+assert(ctx.calcCompScale(1920, null) === 1.0, "calcCompScale with null index returns 1.0");
+assert(ctx.calcCompScale(1920, 99) === 1.0, "calcCompScale with out-of-range index returns 1.0");
+assert(ctx.calcCompScale(640, 0) === 1.0, "calcCompScale(640, 0) = 1.0 (comp matches virtual)");
+assert(ctx.calcCompScale(1280, 0) === 2.0, "calcCompScale(1280, 0) = 2.0 (1280/640)");
+
+// --- defaultSettings includes virtualRes ---
+var dsVR = ctx.defaultSettings();
+assert(dsVR.virtualRes === 2, "defaultSettings virtualRes = 2 (1024x768)");
+
+// --- migrateSettings backfills virtualRes ---
+var oldNoVR = { elements: { dialog: {}, bsod: {}, cursor: {}, pixel: {}, freeze: {} } };
+var migratedVR = ctx.migrateSettings(oldNoVR);
+assert(migratedVR.virtualRes === 2, "migrateSettings backfills virtualRes = 2");
+
+// migrateSettings preserves existing virtualRes
+var hasVR = { virtualRes: 3, elements: { dialog: {}, bsod: {}, cursor: {}, pixel: {}, freeze: {} } };
+var migratedKeep = ctx.migrateSettings(hasVR);
+assert(migratedKeep.virtualRes === 3, "migrateSettings preserves existing virtualRes = 3");
+
+// migrateSettings handles virtualRes=0 correctly (not treated as falsy)
+var vrZero = { virtualRes: 0, elements: { dialog: {}, bsod: {}, cursor: {}, pixel: {}, freeze: {} } };
+var migratedZero = ctx.migrateSettings(vrZero);
+assert(migratedZero.virtualRes === 0, "migrateSettings preserves virtualRes = 0 (not treated as falsy)");
+
+// --- randomizeSettings includes virtualRes ---
+var rsVR = ctx.randomizeSettings();
+assert(rsVR.virtualRes != null, "randomizeSettings includes virtualRes");
+assert(rsVR.virtualRes >= 0 && rsVR.virtualRes < 5, "randomizeSettings virtualRes in valid range 0-4");
 
 console.log("Utilities: " + passed + " passed, " + failed + " failed");
 module.exports = { passed: passed, failed: failed };

@@ -1,5 +1,5 @@
 # Windows Error FX — User Configuration Specification
-### After Effects Plugin ScriptUI Panel Reference v0.1
+### After Effects Plugin ScriptUI Panel Reference v0.3
 
 ---
 
@@ -7,8 +7,8 @@
 
 The panel is a **single dockable ScriptUI panel** in After Effects. It follows three principles:
 
-1. **Minimal input, maximum output.** The user should be able to get a great result in under 30 seconds with only a seed and a chaos level.
-2. **Transparent but not overwhelming.** Advanced controls are present but grouped below the fold — the user can ignore them entirely.
+1. **Minimal input, maximum output.** A seed and chaos level produce a great result in under 30 seconds.
+2. **Transparent but not overwhelming.** Advanced controls are grouped below the fold — ignore them entirely or dial in every detail.
 3. **Deterministic.** Same settings + same seed = identical output. Changing the seed is the fastest creative iteration tool.
 
 ---
@@ -17,31 +17,53 @@ The panel is a **single dockable ScriptUI panel** in After Effects. It follows t
 
 ```
 ┌──────────────────────────────────────┐
-│  💀  WINDOWS ERROR FX                │  ← Panel title bar
+│  WINDOWS ERROR FX                    │  ← Panel title bar
 ├──────────────────────────────────────┤
 │                                      │
-│  SEED  [ 4 8 2 7 ]  [Randomize]      │  ← Seed row
+│  SEED  [ 4 8 2 7 ]  [Randomize]     │  ← Seed + randomize all settings
 │                                      │
-│  CHAOS  ████████░░░░  70%            │  ← Chaos slider
+│  CHAOS  [ 70 ]                       │  ← Chaos level (integer)
+│                                      │
+│  RESOLUTION  [ 1024 x 768 ▾ ]       │  ← Virtual resolution dropdown
 │                                      │
 │  ROTO LAYERS  (auto-detected: 2)     │  ← Roto status
-│  ☑ treat_roto [layer name]           │
-│  ☑ treat_roto [layer name]           │
 │                                      │
 │  [ GENERATE ]                        │  ← Primary action
 │                                      │
-├── ADVANCED ──────────────────────────┤  ← Collapsible section
-│  Element Mix      Animation Mix      │
-│  Dialog   [███░] 75%  Style [XP ▾]  │
-│  BSOD     [██░░] 50%  Min  [8f  ]   │
-│  Text     [███░] 75%  Max  [96f ]   │
-│  Cursors  [██░░] 50%                 │
-│  Blocks   [█░░░] 25%                 │
+├── ELEMENT TABS ─────────────────────┤
+│  [Dialog] [BSOD] [Cursor] [Pixel]   │
+│  [Freeze]                            │
+│  ┌────────────────────────────────┐  │
+│  │ Count [0]  Min f [8]  Max f [96]│ │
+│  │ Scale% [100]  Speed% [100]     │  │
+│  │ OpacMin [50]  OpacMax [100]    │  │
+│  │ Entry f [3]  Exit f [2]       │  │
+│  │                                │  │
+│  │ ☐ Override Trails              │  │
+│  │   Chance [20] Echoes [4]       │  │
+│  │   Decay [50]                   │  │
+│  │ ☐ Override Roto  [Over ▾]     │  │
+│  │ ☐ Override Curve [Flat ▾]     │  │
+│  │ ☐ Override Messages [Edit...]  │  │ ← Dialog/BSOD only
+│  └────────────────────────────────┘  │
 │                                      │
-│  Roto Mode  [ Split ▾ ]             │
-│  Chaos Curve [ Build ▾ ]            │
+├── GLOBAL CONTROLS ──────────────────┤
+│  Animation Style  [ XP Classic ▾ ]   │
+│  Roto Mode        [ Split ▾ ]        │
+│  Chaos Curve      [ Flat ▾ ]         │
+│  Stack Depth [8]  Stack Offset [10]  │
 │                                      │
-│  Custom Messages  [ Edit... ]        │
+├── OVERLAYS ─────────────────────────┤
+│  ☑ Scanlines  Opacity [20] Spacing [4] ☐ Jitter │
+│  ☑ Noise      Opacity [8]  Scale [100] Complex [5] │
+│  ☐ Head Scratch  Freq [20]  Height [2] │
+│                                      │
+├── TRAILS ───────────────────────────┤
+│  ☑ Enabled  Chance [20]  Echoes [4] │
+│  Decay [50]                          │
+│                                      │
+├── CUSTOM MESSAGES ──────────────────┤
+│  [ Edit Messages... ]                │
 │                                      │
 │  [ REGENERATE ]  [ CLEAR ALL ]       │
 └──────────────────────────────────────┘
@@ -52,182 +74,209 @@ The panel is a **single dockable ScriptUI panel** in After Effects. It follows t
 ## Section 1 — Core Controls (Always Visible)
 
 ### Seed
-- **Type:** Integer input field (4–8 digit number)
+- **Type:** Integer input field
 - **Default:** `1984`
-- **Randomize button:** Generates a new random seed and populates the field. Does not regenerate the effect — the user must press Generate.
-- **Behavior:** All randomness in the script derives from this seed. Changing by 1 produces a completely different layout. This is the primary creative iteration tool.
-- **Display:** Shows current seed. If the comp already has a generated effect from a different seed, the field shows that previous seed (read from a comp marker comment).
-
----
+- **Randomize button:** Generates a new random seed AND randomizes ALL settings (per-element counts, chaos, curve, style, overlays, trails). This is a full "surprise me" button, not just a seed change.
+- **Behavior:** All randomness derives from this seed via deterministic PRNG.
 
 ### Chaos
-- **Type:** Horizontal slider + numeric readout
-- **Range:** 0–100 (integer)
-- **Default:** 50
-- **Display:** Shows percentage. Slider has 5 labeled stops: Calm · Glitching · Crashing · Meltdown · Failure
-- **What it controls:**
-  - Total number of elements spawned across the comp duration
-  - Maximum simultaneous on-screen elements at peak density
-  - Dialog cascade depth
-  - Pixel corruption block frequency
-  - Head scratch frequency
-  - Whether extreme behaviors (full-screen BSOD, cursor clusters) are enabled
+- **Type:** Integer field
+- **Range:** 0–100+ (supports values above 100 for extreme density)
+- **Default:** `100`
+- **What it controls:** Total element count in auto mode (when all per-element counts are 0). Formula: `pow(chaos/100, 1.5) × 50 × (totalFrames/240)`
 
-| Chaos % | Max Simultaneous Elements | Dialog Cascade Depth |
-|---|---|---|
-| 0–20 | 2 | 1 |
-| 21–40 | 4 | 2 |
-| 41–60 | 6 | 4 |
-| 61–80 | 10 | 6 |
-| 81–100 | 16+ | 8 |
-
----
+### Virtual Resolution
+- **Type:** Dropdown
+- **Options:** 640×480, 800×600, 1024×768 (default), 1280×1024, Native
+- **What it controls:** Scale factor applied to all element geometry. `compWidth / virtualResWidth`
 
 ### Roto Layers
-- **Type:** Auto-detected checklist
-- **Behavior:** On panel open, the script scans the active comp for layers whose names contain: `roto`, `rotoscope`, `matte`, `cutout`, `subject`, `fg` (case-insensitive)
-- **Display:** Shows count of detected layers. Lists each with a checkbox. User can deselect any layer to exclude it from roto logic.
-- **If none detected:** Shows `No roto layers found — all elements will be composited flat` with a note that the user can rename layers and re-open the panel.
-- **Manual override:** User can type a custom layer name keyword to add to the detection list (single text field below the checklist).
-
----
+- **Type:** Auto-detected status display
+- **Behavior:** Scans active comp for layer names containing: `roto`, `rotoscope`, `matte`, `cutout`, `subject`, `fg` (case-insensitive)
+- **If none detected:** Runs in Flat mode automatically.
 
 ### GENERATE Button
-- Primary action. Reads all current settings and builds the pre-comp in the active comp.
-- If a previous `WindowsErrorFX` pre-comp exists in this comp, prompts: `Replace existing effect? [Yes] [Cancel]`
-- After generation, shows a brief status: `Generated 14 elements across 240 frames.`
+- Primary action. Reads all settings and builds the pre-comp.
+- If a previous `WindowsErrorFX` pre-comp exists, prompts for replacement.
 
 ---
 
-## Section 2 — Advanced Controls (Collapsible)
+## Section 2 — Per-Element Tabs
 
-Collapsed by default. Expanded state persists within the session.
+Five tabs in a `tabbedpanel` — one per element type: **Dialog**, **BSOD**, **Cursor**, **Pixel**, **Freeze**.
+
+Each tab contains identical control layouts:
+
+### Core Controls (all tabs)
+
+| Control | Type | Default | Description |
+|---------|------|---------|-------------|
+| Count | Integer | 0 | Exact number to generate (0 = auto from chaos) |
+| Min Frames | Integer | 8 | Minimum element lifespan |
+| Max Frames | Integer | 96 | Maximum element lifespan |
+| Scale % | Integer | 100 | Size multiplier |
+| Speed % | Integer | 100 | Animation speed multiplier |
+| Opacity Min | Integer | 50 | Minimum opacity (0–100) |
+| Opacity Max | Integer | 100 | Maximum opacity (0–100) |
+| Entry Frames | Integer | 3 | Arrival animation duration |
+| Exit Frames | Integer | 2 | Exit animation duration |
+
+### Per-Element Overrides (checkbox-reveals-controls pattern)
+
+Each override is a checkbox. When checked, its controls become visible. When unchecked, the element inherits the global setting. Uses IIFE closures for ES3 for-loop variable capture.
+
+| Override | Controls | Available On |
+|----------|----------|-------------|
+| **Trails** | Chance %, Echoes count, Decay % | All tabs |
+| **Roto** | Dropdown: Over / Under | All tabs |
+| **Curve** | Dropdown: Flat / Build / Peak / Burst / Random | All tabs |
+| **Messages** | Edit button → floating dialog | Dialog, BSOD only |
+
+**Custom Messages per tab:**
+- Dialog tab: messages + titles fields
+- BSOD tab: messages only
+- Cursor, Pixel, Freeze tabs: no messages row
+
+### Count Behavior
+When **all** per-element counts are 0, the scheduler uses auto mode: chaos determines total count, and types are distributed by weighted probability (dialog:75, bsod:50, cursor:50, pixel:25, freeze:15).
+
+When **any** count is > 0, the scheduler uses exact counts mode: generates exactly the specified number of each type, shuffled for temporal distribution.
 
 ---
 
-### Element Mix
+## Section 3 — Global Controls
 
-Five sliders — one per major element type. Each controls the **relative probability** that the chaos budget will spawn that type of element. They are not absolute counts; they weight the random selection.
+### Animation Style
+**Type:** Dropdown
 
-| Element | Slider Range | Default |
-|---|---|---|
-| Dialog Boxes | 0–100% | 75% |
-| BSOD Panels | 0–100% | 50% |
-| Text Overlays | 0–100% | 75% |
-| Cursors | 0–100% | 50% |
-| Pixel Blocks | 0–100% | 25% |
-
-Setting a slider to 0% completely disables that element type. Setting to 100% makes it the dominant type.
-
----
-
-### Animation Mix — Style
-
-**Type:** Dropdown  
-**Options:**
-
-| Option | Description |
+| Option | Effect |
 |---|---|
-| **XP Classic** | Default. Snappy cuts, linear slides, instant pops. No easing. |
-| **Glitch Heavy** | More position jumps, more stutter, higher character corruption rate. |
-| **Slow Burn** | Longer lifespans, more static holds, fewer fast events. Creeping dread. |
-| **Chaos Maximum** | Shortest lifespans, maximum spawn rate, everything at once. |
-
-These are multiplier presets applied on top of the per-element defaults. They do not override Min/Max frame settings.
-
----
-
-### Animation Mix — Min/Max Frame Duration
-
-- **Min Life:** Integer field, minimum `2` (pixel blocks) or `8` (all others). Default `8`.
-- **Max Life:** Integer field, maximum `96`. Default `96`.
-- These set the **global** floor and ceiling for element lifespan. Individual element types still respect their own defaults within this range.
-
----
+| **XP Classic** | Default. Standard behavior weights. |
+| **Glitch Heavy** | More stutter/shake, higher corruption rate. |
+| **Slow Burn** | Longer lifespans (min 16f), more static holds. |
+| **Chaos Maximum** | Short lifespans (max 36f), maximum density. |
 
 ### Roto Mode
-
-**Type:** Dropdown  
-**Options:**
+**Type:** Dropdown
 
 | Option | Description |
 |---|---|
-| **Split** | Default. Elements are split between OVER and UNDER roto layers according to the interaction matrix. |
-| **All Over** | All elements composite on top of everything, roto ignored. |
-| **All Under** | All elements go behind roto subject. Subject is always clean. |
-| **Flat** | Roto layers are ignored entirely. Effect is single-layer, no depth. |
-
----
+| **Split** | Default. Elements distributed between OVER and UNDER per interaction matrix. |
+| **All Over** | All elements composite on top. |
+| **All Under** | All elements go behind roto subject. |
+| **Flat** | Roto ignored entirely. Single layer, no depth. |
 
 ### Chaos Curve
-
-Controls the **density distribution** of elements across the comp timeline.
-
-**Type:** Dropdown  
-**Options:**
+**Type:** Dropdown. Controls density distribution across timeline.
 
 | Option | Description |
 |---|---|
-| **Flat** | Default. Uniform density throughout. Elements are evenly distributed. |
-| **Build** | Starts sparse, ramps up to peak density at the end. |
-| **Peak** | Sparse at start and end, maximum density in the middle. |
-| **Burst** | Two or three concentrated bursts of high density with quiet gaps. |
-| **Random** | No pattern. Seeded random distribution. Each region has different density. |
+| **Flat** | Uniform density. Default. |
+| **Build** | Sparse → dense. |
+| **Peak** | Bell curve — dense in middle. |
+| **Burst** | 2–3 concentrated clusters with gaps. |
+| **Random** | Seeded random segments with varying density. |
+
+### Dialog Stack Controls
+- **Stack Depth:** Max cascade copies (default 8)
+- **Stack Offset:** Diagonal offset in px per cascade step (default 10)
 
 ---
+
+## Section 4 — Overlay Controls
+
+### Scanlines
+- **Enabled:** Checkbox (default on)
+- **Opacity:** 0–100 (default 20)
+- **Spacing:** Pixels between lines (default 4)
+- **Jitter:** Checkbox — enables occasional 1px vertical shift
+
+### Noise
+- **Enabled:** Checkbox (default on)
+- **Opacity:** 0–100 (default 8)
+- **Scale:** Fractal noise scale (default 100)
+- **Complexity:** Fractal noise detail 1–20 (default 5)
+
+### Head Scratch
+- **Enabled:** Checkbox (default off)
+- **Frequency:** Frames between scratches (default 20)
+- **Height:** Pixels tall (default 2)
+
+---
+
+## Section 5 — Trails (Global)
+
+- **Enabled:** Checkbox (default on)
+- **Chance:** Percent probability per element (default 20)
+- **Echoes:** Number of echo copies (default 4)
+- **Decay:** Percent opacity reduction per echo (default 50)
+
+Per-element trail overrides (in element tabs) take priority over these global settings.
+
+---
+
+## Section 6 — Custom Messages & Actions
 
 ### Custom Messages
-
-**Type:** Button → Opens a separate floating dialog  
-
-The Custom Messages dialog contains:
-
-- A scrollable text area showing the current message pool (title bar strings + body text strings separated)
-- **[Add Line]** — appends a user-typed line to the body text pool
-- **[Add Title]** — appends a user-typed string to the title bar pool
-- **[Reset to Defaults]** — restores the built-in pool, removes all custom additions
-- **[Clear All & Use Custom Only]** — empties the built-in pool, leaving only user entries
-
-Custom messages are stored as a JSON string in a comp marker on frame 0, so they persist with the project file. Re-opening the panel restores them automatically.
-
----
+**Type:** Button → opens a separate floating dialog with text areas for message and title pools. Custom messages are stored globally and can be overridden per-element.
 
 ### REGENERATE Button
-Re-runs generation with current settings. Equivalent to pressing Generate after a settings change. Skips the "replace?" prompt.
+Re-runs generation with current settings. Skips the "replace?" prompt.
 
 ### CLEAR ALL Button
-Removes the `WindowsErrorFX` pre-comp and its contents from the active comp. Prompts: `Remove all Windows Error FX elements? [Yes] [Cancel]`
+Removes the `WindowsErrorFX` pre-comp and its contents from the active comp. Prompts for confirmation.
 
 ---
 
-## Section 3 — Implicit / Non-UI Configuration
+## Constants (Power User Editable)
 
-These values are not exposed in the panel UI but are defined as editable constants at the top of the `.jsx` file, documented for power users who want to open the script and tweak:
+These values are defined at the top of the `.jsx` file, documented inline for power users:
 
 ```javascript
-// ─── ADVANCED CONSTANTS (edit these if you know what you're doing) ───────────
+// ── Visual ──────────────────────────────────────────────
+var C_BSOD_BG         = [0, 0, 0.667];       // #0000AA
+var C_DIALOG_BG       = [0.831, 0.816, 0.784]; // #D4D0C8
+var C_DIALOG_TITLE_BG = [0, 0, 0.502];        // #000080
+var C_PIXEL_COLORS    = [...];                 // 7 colors: black, white, BSOD blue, magenta, cyan, red, green
 
-var FONT_MONOSPACE   = "Courier New";    // swap to "Fixedsys Excelsior" if installed
-var FONT_DIALOG_BODY = "Arial";
-var FONT_SIZE_BSOD   = 13;              // px, monospace text on BSOD panels
-var FONT_SIZE_DIALOG = 11;              // px, dialog body text
+// ── Fonts ───────────────────────────────────────────────
+var FONT_MONO = "Courier New";
+var FONT_UI   = "Arial";
+var FONT_BSOD = "Lucida Console";
 
-var COLOR_BSOD_BG    = [0, 0, 0.667];  // #0000AA  (AE normalized RGB)
-var COLOR_BSOD_TEXT  = [1, 1, 1];      // white
-var COLOR_DIALOG_BG  = [0.831, 0.816, 0.784]; // #D4D0C8  Win98 grey
-var COLOR_TITLE_BAR  = [0, 0, 0.502];  // #000080  deep blue
+// ── Timing ──────────────────────────────────────────────
+var FLOOR_FRAMES      = 8;
+var FLOOR_PIXEL_BLOCK = 2;
+var FLOOR_FREEZE_STRIP = 2;
+var MAX_FRAMES        = 96;
 
-var SCANLINE_OPACITY = 0.20;           // 0.0–1.0
-var NOISE_OPACITY    = 0.08;           // 0.0–1.0
-var SCANLINE_SPACING = 4;              // px between scan lines
+// ── Dialog geometry ─────────────────────────────────────
+var DIALOG_WIDTH  = 280;
+var DIALOG_HEIGHT = 140;
+var STACK_OFFSET_X = 10;
+var MAX_STACK_DEPTH = 8;
 
-var DIALOG_STACK_OFFSET_X = 10;        // px diagonal stack X offset
-var DIALOG_STACK_OFFSET_Y = 10;        // px diagonal stack Y offset
-var DIALOG_MAX_STACK_DEPTH = 8;        // max cascading copies
+// ── Freeze strip ────────────────────────────────────────
+var C_FREEZE_MIN_HEIGHT  = 1;
+var C_FREEZE_MAX_HEIGHT  = 64;
+var C_FREEZE_CLUSTER_MIN = 2;
+var C_FREEZE_CLUSTER_MAX = 5;
+var C_FREEZE_CLUSTER_BAND = 200;
 
-var CURSOR_SIZE      = 24;             // px, rendered cursor height
-var MIN_ELEMENT_LIFE = 8;              // frames — global floor
-var PIXEL_BLOCK_MIN  = 2;             // frames — exception to floor rule
+// ── Element defaults ────────────────────────────────────
+var DEFAULT_ELEMENT_SCALE = 100;
+var DEFAULT_SPEED_MULT    = 100;
+var DEFAULT_OPACITY_MIN   = 50;
+var DEFAULT_OPACITY_MAX   = 100;
+var DEFAULT_ENTRY_FRAMES  = 3;
+var DEFAULT_EXIT_FRAMES   = 2;
+
+// ── Overlay defaults ────────────────────────────────────
+var DEFAULT_SCANLINE_OPACITY = 20;
+var DEFAULT_NOISE_OPACITY    = 8;
+var DEFAULT_TRAILS_CHANCE    = 20;
+var DEFAULT_TRAILS_ECHOES    = 4;
+var DEFAULT_TRAILS_DECAY     = 50;
 ```
 
 ---
@@ -236,12 +285,12 @@ var PIXEL_BLOCK_MIN  = 2;             // frames — exception to floor rule
 
 | Data | Where Stored | Persists? |
 |---|---|---|
-| Seed value | Comp marker, frame 0, label `WEFX_SEED` | Yes, with project |
-| Custom messages | Comp marker, frame 0, label `WEFX_MESSAGES` | Yes, with project |
-| Panel UI state (sliders, dropdowns) | AE preferences file | Per machine |
+| All settings (seed, chaos, elements, overlays, trails, custom messages) | Comp marker at frame 0, JSON with `_type: "WEFX_SETTINGS"` | Yes, with project |
 | Generated layers | Pre-comp `WindowsErrorFX_[seed]` | Yes, until Cleared |
 
-When the user opens the panel on a comp that already has a `WEFX_SEED` marker, the panel populates the seed field and all controls from the stored state automatically.
+Settings are stored as a single JSON blob in a comp marker comment. When the panel opens on a comp with an existing marker, all controls are restored automatically.
+
+Old-format settings (flat fields like `counts`, `minFrames`, `elementScale`) are auto-migrated to the new per-element format via `migrateSettings()`.
 
 ---
 
@@ -249,13 +298,11 @@ When the user opens the panel on a comp that already has a `WEFX_SEED` marker, t
 
 | Situation | Panel Response |
 |---|---|
-| No active comp | `Open a composition to begin.` |
-| Active comp under 24 frames | `Comp is very short. Results may be sparse.` |
-| No roto layers detected | `No roto layers found — running in Flat mode.` |
-| All element sliders at 0% | `Nothing to generate. Enable at least one element type.` |
-| Custom message pool empty and built-in cleared | `No messages in pool. Reset to defaults or add custom messages.` |
-| Pre-comp generation fails | `Something went wrong. Check AE scripting permissions in Preferences > Scripting & Expressions.` |
+| No active comp | `Please open a composition first.` |
+| No roto layers detected | Runs in Flat mode automatically |
+| All element counts at 0 and chaos at 0 | Generates nothing (count formula returns 0) |
+| Pre-comp generation fails | Error logged to `WindowsErrorFX.log` in Documents folder |
 
 ---
 
-*Document version 0.1 — companion to windows-error-fx-spec.md and windows-error-fx-animation-spec.md*
+*Document version 0.3 — updated to match implementation*
