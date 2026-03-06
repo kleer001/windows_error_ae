@@ -22,22 +22,26 @@ A single-file `.jsx` ScriptUI panel script that:
 windows-error-fx/
 ├── CLAUDE.md                              ← You are here
 ├── WindowsErrorFX.jsx                     ← The plugin (single deliverable file)
-├── ae-extendscript-reference.md           ← ExtendScript/AE API knowledge base ⭐
-├── windows-error-fx-spec.md               ← Element visual design reference
-├── windows-error-fx-animation-spec.md     ← Element animation behaviors reference
-├── windows-error-fx-config-spec.md        ← UI panel + user config reference
-├── code-architecture-spec.md              ← Code structure + function signatures reference
-├── qa-checklist.md                        ← Manual QA checklist for AE testing
-├── docs/images/fidelity-reference.md      ← Pixel-perfect visual specs for dialogs, BSODs, cursors
-├── tests/run_tests.js                     ← Test runner (node tests/run_tests.js)
-├── tests/test_harness.js                  ← Node.js VM sandbox that evals the JSX
-├── tests/test_prng.js                     ← PRNG tests
-├── tests/test_utilities.js                ← Utility/settings/message pool tests
-├── tests/test_scheduler.js                ← Scheduler tests (largest suite)
-└── README.md                              ← User-facing install + usage guide
+├── README.md                              ← User-facing install + usage guide
+├── LICENSE
+├── docs/
+│   ├── ae-extendscript-reference.md       ← ExtendScript/AE API knowledge base ⭐
+│   ├── windows-error-fx-spec.md           ← Element visual design reference
+│   ├── windows-error-fx-animation-spec.md ← Element animation behaviors reference
+│   ├── windows-error-fx-config-spec.md    ← UI panel + user config reference
+│   ├── code-architecture-spec.md          ← Code structure + function signatures reference
+│   ├── qa-checklist.md                    ← Manual QA checklist for AE testing
+│   └── images/fidelity-reference.md       ← Pixel-perfect visual specs for dialogs, BSODs, cursors
+├── tests/
+│   ├── run_tests.js                       ← Test runner (node tests/run_tests.js)
+│   ├── test_harness.js                    ← Node.js VM sandbox that evals the JSX
+│   ├── test_prng.js                       ← PRNG tests
+│   ├── test_utilities.js                  ← Utility/settings/message pool tests
+│   └── test_scheduler.js                  ← Scheduler tests (largest suite)
+└── tools/                                 ← Dialog/cursor PNG rendering pipeline
 ```
 
-> ⭐ **Before writing any AE scripting code, read `ae-extendscript-reference.md`.** ExtendScript is ES3 with a large proprietary API — it has many non-obvious constraints and patterns that differ from modern JS.
+> ⭐ **Before writing any AE scripting code, read `docs/ae-extendscript-reference.md`.** ExtendScript is ES3 with a large proprietary API — it has many non-obvious constraints and patterns that differ from modern JS.
 
 ---
 
@@ -47,10 +51,10 @@ The spec documents are **informed suggestions** — they provide design directio
 
 | Doc | Purpose |
 |---|---|
-| `windows-error-fx-spec.md` | What each element looks like — colors, geometry, fonts, roto interaction rules |
-| `windows-error-fx-animation-spec.md` | How each element moves — behaviors, timing, the Floor Rule, easing vocabulary |
-| `windows-error-fx-config-spec.md` | The ScriptUI panel layout, all user controls, stored state, error handling |
-| `code-architecture-spec.md` | Code structure, function signatures, data flow |
+| `docs/windows-error-fx-spec.md` | What each element looks like — colors, geometry, fonts, roto interaction rules |
+| `docs/windows-error-fx-animation-spec.md` | How each element moves — behaviors, timing, the Floor Rule, easing vocabulary |
+| `docs/windows-error-fx-config-spec.md` | The ScriptUI panel layout, all user controls, stored state, error handling |
+| `docs/code-architecture-spec.md` | Code structure, function signatures, data flow |
 
 ---
 
@@ -132,8 +136,8 @@ function buildBSOD(params, targetComp) {
 This project was designed with a no-AE-feedback constraint in mind. Mitigations:
 
 - Spec docs are written before code as reference, so logic can be reviewed in isolation
-- The `ae-extendscript-reference.md` file contains AE API patterns (verify before trusting)
-- The `qa-checklist.md` defines what to verify when AE access is available
+- The `docs/ae-extendscript-reference.md` file contains AE API patterns (verify before trusting)
+- The `docs/qa-checklist.md` defines what to verify when AE access is available
 - The PRNG and scheduler logic can be unit-tested in a browser console (pure JS, no AE API)
 - Shape/color math can be visually prototyped in a browser canvas before porting to ExtendScript
 
