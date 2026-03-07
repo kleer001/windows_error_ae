@@ -46,11 +46,11 @@ def build_text_overlay(job, comp_w, comp_h, frame_rate):
         drift_speed = job.get("driftSpeed", 0.5) * job.get("speedMult", 1.0)
         text_node["translate"].setAnimated()
         if drift_dir == "up":
-            text_node["translate"].setValueAt(in_frame, 0, 1)
-            text_node["translate"].setValueAt(out_frame, drift_speed * (out_frame - in_frame), 1)
+            text_node["translate"].setValueAt(0, in_frame, 1)
+            text_node["translate"].setValueAt(drift_speed * (out_frame - in_frame), out_frame, 1)
         else:
-            text_node["translate"].setValueAt(in_frame, 0, 1)
-            text_node["translate"].setValueAt(out_frame, -drift_speed * (out_frame - in_frame), 1)
+            text_node["translate"].setValueAt(0, in_frame, 1)
+            text_node["translate"].setValueAt(-drift_speed * (out_frame - in_frame), out_frame, 1)
 
     nodes = [bg, text_node]
     return text_node, nodes

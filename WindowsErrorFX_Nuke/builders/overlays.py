@@ -12,7 +12,7 @@ from ..core.constants import (
 
 
 def build_noise(settings, comp_w, comp_h):
-    """Build a Noise overlay node merged at low opacity.
+    """Build a Noise overlay node with Grade for opacity control.
 
     Returns (output_node, list_of_nodes) or (None, []) if disabled.
     """
@@ -27,7 +27,7 @@ def build_noise(settings, comp_w, comp_h):
     noise = nuke.nodes.Noise(name="WEFX_noise")
     noise["size"].setValue(scale_val)
     noise["octaves"].setValue(complexity)
-    noise["zoffset"].setExpression("frame * 100")
+    noise["z"].setExpression("frame * 100")
     noise["gain"].setValue(0.5)
     noise["gamma"].setValue(0.5)
     noise["format"].setValue(nuke.root().format())
@@ -44,6 +44,7 @@ def build_head_scratch(settings, comp_w, comp_h, total_frames, frame_rate):
     """Build a head scratch overlay — bright horizontal slice that appears periodically.
 
     Returns (output_node, list_of_nodes) or (None, []) if disabled.
+    The returned output node has a mix expression for visibility timing.
     """
     hs_settings = settings.get("headScratch", {})
     if not hs_settings.get("enabled", False):
@@ -52,26 +53,19 @@ def build_head_scratch(settings, comp_w, comp_h, total_frames, frame_rate):
     freq = hs_settings.get("freq", DEFAULT_HEADSCRATCH_FREQ)
     height = max(1, hs_settings.get("height", DEFAULT_HEADSCRATCH_HEIGHT))
 
-    # Constant bright line
+    # Constant bright line (unique format name)
     line = nuke.nodes.Constant(name="WEFX_hscratch")
     line["color"].setValue([1.0, 1.0, 1.0, 0.8])
-    line["format"].setValue(nuke.addFormat("%d %d WEFX_hs_fmt" % (comp_w, height)))
+    line["format"].setValue(nuke.addFormat("%d %d WEFX_hs_fmt_%d" % (comp_w, height, freq)))
 
-    # Animate position — moves to random Y every freq frames
+    # Animate position — moves to different Y every freq frames
     xform = nuke.nodes.Transform(name="WEFX_hscratch_xform")
     xform.setInput(0, line)
     xform["filter"].setValue("Impulse")
-    xform["translate"].setExpression(
-        "0", 0
-    )
+    xform["translate"].setExpression("0", 0)
     # Y position cycles based on frame and frequency
     xform["translate"].setExpression(
         "(int(frame / %d) %% %d) * %d" % (freq, max(1, comp_h // (height * 3)), height * 3), 1
-    )
-
-    # Mix animation — only visible for 2-4 frames at each appearance
-    xform["mix"].setExpression(
-        "(frame %% %d < 3) ? 1 : 0" % freq
     )
 
     return xform, [line, xform]

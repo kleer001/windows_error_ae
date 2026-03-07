@@ -23,7 +23,7 @@ def build_chrome(job, comp_w, comp_h, frame_rate):
 
     bg = nuke.nodes.Constant(name=prefix + "_bg")
     bg["color"].setValue([C_DIALOG_BG[0], C_DIALOG_BG[1], C_DIALOG_BG[2], 1.0])
-    bg["format"].setValue(nuke.addFormat("%d %d WEFX_chrome_fmt" % (frag_w, frag_h)))
+    bg["format"].setValue(nuke.addFormat("%d %d WEFX_chrome_fmt_%d" % (frag_w, frag_h, in_frame)))
 
     xform = nuke.nodes.Transform(name=prefix + "_xform")
     xform.setInput(0, bg)

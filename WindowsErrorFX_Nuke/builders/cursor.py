@@ -9,7 +9,7 @@ from ..core.constants import C_CURSOR_FILL, C_CURSOR_STROKE, CURSOR_HEIGHT
 def build_cursor(job, comp_w, comp_h, frame_rate):
     """Build a mouse cursor artifact node.
 
-    Uses a simple polygon shape for the cursor.
+    Uses a small white Constant block as the cursor shape (simple and reliable).
     Returns (output_node, list_of_all_nodes).
     """
     in_frame = job["inFrame"]
@@ -19,56 +19,27 @@ def build_cursor(job, comp_w, comp_h, frame_rate):
 
     x = job.get("x", comp_w // 2)
     y = job.get("y", comp_h // 2)
-    cursor_h = int(CURSOR_HEIGHT * scale)
+    cursor_h = max(2, int(CURSOR_HEIGHT * scale))
+    cursor_w = max(2, int(12 * scale))
 
     prefix = "WEFX_cursor_%d" % in_frame
 
-    # Draw cursor as a white polygon on transparent background
+    # Draw cursor as a small white block (reliable cross-version approach)
     bg = nuke.nodes.Constant(name=prefix + "_bg")
-    bg["color"].setValue([0, 0, 0, 0])
-    bg["format"].setValue(nuke.root().format())
+    bg["color"].setValue([C_CURSOR_FILL[0], C_CURSOR_FILL[1], C_CURSOR_FILL[2], 1.0])
+    bg["format"].setValue(nuke.addFormat(
+        "%d %d WEFX_cursor_fmt_%d" % (cursor_w, cursor_h, in_frame)
+    ))
 
-    # Use Roto node to draw cursor shape
-    roto = nuke.nodes.Roto(name=prefix + "_shape")
-    roto.setInput(0, bg)
+    # Position transform
+    pos_xform = nuke.nodes.Transform(name=prefix + "_pos")
+    pos_xform.setInput(0, bg)
+    pos_xform["translate"].setValue([x, comp_h - y])
+    pos_xform["filter"].setValue("Impulse")
 
-    # Create cursor arrow shape using the Roto's curves knob
-    # The cursor is drawn as a simple arrow polygon
-    curve_knob = roto["curves"]
-    root_layer = curve_knob.rootLayer
-    shape = nuke.rotopaint.Shape(curve_knob)
-    shape.name = "cursor"
-
-    # Arrow cursor vertices (normalized to cursor_h size)
-    s = cursor_h / 24.0
-    cx = x
-    cy = comp_h - y  # Nuke Y is bottom-up
-    pts = [
-        (cx, cy),
-        (cx, cy - 16 * s),
-        (cx + 4 * s, cy - 12 * s),
-        (cx + 8 * s, cy - 18 * s),
-        (cx + 10 * s, cy - 17 * s),
-        (cx + 6 * s, cy - 11 * s),
-        (cx + 11 * s, cy - 11 * s),
-    ]
-
-    for px, py in pts:
-        cp = shape.append(px, py)
-        cp[0].interpolation = nuke.SMOOTH
-        cp[1].interpolation = nuke.SMOOTH
-
-    attrs = shape.getAttributes()
-    attrs.set("r", 1.0)
-    attrs.set("g", 1.0)
-    attrs.set("b", 1.0)
-    attrs.set("a", 1.0)
-
-    root_layer.append(shape)
-
-    # Transform for behavior animation
+    # Behavior transform (separate node so expressions don't override position)
     xform = nuke.nodes.Transform(name=prefix + "_xform")
-    xform.setInput(0, roto)
+    xform.setInput(0, pos_xform)
     xform["filter"].setValue("Impulse")
 
     behavior = job.get("behavior", "frozen")
@@ -101,11 +72,11 @@ def build_cursor(job, comp_w, comp_h, frame_rate):
         dy = ty / length * seek_speed
 
         xform["translate"].setAnimated()
-        xform["translate"].setValueAt(in_frame, 0, 0)
-        xform["translate"].setValueAt(in_frame, 0, 1)
+        xform["translate"].setValueAt(0, in_frame, 0)
+        xform["translate"].setValueAt(0, in_frame, 1)
         frames = out_frame - in_frame
-        xform["translate"].setValueAt(out_frame, dx * frames, 0)
-        xform["translate"].setValueAt(out_frame, dy * frames, 1)
+        xform["translate"].setValueAt(dx * frames, out_frame, 0)
+        xform["translate"].setValueAt(dy * frames, out_frame, 1)
 
     elif behavior == "randomWalk":
         walk_interval = job.get("walkInterval", 12)
@@ -129,5 +100,5 @@ def build_cursor(job, comp_w, comp_h, frame_rate):
             "(frame %% 4 < 2) ? noise(frame * 0.7) * 10 : -noise(frame * 0.7) * 10", 1
         )
 
-    nodes = [bg, roto, xform]
+    nodes = [bg, pos_xform, xform]
     return xform, nodes

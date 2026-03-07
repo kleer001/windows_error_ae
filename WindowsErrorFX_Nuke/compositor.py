@@ -161,7 +161,7 @@ def generate(group, settings=None):
         noise_merge.setInput(0, current)
         noise_merge.setInput(1, noise_out)
         noise_merge["operation"].setValue("overlay")
-        noise_merge["mix"].setValue(settings.get("noise", {}).get("opacity", 8) / 100.0)
+        noise_merge["mix"].setValue(1.0)
         all_nodes.append(noise_merge)
         current = noise_merge
 
@@ -172,7 +172,11 @@ def generate(group, settings=None):
         hs_merge.setInput(0, current)
         hs_merge.setInput(1, hs_out)
         hs_merge["operation"].setValue("plus")
-        hs_merge["mix"].setValue(0.3)
+        # Visibility: only show for 2-3 frames every freq frames
+        hs_freq = settings.get("headScratch", {}).get("freq", 20)
+        hs_merge["mix"].setExpression(
+            "(frame %% %d < 3) ? 0.3 : 0" % hs_freq
+        )
         all_nodes.append(hs_merge)
         current = hs_merge
 
@@ -227,22 +231,22 @@ def _create_element_merge(job, bg_node, fg_node, all_nodes):
 
     # Off before element life
     if in_frame > 0:
-        merge["mix"].setValueAt(in_frame - 1, 0)
+        merge["mix"].setValueAt(0, in_frame - 1)
 
     # Entry ramp
     if entry_frames > 0:
-        merge["mix"].setValueAt(in_frame, 0)
-        merge["mix"].setValueAt(in_frame + entry_frames, opacity)
+        merge["mix"].setValueAt(0, in_frame)
+        merge["mix"].setValueAt(opacity, in_frame + entry_frames)
     else:
-        merge["mix"].setValueAt(in_frame, opacity)
+        merge["mix"].setValueAt(opacity, in_frame)
 
     # Hold at opacity during life
     if exit_frames > 0:
-        merge["mix"].setValueAt(out_frame - exit_frames, opacity)
-        merge["mix"].setValueAt(out_frame, 0)
+        merge["mix"].setValueAt(opacity, out_frame - exit_frames)
+        merge["mix"].setValueAt(0, out_frame)
     else:
-        merge["mix"].setValueAt(out_frame, opacity)
-        merge["mix"].setValueAt(out_frame + 1, 0)
+        merge["mix"].setValueAt(opacity, out_frame)
+        merge["mix"].setValueAt(0, out_frame + 1)
 
     all_nodes.append(merge)
     return merge

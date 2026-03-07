@@ -28,7 +28,7 @@ def build_pixel(job, comp_w, comp_h, frame_rate, footage_node=None):
 
         bg = nuke.nodes.Constant(name=prefix + "_bg")
         bg["color"].setValue([tear_color[0], tear_color[1], tear_color[2], 1.0])
-        bg["format"].setValue(nuke.addFormat("%d %d WEFX_tear_fmt" % (tear_w, tear_h)))
+        bg["format"].setValue(nuke.addFormat("%d %d WEFX_tear_fmt_%d" % (tear_w, tear_h, in_frame)))
 
         xform = nuke.nodes.Transform(name=prefix + "_xform")
         xform.setInput(0, bg)
@@ -49,7 +49,9 @@ def build_pixel(job, comp_w, comp_h, frame_rate, footage_node=None):
 
             dot = nuke.nodes.Constant(name=prefix + "_dot%d" % i)
             dot["color"].setValue([color[0], color[1], color[2], 1.0])
-            dot["format"].setValue(nuke.addFormat("%d %d WEFX_dot_fmt" % (dot_size, dot_size)))
+            dot["format"].setValue(nuke.addFormat(
+                "%d %d WEFX_dot_fmt_%d_%d" % (dot_size, dot_size, in_frame, i)
+            ))
 
             dot_xform = nuke.nodes.Transform(name=prefix + "_dotX%d" % i)
             dot_xform.setInput(0, dot)
@@ -149,7 +151,7 @@ def build_pixel(job, comp_w, comp_h, frame_rate, footage_node=None):
     color = C_PIXEL_COLORS[0]
     bg = nuke.nodes.Constant(name=prefix + "_bg")
     bg["color"].setValue([color[0], color[1], color[2], 1.0])
-    bg["format"].setValue(nuke.addFormat("%d %d WEFX_pix_fmt" % (block_size, block_size)))
+    bg["format"].setValue(nuke.addFormat("%d %d WEFX_pix_fmt_%d" % (block_size, block_size, in_frame)))
 
     xform = nuke.nodes.Transform(name=prefix + "_xform")
     xform.setInput(0, bg)
