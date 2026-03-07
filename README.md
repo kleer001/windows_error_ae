@@ -1,25 +1,31 @@
 # Windows Error FX
 
-A ScriptUI panel for Adobe After Effects that generates Windows 9x/XP error aesthetic effects over your footage. One file, no plugins, no assets.
+Generate Windows 9x/XP error aesthetic effects over your footage. Available for **After Effects** and **Nuke**.
 
-![After Effects CC 2015+](https://img.shields.io/badge/After%20Effects-CC%202015%2B-blue)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Mac-lightgrey)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Mac%20%7C%20Linux-lightgrey)
 ![No Dependencies](https://img.shields.io/badge/dependencies-none-green)
 
 ---
 
 ## What It Does
 
-Generates Windows error dialogs, BSOD panels, corrupted text, cursor artifacts, pixel corruption, and freeze strips over your footage. Dialogs use pre-rendered PNGs (embedded in the script) for fast generation with pixel-perfect title bar gradients. All other elements are native AE shape/text layers. Everything composites over (and optionally behind) your footage using auto-detected or explicitly chosen roto layers.
+Generates Windows error dialogs, BSOD panels, corrupted text, cursor artifacts, pixel corruption, and freeze strips over your footage. Everything composites over (and optionally behind) your roto subject. Seeded randomness means the same seed always produces the same layout.
 
 - **Seeded randomness** — same seed always produces the same layout
 - **Chaos slider** — controls density from subtle glitches to total system failure
-- **Per-element control** — independent settings for each element type, including jitter
-- **Roto-aware** — auto-detects or lets you pick the roto layer, with adjustable over/under split
-- **Custom assets** — supply your own dialog/cursor PNGs via a project bin folder
-- **Fully editable** — output is normal AE layers, not baked pixels
+- **Per-element control** — independent settings for each element type
+- **Roto-aware** — elements go behind and in front of your subject
+- **Fully editable** — output is normal layers/nodes, not baked pixels
 
-## Install
+---
+
+# After Effects
+
+![After Effects CC 2015+](https://img.shields.io/badge/After%20Effects-CC%202015%2B-blue)
+
+One `.jsx` file, no plugins, no external assets. Dialogs use pre-rendered PNGs embedded in the script for pixel-perfect title bar gradients.
+
+## AE Install
 
 1. Copy `WindowsErrorFX.jsx` into your ScriptUI Panels folder:
 
@@ -33,7 +39,7 @@ Generates Windows error dialogs, BSOD panels, corrupted text, cursor artifacts, 
 
 > First time? Enable scripting: **Edit > Preferences > Scripting & Expressions** > check **Allow Scripts to Write Files and Access Network**.
 
-## Quick Start
+## AE Quick Start
 
 1. Open a comp with your footage.
 2. Open the **Windows Error FX** panel.
@@ -43,7 +49,7 @@ Generates Windows error dialogs, BSOD panels, corrupted text, cursor artifacts, 
 
 A pre-comp with error windows, BSOD panels, cursors, glitch text, pixel corruption, and freeze strips appears in your comp. Change the seed for a different look. Same seed = same result every time.
 
-## Panel Layout
+## AE Panel Layout
 
 ### Main Panel
 
@@ -107,13 +113,123 @@ Stack Depth and Offset (for dialog cascade stacking) remain global controls belo
 | **CLEAR ALL** | Removes all generated elements (with confirmation) |
 | **Show Log** | View the generation log file for debugging |
 
-## Roto Layers
+## AE Roto Layers
 
 Use the **Roto** dropdown in the main panel to explicitly select a roto layer, or leave it on **Auto-detect** to find layers by name. Auto-detect looks for names containing **roto**, **matte**, **cutout**, **subject**, or **fg**. The **Element Layering** control determines how elements interact with roto layers — in **Split** mode, the **Behind %** slider controls how often elements go behind vs. in front of your subject. No roto layers? Set Element Layering to **Flat**.
 
-## Logging
+## AE Logging
 
 Each generate writes a log to `Documents/WindowsErrorFX/WindowsErrorFX.log`. The file is overwritten each run and is safe to delete. Use the **Show Log** button to view it, reveal it in Explorer/Finder, or delete it.
+
+## AE Requirements
+
+- After Effects CC 2015 or newer
+- Mac or Windows
+- No plugins or fonts required (uses Courier New and Arial)
+
+---
+
+# Nuke
+
+![Nuke 13+](https://img.shields.io/badge/Nuke-13%2B-orange)
+![Python 3.7+](https://img.shields.io/badge/Python-3.7%2B-blue)
+
+Python module that creates a Group node with custom knobs. All settings persist with the `.nk` file automatically. Same seeded scheduler as the AE version — identical element layout for a given seed.
+
+### Differences from the AE version
+
+| Feature | AE | Nuke |
+|---|---|---|
+| Scanlines | Built-in overlay | Dropped (make your own) |
+| BSOD typewriter | Animated text reveal | Static text only |
+| Text corruption | Per-frame char swaps | Static text only |
+| UI | ScriptUI panel | Knobs on Group node |
+| Output | Pre-comp with layers | Merge chain inside Group |
+
+## Nuke Install
+
+1. Copy the `WindowsErrorFX_Nuke/` folder to `~/.nuke/` (or anywhere on your `NUKE_PATH`).
+
+2. Add this line to your `~/.nuke/menu.py`:
+
+   ```python
+   import WindowsErrorFX_Nuke.menu
+   ```
+
+3. Restart Nuke. A **WindowsErrorFX** menu appears in the toolbar.
+
+## Nuke Quick Start
+
+1. Select your footage node in the DAG.
+2. Go to **Nodes > WindowsErrorFX > Create WindowsErrorFX**.
+3. Connect your footage to **Input 1 (Footage)**. Optionally connect a roto matte to **Input 2 (Roto)**.
+4. In the Group's properties, set **Seed** and **Chaos**.
+5. Click **Generate**.
+
+The Group fills with element nodes wired into a merge chain. The output carries the composited result. Change settings and re-generate as needed. **Clear** removes all generated nodes, keeping the Group shell.
+
+## Nuke Controls
+
+All controls live as knobs on the Group node. Tabs organize them:
+
+### WindowsErrorFX Tab (main)
+| Knob | What it does |
+|---|---|
+| **Seed** | Integer seed for deterministic generation |
+| **Chaos** | Element count multiplier (0 = nothing, 100 = standard, 200+ = heavy) |
+| **Resolution** | Virtual resolution for element sizing (640x480 through Native) |
+| **Roto Mode** | Split / All Over / All Under / Flat |
+| **Behind %** | Probability of elements going behind the roto subject |
+| **Anim Style** | XP Classic / Glitch Heavy / Slow Burn / Chaos Maximum |
+| **Chaos Curve** | Time distribution: Flat / Build / Peak / Burst / Random |
+| **Stack Depth / Offset** | Dialog cascade stacking controls |
+| **Generate** | Build the effect network |
+| **Clear** | Remove all generated nodes |
+| **Randomize** | Randomize all settings |
+
+### Per-Element Tabs (Dialog, BSOD, Cursor, Pixel, Freeze)
+Each tab has: Count, Min/Max Frames, Scale %, Speed %, Opacity Min/Max, Entry/Exit Frames, Jitter.
+
+### Overlays Tab
+Noise (enable, opacity, scale, complexity) and Head Scratch (enable, frequency, height).
+
+### Trails Tab
+Enable, Chance %, Echoes, Decay %.
+
+## Nuke Architecture
+
+```
+[Footage] ──► ┌─────────────────────────────────┐
+              │  WindowsErrorFX (Group)          │
+[Roto]   ──► │                                   │ ──► [Output]
+              │  Knobs for all settings           │
+              │  Generate → element nodes + merges│
+              │  Clear → delete WEFX_* nodes      │
+              └─────────────────────────────────┘
+```
+
+**Flat mode:** `Footage → Merge(elem1) → Merge(elem2) → ... → Merge(overlays) → Output`
+
+**Split mode (with roto):** `Footage → UNDER merges → Roto over → OVER merges → Overlays → Output`
+
+Element lifespan is handled by mix keyframes on each element's Merge node — ramping in over the entry frames, holding during the element's life, and ramping out over exit frames.
+
+## Nuke Requirements
+
+- Nuke 13 or newer (Python 3.7+)
+- Mac, Windows, or Linux
+- No external dependencies
+
+## Running Tests (No Nuke Required)
+
+The pure-logic core (PRNG, scheduler, settings, constants) runs without Nuke installed:
+
+```bash
+cd windows_error_ae
+python3 -m unittest discover -s WindowsErrorFX_Nuke/tests -v
+```
+
+147 tests covering PRNG determinism, scheduler behavior, settings migration, and cross-language compatibility.
 
 ---
 
@@ -125,6 +241,7 @@ Every generated layout is driven by a single integer **seed**. The same seed wit
 - Change the seed to get a completely different layout
 - Write down a seed you like — you can recreate it any time
 - **RANDOMIZE** picks a new seed *and* randomizes all settings at once
+- The PRNG is bit-identical between the AE and Nuke versions — same seed produces the same scheduler output in both
 
 </details>
 
@@ -146,30 +263,24 @@ The formula is non-linear (power curve), so low values stay subtle and high valu
 </details>
 
 <details>
-<summary><strong>Per-Element Tabs</strong></summary>
+<summary><strong>Per-Element Controls</strong></summary>
 
-Five tabs (Dialog, BSOD, Cursor, Pixel, Freeze) give you independent control over each element type (Text elements use global settings):
+Five element types (Dialog, BSOD, Cursor, Pixel, Freeze) have independent controls. Text elements use global settings.
 
 - **Count** — Exact number to spawn. Set to `0` for auto (chaos-based). Example: set Dialog to 5, Cursor to 0, and everything else to 0 to get only 5 error windows.
 - **Min / Max f** — Duration range in frames. Elements will last between these values.
 - **Scale %** — Size multiplier. 100 = normal, 200 = double size.
 - **Spd %** — Animation speed. 100 = normal, 50 = half speed, 200 = double speed.
-- **Jit** — Position jitter. 0 = off, 50 = subtle oscillation, 100+ = aggressive shaking. Adds a `wiggle()` expression to the element's position.
+- **Jit** — Position jitter. 0 = off, higher = more movement.
 - **Opac** — Opacity range. Elements get a random opacity between min and max.
 - **Entry / Exit** — Fade-in and fade-out duration in frames.
-
-**Per-element overrides** (below the main fields in each tab):
-- **Override Trails** — Set trails (echo effect) independently for this element type. Unchecked = use global trails setting.
-- **Override Roto** — Force this element type to always appear Over or Under the roto subject, regardless of the global roto mode.
-- **Override Curve** — Use a different time distribution curve for this element type.
-- **Custom Messages** — (BSOD only) Set custom error text specific to this element type. Dialog text is baked into pre-rendered images.
 
 </details>
 
 <details>
 <summary><strong>Animation Style</strong></summary>
 
-The Style dropdown changes the personality of element animations:
+The Style control changes the personality of element animations:
 
 - **XP Classic** — Balanced mix of behaviors, moderate timing
 - **Glitch Heavy** — More shaking, jump-cuts, and erratic movement
@@ -194,23 +305,23 @@ Per-element curve overrides let different types follow different distributions (
 </details>
 
 <details>
-<summary><strong>Element Layering</strong></summary>
+<summary><strong>Roto / Element Layering</strong></summary>
 
-The **Element Layering** dropdown controls how elements interact with your roto subject:
+Controls how elements interact with your roto subject:
 
 - **Split** — Elements randomly appear above and below the subject. The **Behind %** slider controls the probability (0% = all in front, 50% = even split, 100% = all behind)
 - **All Over** — Everything composites in front of the subject
 - **All Under** — Everything composites behind the subject
-- **Flat** — No roto splitting; everything in one layer (use when you have no roto layers)
+- **Flat** — No roto splitting; everything in one layer (use when you have no roto)
 
-The **Roto** dropdown in the main panel lets you pick a specific layer instead of relying on auto-detection. Per-element roto overrides let you force specific types over or under regardless of the global mode.
+Per-element roto overrides let you force specific types over or under regardless of the global mode.
 
 </details>
 
 <details>
 <summary><strong>Overlays</strong></summary>
 
-- **Scanlines** — CRT-style horizontal line overlay. Adjust opacity, line spacing, and enable jitter for randomized line positions.
+- **Scanlines** (AE only) — CRT-style horizontal line overlay. Adjust opacity, line spacing, and enable jitter for randomized line positions.
 - **Noise** — Fractal noise grain overlay. Control opacity, scale (grain size), and complexity (detail level).
 - **Head Scratch** — Horizontal line artifacts that appear at random positions, like a damaged VHS tape.
 
@@ -219,30 +330,30 @@ The **Roto** dropdown in the main panel lets you pick a specific layer instead o
 <details>
 <summary><strong>Trails</strong></summary>
 
-Trails add an echo/ghost effect to random elements using AE's Echo effect.
+Trails add an echo/ghost effect to random elements.
 
 - **Chance %** — Probability that any given element gets trails (e.g., 20 = 1 in 5 elements)
 - **Echoes** — Number of trailing copies
 - **Decay %** — How quickly each echo fades (higher = faster fade)
 
-Per-element trail overrides let you give specific types their own trail settings (or disable trails entirely for a type while keeping them globally on).
+Per-element trail overrides let you give specific types their own trail settings.
 
 </details>
 
 <details>
 <summary><strong>Custom Messages</strong></summary>
 
-Add your own error messages via the **Custom Messages** button. Messages are mixed into the random pool for BSOD and text elements — the more you add, the more often they appear.
+Add your own error messages to the random pool for BSOD and text elements — the more you add, the more often they appear.
 
 - **Global custom messages** apply to BSOD and text elements
-- **Per-element custom messages** (via the Override checkbox in the BSOD tab) apply only to BSOD and override the global pool
+- **Per-element custom messages** (BSOD tab override) apply only to BSOD
 
-Dialog text is pre-rendered into embedded PNG images and cannot be customized via text. However, you can supply your own dialog PNGs via the custom assets folder (see below).
+Dialog text in AE is pre-rendered into embedded PNGs and cannot be customized via text. In Nuke, dialog text is rendered by Text2 nodes and uses the built-in message pool.
 
 </details>
 
 <details>
-<summary><strong>Custom Assets</strong></summary>
+<summary><strong>Custom Assets (AE only)</strong></summary>
 
 You can replace or supplement the built-in dialog and cursor images with your own PNGs.
 
@@ -254,12 +365,6 @@ You can replace or supplement the built-in dialog and cursor images with your ow
 The custom folder is never deleted by **CLEAR ALL** — it's yours to manage. Delete `WindowsErrorFX_Custom` from the project bin to go back to built-in assets only.
 
 </details>
-
-## Requirements
-
-- After Effects CC 2015 or newer
-- Mac or Windows
-- No plugins or fonts required (uses Courier New and Arial)
 
 ## License
 
