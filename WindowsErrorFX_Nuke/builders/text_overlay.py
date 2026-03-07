@@ -16,7 +16,7 @@ def build_text_overlay(job, comp_w, comp_h, frame_rate):
     scale = job.get("scale", 1.0)
 
     lines = job.get("lines", ["ERROR"])
-    body_text = "\\n".join(lines)
+    body_text = "\n".join(lines)
 
     x = job.get("x", comp_w // 2)
     y = job.get("y", comp_h // 2)

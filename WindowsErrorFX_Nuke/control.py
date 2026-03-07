@@ -291,6 +291,7 @@ def apply_settings_to_knobs(group, settings):
     """Apply a settings dict to the Group's knobs."""
     group["wefx_seed"].setValue(settings.get("seed", 1984))
     group["wefx_chaos"].setValue(settings.get("chaos", 100))
+    group["wefx_virtualRes"].setValue(settings.get("virtualRes", 2))
     group["wefx_rotoMode"].setValue(settings.get("rotoMode", "split"))
     group["wefx_animStyle"].setValue(settings.get("animStyle", "xpClassic"))
     group["wefx_chaosCurve"].setValue(settings.get("chaosCurve", "flat"))

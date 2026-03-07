@@ -29,7 +29,7 @@ def build_bsod(job, comp_w, comp_h, frame_rate):
     if job.get("textLines"):
         text_lines.extend(job["textLines"])
 
-    body_text = "\\n".join(text_lines)
+    body_text = "\n".join(text_lines)
 
     # Determine BSOD panel size based on variant
     variant = job.get("variant", "island")

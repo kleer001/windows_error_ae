@@ -58,14 +58,20 @@ def build_cursor(job, comp_w, comp_h, frame_rate):
     elif behavior == "cornerSeek":
         corner = job.get("targetCorner", "BR")
         seek_speed = job.get("seekSpeed", 10) * speed_mult
+        # Screen corners to Nuke offsets (Y-up):
+        # Screen TL = Nuke top-left (0, comp_h)
+        # Screen TR = Nuke top-right (comp_w, comp_h)
+        # Screen BL = Nuke bottom-left (0, 0)
+        # Screen BR = Nuke bottom-right (comp_w, 0)
+        # pos_xform places cursor at (x, comp_h - y), so offset = target - pos
         if corner == "TL":
-            tx, ty = -x, -(comp_h - y)
-        elif corner == "TR":
-            tx, ty = comp_w - x, -(comp_h - y)
-        elif corner == "BL":
             tx, ty = -x, y
-        else:
+        elif corner == "TR":
             tx, ty = comp_w - x, y
+        elif corner == "BL":
+            tx, ty = -x, -(comp_h - y)
+        else:
+            tx, ty = comp_w - x, -(comp_h - y)
 
         length = math.sqrt(tx * tx + ty * ty) or 1
         dx = tx / length * seek_speed

@@ -96,6 +96,13 @@ def generate(group, settings=None):
         group.end()
         return
 
+    # Offset scheduler's 0-based frames to Nuke's absolute timeline
+    for job in jobs:
+        job["inFrame"] += first_frame
+        job["outFrame"] += first_frame
+        if "freezeFrame" in job:
+            job["freezeFrame"] += first_frame
+
     # Determine roto mode
     roto_mode = settings.get("rotoMode", "flat")
     has_roto = roto_input is not None and roto_mode != "flat"
