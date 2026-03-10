@@ -3,8 +3,9 @@
 import nuke
 
 from ..core.constants import (
-    C_BSOD_BG, C_BSOD_TEXT, FONT_BSOD, FSIZE_BSOD,
+    C_BSOD_BG, C_BSOD_TEXT, FONT_MONO_CANDIDATES, FSIZE_BSOD,
     BSOD_LINES_XP, BSOD_LINES_9X, BSOD_CODES, BSOD_EXCEPTIONS,
+    set_font,
 )
 from ..core.prng import rng_pick, rng_int
 from ..core.scheduler import resolve_hex_placeholders
@@ -57,7 +58,7 @@ def build_bsod(job, comp_w, comp_h, frame_rate):
     text_node = nuke.nodes.Text2(name=prefix + "_text")
     text_node.setInput(0, bg)
     text_node["message"].setValue(body_text)
-    text_node["font"].setValue(FONT_BSOD, "Regular")
+    set_font(text_node["font"], FONT_MONO_CANDIDATES)
     text_node["font_size"].setValue(int(FSIZE_BSOD * scale))
     text_node["color"].setValue([C_BSOD_TEXT[0], C_BSOD_TEXT[1], C_BSOD_TEXT[2], 1.0])
     text_node["box"].setValue([10, 10, panel_w - 10, panel_h - 10])

@@ -2,7 +2,7 @@
 
 import nuke
 
-from ..core.constants import C_TEXT_OVERLAY, FONT_MONO, FSIZE_TEXT_OVER
+from ..core.constants import C_TEXT_OVERLAY, FONT_MONO_CANDIDATES, FSIZE_TEXT_OVER, set_font
 
 
 def build_text_overlay(job, comp_w, comp_h, frame_rate):
@@ -32,7 +32,7 @@ def build_text_overlay(job, comp_w, comp_h, frame_rate):
     text_node = nuke.nodes.Text2(name=prefix + "_text")
     text_node.setInput(0, bg)
     text_node["message"].setValue(body_text)
-    text_node["font"].setValue(FONT_MONO, "Regular")
+    set_font(text_node["font"], FONT_MONO_CANDIDATES)
     text_node["font_size"].setValue(font_size)
     text_node["color"].setValue([C_TEXT_OVERLAY[0], C_TEXT_OVERLAY[1],
                                  C_TEXT_OVERLAY[2], 1.0])

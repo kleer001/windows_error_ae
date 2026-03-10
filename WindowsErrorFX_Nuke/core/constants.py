@@ -26,10 +26,34 @@ C_PIXEL_COLORS = [
     [0, 1, 0],
 ]
 
-# Fonts (Nuke font names)
+# Fonts — primary + fallbacks per role (Nuke font names vary by OS/install)
+FONT_MONO_CANDIDATES = ["Courier New", "Consolas", "Lucida Console", "monospace"]
+FONT_UI_CANDIDATES = ["Arial", "Tahoma", "Segoe UI", "Microsoft Sans Serif", "Helvetica", "sans"]
+FONT_STYLES = ["Regular", "Bold", "Medium", "Book", "Normal"]
+
+# Legacy names (used in constants references — prefer set_font() helper)
 FONT_MONO = "Courier New"
 FONT_UI = "Arial"
 FONT_BSOD = "Courier New"
+
+
+def set_font(knob, candidates, preferred_style="Regular"):
+    """Set font on a Text2 font knob, trying candidates and styles until one works.
+
+    Args:
+        knob: The nuke knob (e.g. text_node["font"])
+        candidates: List of font family names to try in order
+        preferred_style: Style to try first ("Regular", "Bold", etc.)
+    """
+    styles = [preferred_style] + [s for s in FONT_STYLES if s != preferred_style]
+    for font_name in candidates:
+        for style in styles:
+            try:
+                knob.setValue(font_name, style)
+                return
+            except (ValueError, RuntimeError):
+                continue
+    # All candidates failed — leave Nuke's default font
 
 # Font sizes
 FSIZE_BSOD = 13

@@ -4,8 +4,8 @@ import nuke
 
 from ..core.constants import (
     DIALOG_VARIANTS, DIALOG_WIDTH, DIALOG_HEIGHT,
-    C_DIALOG_TITLE_TX, FONT_UI, FSIZE_DIALOG_BODY, FSIZE_DIALOG_TITLE,
-    FSIZE_BUTTON,
+    C_DIALOG_TITLE_TX, FONT_UI_CANDIDATES, FSIZE_DIALOG_BODY, FSIZE_DIALOG_TITLE,
+    FSIZE_BUTTON, set_font,
 )
 
 
@@ -63,7 +63,7 @@ def build_dialog(job, comp_w, comp_h, frame_rate):
     title_node = nuke.nodes.Text2(name=prefix + "_titleText")
     title_node.setInput(0, merge_title)
     title_node["message"].setValue(title_text)
-    title_node["font"].setValue(FONT_UI, "Regular")
+    set_font(title_node["font"], FONT_UI_CANDIDATES)
     title_node["font_size"].setValue(int(FSIZE_DIALOG_TITLE * scale))
     title_node["color"].setValue([C_DIALOG_TITLE_TX[0], C_DIALOG_TITLE_TX[1],
                                   C_DIALOG_TITLE_TX[2], 1.0])
@@ -75,7 +75,7 @@ def build_dialog(job, comp_w, comp_h, frame_rate):
     body_node = nuke.nodes.Text2(name=prefix + "_bodyText")
     body_node.setInput(0, title_node)
     body_node["message"].setValue(body_text)
-    body_node["font"].setValue(FONT_UI, "Regular")
+    set_font(body_node["font"], FONT_UI_CANDIDATES)
     body_node["font_size"].setValue(int(FSIZE_DIALOG_BODY * scale))
     body_node["color"].setValue([0, 0, 0, 1.0])
     body_node["box"].setValue([50 * scale, 30 * scale,
