@@ -26,15 +26,21 @@ C_PIXEL_COLORS = [
     [0, 1, 0],
 ]
 
-# Fonts — primary + fallbacks per role (Nuke font names vary by OS/install)
-FONT_MONO_CANDIDATES = ["Courier New", "Consolas", "Lucida Console", "monospace"]
-FONT_UI_CANDIDATES = ["Arial", "Tahoma", "Segoe UI", "Microsoft Sans Serif", "Helvetica", "sans"]
+# Fonts — bundled Liberation fonts first, then system fallbacks.
+# Liberation Mono/Sans are metric-compatible with Courier New/Arial (SIL OFL license).
+# Bundled in WindowsErrorFX_Nuke/fonts/, registered via NUKE_FONT_PATH in __init__.py.
+FONT_MONO_CANDIDATES = [
+    "Liberation Mono", "Courier New", "Consolas", "Lucida Console", "monospace",
+]
+FONT_UI_CANDIDATES = [
+    "Liberation Sans", "Arial", "Tahoma", "Segoe UI", "Helvetica", "sans",
+]
 FONT_STYLES = ["Regular", "Bold", "Medium", "Book", "Normal"]
 
 # Legacy names (used in constants references — prefer set_font() helper)
-FONT_MONO = "Courier New"
-FONT_UI = "Arial"
-FONT_BSOD = "Courier New"
+FONT_MONO = "Liberation Mono"
+FONT_UI = "Liberation Sans"
+FONT_BSOD = "Liberation Mono"
 
 
 def set_font(knob, candidates, preferred_style="Regular"):
