@@ -57,7 +57,7 @@ def build_bsod(job, comp_w, comp_h, frame_rate):
     text_node = nuke.nodes.Text2(name=prefix + "_text")
     text_node.setInput(0, bg)
     text_node["message"].setValue(body_text)
-    text_node["font"].setValue(FONT_BSOD)
+    text_node["font"].setValue(FONT_BSOD, "Regular")
     text_node["font_size"].setValue(int(FSIZE_BSOD * scale))
     text_node["color"].setValue([C_BSOD_TEXT[0], C_BSOD_TEXT[1], C_BSOD_TEXT[2], 1.0])
     text_node["box"].setValue([10, 10, panel_w - 10, panel_h - 10])

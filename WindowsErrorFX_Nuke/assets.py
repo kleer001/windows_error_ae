@@ -6,6 +6,8 @@ Handles embedded dialog/cursor PNGs and custom user assets.
 import os
 import base64
 
+from .core.log import wlog
+
 
 CUSTOM_ASSET_DIR = os.path.expanduser("~/.nuke/WindowsErrorFX/custom/")
 
@@ -25,13 +27,16 @@ def decode_and_save_png(b64_data, filename):
     filepath = os.path.join(CUSTOM_ASSET_DIR, filename)
     with open(filepath, "wb") as f:
         f.write(base64.b64decode(b64_data))
+    wlog("Saved asset: %s" % filepath)
     return filepath
 
 
 def list_custom_assets():
     """List all PNG files in the custom asset directory."""
     ensure_custom_dir()
-    return [f for f in os.listdir(CUSTOM_ASSET_DIR) if f.lower().endswith(".png")]
+    assets = [f for f in os.listdir(CUSTOM_ASSET_DIR) if f.lower().endswith(".png")]
+    wlog("Custom assets found: %d" % len(assets))
+    return assets
 
 
 def get_asset_path(filename):

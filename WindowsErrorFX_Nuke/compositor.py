@@ -6,6 +6,7 @@ Builds the Nuke node graph inside a Group node.
 import nuke
 
 from .core.constants import BLEND_MODE_MAP
+from .core.log import wlog, wwarn, werr
 from .core.scheduler import schedule
 from .core.settings import default_settings, get_element_settings
 
@@ -22,6 +23,7 @@ from .builders.overlays import build_noise, build_head_scratch
 BUILDER_MAP = {
     "bsod": build_bsod,
     "dialog": build_dialog,
+    "chrome": build_chrome,
     "text": build_text_overlay,
     "cursor": build_cursor,
 }
@@ -34,9 +36,12 @@ def clear_generated_nodes(group):
     for node in nuke.allNodes():
         if node.name().startswith("WEFX_"):
             to_delete.append(node)
+    wlog("clearEffect: scanning nodes, found %d WEFX_ nodes to remove" % len(to_delete))
     for node in to_delete:
+        wlog("  removing: \"%s\"" % node.name())
         nuke.delete(node)
     group.end()
+    wlog("clearEffect: done")
 
 
 def generate(group, settings=None):
@@ -49,8 +54,12 @@ def generate(group, settings=None):
     if settings is None:
         settings = default_settings()
 
+    wlog("=== GENERATE START ===")
+
     # Clear previous generated nodes
+    wlog("Clearing existing nodes...")
     clear_generated_nodes(group)
+    wlog("Cleared.")
 
     group.begin()
 
@@ -68,6 +77,7 @@ def generate(group, settings=None):
             output_node = node
 
     if not input_node or not output_node:
+        werr("Missing Input or Output node inside Group")
         group.end()
         return
 
@@ -81,6 +91,9 @@ def generate(group, settings=None):
     last_frame = int(root["last_frame"].value())
     total_frames = last_frame - first_frame + 1
 
+    wlog("Comp: %dx%d @ %.2ffps, frames %d-%d (%d total)" % (
+        comp_w, comp_h, frame_rate, first_frame, last_frame, total_frames))
+
     comp_info = {
         "width": comp_w,
         "height": comp_h,
@@ -89,9 +102,12 @@ def generate(group, settings=None):
     }
 
     # Run the scheduler
+    wlog("Scheduling elements...")
     jobs = schedule(settings, comp_info)
+    wlog("Scheduled %d elements" % len(jobs))
 
     if not jobs:
+        wwarn("No elements scheduled. Chaos=%s" % settings.get("chaos"))
         output_node.setInput(0, input_node)
         group.end()
         return
@@ -106,14 +122,29 @@ def generate(group, settings=None):
     # Determine roto mode
     roto_mode = settings.get("rotoMode", "flat")
     has_roto = roto_input is not None and roto_mode != "flat"
+    if roto_input is None and roto_mode != "flat":
+        wlog("No roto input connected, switched rotoMode to 'flat'")
+    wlog("Effective rotoMode: %s" % ("split" if has_roto else "flat"))
 
     # Separate jobs into over and under
     over_jobs = [j for j in jobs if j["layer"] == "over"]
     under_jobs = [j for j in jobs if j["layer"] == "under"]
 
+    # Job summary
+    type_counts = {}
+    for job in jobs:
+        t = job["type"]
+        type_counts[t] = type_counts.get(t, 0) + 1
+    summary_parts = ["%s=%d" % (t, c) for t, c in sorted(type_counts.items())]
+    wlog("  Types: %s" % ", ".join(summary_parts))
+    wlog("  Layers: over=%d, under=%d" % (len(over_jobs), len(under_jobs)))
+    wlog("  Frame range: %d to %d" % (jobs[0]["inFrame"], jobs[-1]["outFrame"]))
+
     # Build element nodes
+    wlog("Building %d elements..." % len(jobs))
     all_nodes = []
     footage_node = input_node
+    built_count = 0
 
     if has_roto:
         # Split mode: build UNDER elements, then stencil with roto, then OVER elements
@@ -128,6 +159,7 @@ def generate(group, settings=None):
 
             merge = _create_element_merge(job, current, element_out, all_nodes)
             current = merge
+            built_count += 1
 
         # Stencil: composite the roto subject on top of the UNDER result
         # This puts the subject (with its matte) on top of background + under elements
@@ -147,6 +179,7 @@ def generate(group, settings=None):
 
             merge = _create_element_merge(job, current, element_out, all_nodes)
             current = merge
+            built_count += 1
 
     else:
         # Flat mode: all elements composited over footage
@@ -154,11 +187,14 @@ def generate(group, settings=None):
         for job in jobs:
             element_out, element_nodes = _build_element(job, comp_w, comp_h, frame_rate, footage_node)
             if element_out is None:
+                if job["type"] == "freeze":
+                    wlog("  Skipping freeze (no footage layer)")
                 continue
             all_nodes.extend(element_nodes)
 
             merge = _create_element_merge(job, current, element_out, all_nodes)
             current = merge
+            built_count += 1
 
     # Add overlays (noise, head scratch)
     noise_out, noise_nodes = build_noise(settings, comp_w, comp_h)
@@ -196,10 +232,27 @@ def generate(group, settings=None):
 
     group.end()
 
+    wlog("Built %d/%d elements" % (built_count, len(jobs)))
+    wlog("=== GENERATE COMPLETE ===")
+
 
 def _build_element(job, comp_w, comp_h, frame_rate, footage_node):
     """Dispatch to the correct builder based on job type."""
     type_name = job["type"]
+
+    desc_parts = ["type=%s" % type_name, "in=%d" % job["inFrame"], "out=%d" % job["outFrame"],
+                  "layer=%s" % job.get("layer", "?")]
+    if type_name == "dialog":
+        desc_parts.append("variant=%s" % job.get("dialogVariant", "?"))
+    elif type_name == "bsod":
+        desc_parts.append("variant=%s" % job.get("variant", "?"))
+    elif type_name == "cursor":
+        desc_parts.append("behavior=%s" % job.get("behavior", "?"))
+    elif type_name == "pixel":
+        desc_parts.append("behavior=%s" % job.get("behavior", "?"))
+    elif type_name == "freeze":
+        desc_parts.append("behavior=%s" % job.get("behavior", "?"))
+    wlog("  Build: %s" % ", ".join(desc_parts))
 
     if type_name in BUILDER_MAP:
         return BUILDER_MAP[type_name](job, comp_w, comp_h, frame_rate)
@@ -207,6 +260,8 @@ def _build_element(job, comp_w, comp_h, frame_rate, footage_node):
         return build_pixel(job, comp_w, comp_h, frame_rate, footage_node)
     elif type_name == "freeze":
         return build_freeze(job, comp_w, comp_h, frame_rate, footage_node)
+
+    wwarn("Unknown element type: %s" % type_name)
     return None, []
 
 

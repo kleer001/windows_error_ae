@@ -9,6 +9,7 @@ from ..core.constants import (
     DEFAULT_NOISE_OPACITY, DEFAULT_NOISE_SCALE, DEFAULT_NOISE_COMPLEXITY,
     DEFAULT_HEADSCRATCH_FREQ, DEFAULT_HEADSCRATCH_HEIGHT,
 )
+from ..core.log import wlog
 
 
 def build_noise(settings, comp_w, comp_h):
@@ -24,6 +25,8 @@ def build_noise(settings, comp_w, comp_h):
     scale_val = noise_settings.get("scale", DEFAULT_NOISE_SCALE)
     complexity = noise_settings.get("complexity", DEFAULT_NOISE_COMPLEXITY)
 
+    wlog("Building noise: opacity=%d, scale=%d, complexity=%d" % (
+        noise_settings.get("opacity", DEFAULT_NOISE_OPACITY), scale_val, complexity))
     noise = nuke.nodes.Noise(name="WEFX_noise")
     noise["size"].setValue(scale_val)
     noise["octaves"].setValue(complexity)
@@ -53,6 +56,7 @@ def build_head_scratch(settings, comp_w, comp_h, total_frames, frame_rate):
     freq = hs_settings.get("freq", DEFAULT_HEADSCRATCH_FREQ)
     height = max(1, hs_settings.get("height", DEFAULT_HEADSCRATCH_HEIGHT))
 
+    wlog("Building head scratch: freq=%d, height=%d" % (freq, height))
     # Constant bright line (unique format name)
     line = nuke.nodes.Constant(name="WEFX_hscratch")
     line["color"].setValue([1.0, 1.0, 1.0, 0.8])

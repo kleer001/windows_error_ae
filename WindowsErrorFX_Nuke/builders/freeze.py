@@ -68,7 +68,7 @@ def _make_freeze_strip(name, footage_node, comp_w, comp_h, strip_y, strip_h, fre
     # FrameHold to freeze at the target frame
     hold = nuke.nodes.FrameHold(name=name + "_hold")
     hold.setInput(0, footage_node)
-    hold["first_frame"].setValue(freeze_frame)
+    hold["firstFrame"].setValue(freeze_frame)
 
     # Crop to the strip region
     crop = nuke.nodes.Crop(name=name + "_crop")

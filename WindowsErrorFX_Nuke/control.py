@@ -5,6 +5,7 @@ Creates the WindowsErrorFX Group node with embedded controls and callbacks.
 
 import nuke
 
+from .core.log import wlog, wlog_open, wlog_close, get_log_path
 from .core.constants import (
     FLOOR_FRAMES, MAX_FRAMES,
     DEFAULT_ELEMENT_SCALE, DEFAULT_SPEED_MULT,
@@ -335,33 +336,49 @@ def apply_settings_to_knobs(group, settings):
 
 def on_generate(group):
     """Generate button callback."""
-    from . import compositor
-    settings = settings_from_knobs(group)
-    compositor.generate(group, settings)
-    nuke.message("WindowsErrorFX: Generated %d elements." % len(
-        [n for n in group.nodes() if n.name().startswith("WEFX_merge_")]
-    ))
+    wlog_open()
+    try:
+        from . import compositor
+        settings = settings_from_knobs(group)
+        wlog("Settings: seed=%d, chaos=%d, rotoMode=%s, virtualRes=%s" % (
+            settings["seed"], settings["chaos"],
+            settings["rotoMode"], settings.get("virtualRes")))
+        compositor.generate(group, settings)
+        count = len([n for n in group.nodes() if n.name().startswith("WEFX_merge_")])
+        wlog("Log file: %s" % get_log_path())
+        nuke.message("WindowsErrorFX: Generated %d elements." % count)
+    finally:
+        wlog_close()
 
 
 def on_clear(group):
     """Clear button callback."""
-    from . import compositor
-    compositor.clear_generated_nodes(group)
-    # Reconnect Input directly to Output
-    group.begin()
-    for node in nuke.allNodes():
-        if node.Class() == "Output":
-            for inp in nuke.allNodes():
-                if inp.Class() == "Input" and inp["number"].value() == 0:
-                    node.setInput(0, inp)
-                    break
-            break
-    group.end()
-    nuke.message("WindowsErrorFX: Cleared.")
+    wlog_open()
+    try:
+        wlog("=== CLEAR ALL ===")
+        from . import compositor
+        compositor.clear_generated_nodes(group)
+        # Reconnect Input directly to Output
+        group.begin()
+        for node in nuke.allNodes():
+            if node.Class() == "Output":
+                for inp in nuke.allNodes():
+                    if inp.Class() == "Input" and inp["number"].value() == 0:
+                        node.setInput(0, inp)
+                        break
+                break
+        group.end()
+        wlog("=== CLEAR COMPLETE ===")
+        nuke.message("WindowsErrorFX: Cleared.")
+    finally:
+        wlog_close()
 
 
 def on_randomize(group):
     """Randomize button callback."""
+    wlog_open()
     from .core.settings import randomize_settings
     settings = randomize_settings()
+    wlog("Randomize: new seed=%d, chaos=%d" % (settings["seed"], settings["chaos"]))
     apply_settings_to_knobs(group, settings)
+    wlog_close()

@@ -63,7 +63,7 @@ def build_dialog(job, comp_w, comp_h, frame_rate):
     title_node = nuke.nodes.Text2(name=prefix + "_titleText")
     title_node.setInput(0, merge_title)
     title_node["message"].setValue(title_text)
-    title_node["font"].setValue(FONT_UI)
+    title_node["font"].setValue(FONT_UI, "Regular")
     title_node["font_size"].setValue(int(FSIZE_DIALOG_TITLE * scale))
     title_node["color"].setValue([C_DIALOG_TITLE_TX[0], C_DIALOG_TITLE_TX[1],
                                   C_DIALOG_TITLE_TX[2], 1.0])
@@ -75,7 +75,7 @@ def build_dialog(job, comp_w, comp_h, frame_rate):
     body_node = nuke.nodes.Text2(name=prefix + "_bodyText")
     body_node.setInput(0, title_node)
     body_node["message"].setValue(body_text)
-    body_node["font"].setValue(FONT_UI)
+    body_node["font"].setValue(FONT_UI, "Regular")
     body_node["font_size"].setValue(int(FSIZE_DIALOG_BODY * scale))
     body_node["color"].setValue([0, 0, 0, 1.0])
     body_node["box"].setValue([50 * scale, 30 * scale,
@@ -118,10 +118,13 @@ def _animate_dialog(xform, job, comp_w, comp_h, dlg_w, dlg_h, in_f, out_f, fps,
     exit_b = job.get("exitBehavior", "cut")
 
     if arrival == "scalePop" and entry_frames > 0:
-        xform["uniform_scale"].setAnimated()
-        xform["uniform_scale"].setValueAt(0.8, in_f)
-        xform["uniform_scale"].setValueAt(0.95, in_f + 1)
-        xform["uniform_scale"].setValueAt(1.0, in_f + entry_frames)
+        xform["scale"].setAnimated()
+        xform["scale"].setValueAt(0.8, in_f, 0)
+        xform["scale"].setValueAt(0.8, in_f, 1)
+        xform["scale"].setValueAt(0.95, in_f + 1, 0)
+        xform["scale"].setValueAt(0.95, in_f + 1, 1)
+        xform["scale"].setValueAt(1.0, in_f + entry_frames, 0)
+        xform["scale"].setValueAt(1.0, in_f + entry_frames, 1)
 
     if life == "shake":
         shake_start = in_f + job.get("shakeFrame", 10)
@@ -136,7 +139,10 @@ def _animate_dialog(xform, job, comp_w, comp_h, dlg_w, dlg_h, in_f, out_f, fps,
 
     if exit_b == "collapse" and exit_frames > 0:
         collapse_start = out_f - exit_frames
-        xform["uniform_scale"].setAnimated()
-        xform["uniform_scale"].setValueAt(1.0, collapse_start)
-        xform["uniform_scale"].setValueAt(0.5, collapse_start + 1)
-        xform["uniform_scale"].setValueAt(0.0, out_f)
+        xform["scale"].setAnimated()
+        xform["scale"].setValueAt(1.0, collapse_start, 0)
+        xform["scale"].setValueAt(1.0, collapse_start, 1)
+        xform["scale"].setValueAt(0.5, collapse_start + 1, 0)
+        xform["scale"].setValueAt(0.5, collapse_start + 1, 1)
+        xform["scale"].setValueAt(0.0, out_f, 0)
+        xform["scale"].setValueAt(0.0, out_f, 1)
