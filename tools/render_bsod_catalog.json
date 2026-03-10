@@ -1,0 +1,15 @@
+[
+  {"id": "xp_0", "era": "xp", "code": "DRIVER_IRQL_NOT_LESS_OR_EQUAL"},
+  {"id": "xp_1", "era": "xp", "code": "UNEXPECTED_KERNEL_MODE_TRAP"},
+  {"id": "xp_2", "era": "xp", "code": "PAGE_FAULT_IN_NONPAGED_AREA"},
+  {"id": "xp_3", "era": "xp", "code": "KERNEL_DATA_INPAGE_ERROR"},
+  {"id": "xp_4", "era": "xp", "code": "INACCESSIBLE_BOOT_DEVICE"},
+  {"id": "xp_5", "era": "xp", "code": "SYSTEM_THREAD_EXCEPTION_NOT_HANDLED"},
+  {"id": "xp_6", "era": "xp", "code": "CRITICAL_PROCESS_DIED"},
+
+  {"id": "9x_0", "era": "9x", "code": "0E"},
+  {"id": "9x_1", "era": "9x", "code": "0D"},
+  {"id": "9x_2", "era": "9x", "code": "06"},
+  {"id": "9x_3", "era": "9x", "code": "0C"},
+  {"id": "9x_4", "era": "9x", "code": "00"}
+]
