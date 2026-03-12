@@ -5,7 +5,7 @@ Builds the Nuke node graph inside a Group node.
 
 import nuke
 
-from .core.constants import BLEND_MODE_MAP
+from .core.constants import BLEND_MODE_MAP, VIRTUAL_RESOLUTIONS
 from .core.log import wlog, wwarn, werr
 from .core.scheduler import schedule
 from .core.settings import default_settings, get_element_settings
@@ -111,6 +111,17 @@ def generate(group, settings=None):
         output_node.setInput(0, input_node)
         group.end()
         return
+
+    # Apply compScale — scale element sizes from virtual resolution to actual comp
+    virtual_res_index = settings.get("virtualRes", 2)
+    if virtual_res_index < len(VIRTUAL_RESOLUTIONS):
+        vr = VIRTUAL_RESOLUTIONS[virtual_res_index]
+    else:
+        vr = {"w": 0, "h": 0}
+    comp_scale = (comp_w / vr["w"]) if vr["w"] > 0 else 1.0
+    wlog("Virtual resolution: index=%d, compScale=%.3f" % (virtual_res_index, comp_scale))
+    for job in jobs:
+        job["scale"] = (job.get("scale", 1.0)) * comp_scale
 
     # Offset scheduler's 0-based frames to Nuke's absolute timeline
     for job in jobs:

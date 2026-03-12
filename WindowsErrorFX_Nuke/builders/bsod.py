@@ -7,7 +7,7 @@ from ..core.constants import (
     BSOD_LINES_XP, BSOD_LINES_9X, BSOD_CODES, BSOD_EXCEPTIONS,
     set_font,
 )
-from ..core.prng import rng_pick, rng_int
+from ..core.prng import create_rng, rng_pick, rng_int
 from ..core.scheduler import resolve_hex_placeholders
 
 
@@ -30,7 +30,15 @@ def build_bsod(job, comp_w, comp_h, frame_rate):
     if job.get("textLines"):
         text_lines.extend(job["textLines"])
 
-    body_text = "\n".join(text_lines)
+    # Resolve placeholders in era text lines
+    rng = create_rng(in_frame * 7919)
+    resolved = []
+    for line in text_lines:
+        line = line.replace("%BSOD_EXCEPTION%", rng_pick(rng, BSOD_EXCEPTIONS))
+        line = line.replace("%BSOD_CODE%", rng_pick(rng, BSOD_CODES))
+        line = resolve_hex_placeholders(line, rng)
+        resolved.append(line)
+    body_text = "\n".join(resolved)
 
     # Determine BSOD panel size based on variant
     variant = job.get("variant", "island")

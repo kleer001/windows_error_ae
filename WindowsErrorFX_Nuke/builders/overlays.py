@@ -30,17 +30,22 @@ def build_noise(settings, comp_w, comp_h):
     noise = nuke.nodes.Noise(name="WEFX_noise")
     noise["size"].setValue(scale_val)
     noise["octaves"].setValue(complexity)
-    noise["z"].setExpression("frame * 100")
+    noise["zoffset"].setExpression("frame * 100")
     noise["gain"].setValue(0.5)
     noise["gamma"].setValue(0.5)
-    noise["format"].setValue(nuke.root().format())
+
+    # Reformat to comp size (Noise has no format knob)
+    reformat = nuke.nodes.Reformat(name="WEFX_noise_reformat")
+    reformat.setInput(0, noise)
+    reformat["type"].setValue("to format")
+    reformat["format"].setValue(nuke.root().format())
 
     # Grade to control opacity
     grade = nuke.nodes.Grade(name="WEFX_noise_grade")
-    grade.setInput(0, noise)
+    grade.setInput(0, reformat)
     grade["multiply"].setValue(opacity)
 
-    return grade, [noise, grade]
+    return grade, [noise, reformat, grade]
 
 
 def build_head_scratch(settings, comp_w, comp_h, total_frames, frame_rate):
