@@ -1,5 +1,7 @@
 # CLAUDE.md — Windows Error FX
 
+> **See also: [CLAUDE_GENERIC.md](./CLAUDE_GENERIC.md)** — Behavioral guidelines that apply to all work in this repo.
+
 This is the project root context file for AI-assisted development of **Windows Error FX**, a ScriptUI panel for Adobe After Effects that generates Windows 9x/XP error aesthetic visual effects over footage.
 
 ---

@@ -43,75 +43,72 @@ One `.jsx` file, no plugins, no external assets. Dialogs use pre-rendered PNGs e
 
 1. Open a comp with your footage.
 2. Open the **Windows Error FX** panel.
-3. Enter a **seed** (or hit **RANDOMIZE** for a full random setup).
-4. Set **chaos** (start around 50-100).
+3. Enter a **seed** (or click the dice button for a quick re-roll, or **RANDOMIZE** for a full random setup).
+4. Set **chaos** (start around 50–100 — the gradient bar shows intensity from green to red).
 5. Hit **REGENERATE**.
 
 A pre-comp with error windows, BSOD panels, cursors, glitch text, pixel corruption, and freeze strips appears in your comp. Change the seed for a different look. Same seed = same result every time.
 
 ## AE Panel Layout
 
-### Main Panel
-
 <p align="center">
-  <img src="docs/images/gui-main-panel.svg" alt="Main panel" width="320"/>
+  <img src="docs/images/ui-mockup.png" alt="Windows Error FX panel" width="380"/>
 </p>
 
-Enter a seed, set your chaos level, and choose a roto layer (or leave on **Auto-detect**).
-
-### Global Settings
-
-<p align="center">
-  <img src="docs/images/gui-global-settings.svg" alt="Global settings panel" width="340"/>
-</p>
-
-Below the roto picker, a grouped panel controls how elements behave globally:
+### Top Controls
 
 | Control | What it does |
 |---|---|
-| **Element Layering** | How elements interact with roto layers (Split / All Over / All Under / Flat) |
+| **SEED** | Integer seed for deterministic output. The dice button picks a random seed without touching other settings. |
+| **CHAOS** | Element count multiplier. The gradient bar shows intensity: green (off) through yellow (normal) to red (insane). |
+| **Resolution** | Simulated screen resolution for element sizing |
+| **Roto** | Select a roto layer explicitly, or leave on **Auto-detect** |
+
+### Global Settings
+
+| Control | What it does |
+|---|---|
+| **Layering** | How elements interact with roto layers (Split / All Over / All Under / Flat) |
 | **Behind %** | Probability of elements going behind the roto subject (0 = all over, 100 = all under) |
 | **Style** | Animation personality: XP Classic, Glitch Heavy, Slow Burn, Chaos Maximum |
 | **Animation Curves** | Time distribution: Flat, Build, Peak, Burst, Random |
 
 ### Per-Element Tabs
 
-<p align="center">
-  <img src="docs/images/gui-element-tabs.svg" alt="Per-element tabbed controls" width="340"/>
-</p>
-
-A tabbed panel gives independent control over each of the 6 element types (Dialog, BSOD, Cursor, Pixel, Freeze). Each tab has:
+Five custom tab buttons with colored dots give independent control over each element type (Dialog, BSOD, Cursor, Pixel, Freeze). The active tab lights up robin-egg blue; inactive tabs show a neutral beige dot. Each tab has:
 
 | Field | What it does |
 |---|---|
 | **Count** | Exact number to spawn (0 = auto from chaos level) |
-| **Min / Max f** | Duration range in frames |
-| **Scale %** | Size multiplier |
-| **Spd %** | Animation speed multiplier |
-| **Jit** | Position jitter intensity (0 = off, higher = more wiggle) |
-| **Opac** | Opacity range (min - max) |
-| **Entry / Exit** | Fade-in and fade-out frames |
+| **Duration** | Frame range (e.g. 8 – 96 frames) |
+| **Scale** | Size multiplier |
+| **Speed** | Animation speed multiplier |
+| **Jitter** | Position jitter intensity (0 = off, higher = more wiggle) |
+| **Opacity** | Opacity range (min – max %) |
+| **Fade In / Fade Out** | Entry and exit duration in frames |
+| **Per-Element Overrides** | Collapsible section with per-type Trails, Roto, Curve, and Custom Messages overrides |
 
 Stack Depth and Offset (for dialog cascade stacking) remain global controls below the tabs.
 
-### Overlays & Actions
-
-<p align="center">
-  <img src="docs/images/gui-advanced-panel.svg" alt="Overlays and actions" width="340"/>
-</p>
+### Overlays
 
 | Control | What it does |
 |---|---|
 | **Scanlines** | CRT scanline overlay with opacity, spacing, and jitter |
-| **Noise** | Fractal noise grain overlay |
+| **Noise** | Fractal noise grain overlay (opacity, scale, complexity — single row) |
 | **Head Scratch** | Horizontal line artifacts |
 | **Trails** | Echo/ghost trail effect on random elements |
-| **Custom Messages** | Add your own error messages (applies to BSOD and text elements) |
-| **Export Assets** | Decode built-in PNGs into a project folder for customization |
+
+### Actions
+
+| Control | What it does |
+|---|---|
+| **Custom Msgs / Export Assets / Show Log** | Utility row — custom messages, asset export, and log viewer |
 | **RANDOMIZE** | Randomizes all settings at once — seed, chaos, per-element controls, overlays, style, and curves |
-| **REGENERATE** | Generates (or replaces) the effect in the active comp |
-| **CLEAR ALL** | Removes all generated elements (with confirmation) |
-| **Show Log** | View the generation log file for debugging |
+| **REGENERATE** | Generates (or replaces) the effect in the active comp (green button) |
+| **CLEAR ALL** | Removes all generated elements with confirmation (red button) |
+
+A **status bar** at the bottom shows the current state (Ready, Generated N elements, Cleared, etc.).
 
 ## AE Roto Layers
 
@@ -268,12 +265,14 @@ The formula is non-linear (power curve), so low values stay subtle and high valu
 Five element types (Dialog, BSOD, Cursor, Pixel, Freeze) have independent controls. Text elements use global settings.
 
 - **Count** — Exact number to spawn. Set to `0` for auto (chaos-based). Example: set Dialog to 5, Cursor to 0, and everything else to 0 to get only 5 error windows.
-- **Min / Max f** — Duration range in frames. Elements will last between these values.
-- **Scale %** — Size multiplier. 100 = normal, 200 = double size.
-- **Spd %** — Animation speed. 100 = normal, 50 = half speed, 200 = double speed.
-- **Jit** — Position jitter. 0 = off, higher = more movement.
-- **Opac** — Opacity range. Elements get a random opacity between min and max.
-- **Entry / Exit** — Fade-in and fade-out duration in frames.
+- **Duration** — Frame range (min – max). Elements will last between these values.
+- **Scale** — Size multiplier. 100 = normal, 200 = double size.
+- **Speed** — Animation speed. 100 = normal, 50 = half speed, 200 = double speed.
+- **Jitter** — Position jitter. 0 = off, higher = more movement.
+- **Opacity** — Opacity range (min – max %). Elements get a random opacity between the two values.
+- **Fade In / Fade Out** — Entry and exit duration in frames.
+
+Each tab also has a collapsible **Per-Element Overrides** section for per-type Trails, Roto layer assignment, Curve, and Custom Messages.
 
 </details>
 

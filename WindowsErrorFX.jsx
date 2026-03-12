@@ -526,9 +526,6 @@ var DIALOG_PNG_DATA = {
 
 var CURSOR_ARROW_B64 = "iVBORw0KGgoAAAANSUhEUgAAAAwAAAATCAYAAACk9eypAAABhGlDQ1BJQ0MgcHJvZmlsZQAAKJF9kb9Lw0AcxV/TSkUqDi0o0iFDdbKLijjWKhShQqgVWnUwufQXNGlIUlwcBdeCgz8Wqw4uzro6uAqC4A8Q/wBxUnSREr+XFFrEenDch3f3HnfvAKFZZZoVSACabpuZVFLM5VfF4Cv8CCCMYURlZhlzkpRGz/F1Dx9f7+I8q/e5P8egWrAY4BOJE8wwbeIN4plN2+C8TxxhZVklPieeMOmCxI9cVzx+41xyWeCZETObmSeOEIulLla6mJVNjXiaOKZqOuULOY9VzluctWqdte/JXxgq6CvLXKcZRQqLWIIEEQrqqKAKG3FadVIsZGg/2cM/6volcinkqoCRYwE1aJBdP/gf/O7WKk5NekmhJND34jgfY0BwF2g1HOf72HFaJ4D/GbjSO/5aE5j9JL3R0WJHwNA2cHHd0ZQ94HIHGHkyZFN2JT9NoVgE3s/om/JA+BYYWPN6a+/j9AHIUlfpG+DgEBgvUfZ6j3f3d/f275l2fz9i/HKgr+CAVAAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAAEbgAABG4B0KOyaAAAAAd0SU1FB+oDBBMbJDicTaEAAABqSURBVCjPlZHRCkAhCEPd6P9/efflClKmJkQkOyuXmZnsofjvegIkjSG/YQwxHiYQ90YHMWtWEG9ON4jVezOIXSo7xEn2EeL0hx1alQhAn1IiQlxMxHCoTMnF3SwIDjjn1GG2Jq4vpX2GD5WTNQwxBFPfAAAAAElFTkSuQmCC";
 var CURSOR_HAND_B64 = "iVBORw0KGgoAAAANSUhEUgAAABEAAAAWCAYAAAAmaHdCAAABhGlDQ1BJQ0MgcHJvZmlsZQAAKJF9kb9Lw0AcxV/TSkUqDi0o0iFDdbKLijjWKhShQqgVWnUwufQXNGlIUlwcBdeCgz8Wqw4uzro6uAqC4A8Q/wBxUnSREr+XFFrEenDch3f3HnfvAKFZZZoVSACabpuZVFLM5VfF4Cv8CCCMYURlZhlzkpRGz/F1Dx9f7+I8q/e5P8egWrAY4BOJE8wwbeIN4plN2+C8TxxhZVklPieeMOmCxI9cVzx+41xyWeCZETObmSeOEIulLla6mJVNjXiaOKZqOuULOY9VzluctWqdte/JXxgq6CvLXKcZRQqLWIIEEQrqqKAKG3FadVIsZGg/2cM/6volcinkqoCRYwE1aJBdP/gf/O7WKk5NekmhJND34jgfY0BwF2g1HOf72HFaJ4D/GbjSO/5aE5j9JL3R0WJHwNA2cHHd0ZQ94HIHGHkyZFN2JT9NoVgE3s/om/JA+BYYWPN6a+/j9AHIUlfpG+DgEBgvUfZ6j3f3d/f275l2fz9i/HKgr+CAVAAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAAEbgAABG4B0KOyaAAAAAd0SU1FB+oDBBMcN/NjmrgAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAAfElEQVQ4y9VUWw6AMAijZPe/cv1w073YS43aZMlCoCmFTaQO+jME1AjIvR6AlZNA5Qb8i6RrsusynCbTGshUOyQDaaJu2ZOITDRi5SqRVmQWfuT35nRaia085Ks+CwCHEvh38o2NXVZzSUn4KrSM4x1PYK8Ch1p5XslM/QaJpTsOGx/5vgAAAABJRU5ErkJggg==";
-
-
-
 // ════════════════════════════════════════════════════════════════
 // SECTION 2 — PRNG
 // ════════════════════════════════════════════════════════════════
@@ -930,8 +927,331 @@ function exportBuiltInAssets() {
         }
     }
 
-    wlog("exportBuiltInAssets: exported " + count + " assets");
+    // Export BSOD PNGs (rendered on the fly)
+    var bsodCount = exportBSODAssets(dirPath, sep, customFolder);
+    count += bsodCount;
+
+    wlog("exportBuiltInAssets: exported " + count + " assets (" + bsodCount + " BSODs)");
     return count;
+}
+
+/**
+ * Generate BSOD PNGs on the fly by creating temp comps, rendering via
+ * the render queue, then importing the results into the custom folder.
+ * @param {string} dirPath   Disk directory for PNG output
+ * @param {string} sep       Path separator
+ * @param {FolderItem} customFolder  AE project folder for imports
+ * @returns {number} Count of exported BSODs
+ */
+function exportBSODAssets(dirPath, sep, customFolder) {
+    var bsodDir = dirPath + sep + "bsod";
+    var dir = new Folder(bsodDir);
+    if (!dir.exists) dir.create();
+    if (!dir.exists) {
+        werr("exportBSODAssets: cannot create dir: " + bsodDir);
+        return 0;
+    }
+
+    var rng = mulberry32(42); // fixed seed for reproducible hex values
+    var tempComps = [];
+    var outputFiles = [];
+    var count = 0;
+
+    // Build temp comps for each BSOD variant
+    // XP-era BSODs
+    for (var xi = 0; xi < BSOD_CODES.length; xi++) {
+        var xpId = "bsod_xp_" + xi;
+        var xpPath = bsodDir + sep + xpId + ".png";
+        var xpFile = new File(xpPath);
+        // Skip if already exported
+        if (xpFile.exists) {
+            try {
+                var xpIo = new ImportOptions(xpFile);
+                xpIo.importAs = ImportAsType.FOOTAGE;
+                xpIo.sequence = false;
+                var xpItem = app.project.importFile(xpIo);
+                xpItem.name = xpId;
+                xpItem.parentFolder = customFolder;
+                count++;
+            } catch (e) {
+                wwarn("exportBSODAssets: import existing " + xpId + " failed: " + e.toString());
+            }
+            continue;
+        }
+        var xpComp = buildBSODExportComp(xpId, "xp", BSOD_CODES[xi], null, rng);
+        tempComps.push(xpComp);
+        outputFiles.push({ id: xpId, path: xpPath, comp: xpComp });
+    }
+
+    // 9x-era BSODs
+    for (var ni = 0; ni < BSOD_EXCEPTIONS.length; ni++) {
+        var nxId = "bsod_9x_" + ni;
+        var nxPath = bsodDir + sep + nxId + ".png";
+        var nxFile = new File(nxPath);
+        if (nxFile.exists) {
+            try {
+                var nxIo = new ImportOptions(nxFile);
+                nxIo.importAs = ImportAsType.FOOTAGE;
+                nxIo.sequence = false;
+                var nxItem = app.project.importFile(nxIo);
+                nxItem.name = nxId;
+                nxItem.parentFolder = customFolder;
+                count++;
+            } catch (e) {
+                wwarn("exportBSODAssets: import existing " + nxId + " failed: " + e.toString());
+            }
+            continue;
+        }
+        var nxComp = buildBSODExportComp(nxId, "9x", null, BSOD_EXCEPTIONS[ni], rng);
+        tempComps.push(nxComp);
+        outputFiles.push({ id: nxId, path: nxPath, comp: nxComp });
+    }
+
+    if (outputFiles.length === 0) {
+        wlog("exportBSODAssets: all BSODs already exported, skipping render");
+        return count;
+    }
+
+    // Queue each temp comp for render as PNG
+    var rqItems = [];
+    for (var qi = 0; qi < outputFiles.length; qi++) {
+        var ofe = outputFiles[qi];
+        try {
+            var rqi = app.project.renderQueue.items.add(ofe.comp);
+            var om = rqi.outputModule(1);
+            om.file = new File(ofe.path);
+            // Try to apply a PNG template; fall back to default
+            try {
+                om.applyTemplate("PNG Sequence");
+            } catch (e1) {
+                try {
+                    om.applyTemplate("PNG");
+                } catch (e2) {
+                    wlog("exportBSODAssets: PNG template not found, using default");
+                }
+            }
+            om.file = new File(ofe.path); // re-set file after template
+            rqItems.push(rqi);
+        } catch (e) {
+            werr("exportBSODAssets: queue failed for " + ofe.id + ": " + e.toString());
+        }
+    }
+
+    // Render all queued items
+    if (rqItems.length > 0) {
+        try {
+            app.project.renderQueue.render();
+        } catch (e) {
+            werr("exportBSODAssets: render failed: " + e.toString());
+        }
+    }
+
+    // Import rendered PNGs and clean up
+    for (var ii = 0; ii < outputFiles.length; ii++) {
+        var ofi = outputFiles[ii];
+        // AE PNG Sequence appends frame numbers — check for both patterns
+        var outFile = new File(ofi.path);
+        // PNG Sequence often creates "name_00000.png" instead of "name.png"
+        if (!outFile.exists) {
+            // Try common AE render output patterns
+            var basePath = ofi.path.replace(/\.png$/i, "");
+            var candidates = [
+                basePath + "_00000.png",
+                basePath + "_00001.png",
+                basePath + "00000.png",
+                basePath + "00001.png",
+                basePath + "[00000].png"
+            ];
+            for (var ci = 0; ci < candidates.length; ci++) {
+                var cf = new File(candidates[ci]);
+                if (cf.exists) {
+                    // Rename to expected name
+                    cf.rename(ofi.id + ".png");
+                    outFile = cf;
+                    break;
+                }
+            }
+        }
+        if (outFile.exists) {
+            try {
+                var bIo = new ImportOptions(outFile);
+                bIo.importAs = ImportAsType.FOOTAGE;
+                bIo.sequence = false;
+                var bItem = app.project.importFile(bIo);
+                bItem.name = ofi.id;
+                bItem.parentFolder = customFolder;
+                count++;
+            } catch (e) {
+                wwarn("exportBSODAssets: import " + ofi.id + " failed: " + e.toString());
+            }
+        } else {
+            wwarn("exportBSODAssets: render output not found for " + ofi.id);
+        }
+    }
+
+    // Clean up temp comps
+    for (var di = tempComps.length - 1; di >= 0; di--) {
+        try { tempComps[di].remove(); } catch (e) { /* ignore */ }
+    }
+
+    wlog("exportBSODAssets: rendered " + count + " BSODs");
+    return count;
+}
+
+/**
+ * Build a temporary 1-frame comp containing a complete BSOD for export.
+ * @param {string} name     Comp name
+ * @param {string} era      "xp" or "9x"
+ * @param {string|null} code      Stop code for XP era (e.g. "DRIVER_IRQL_NOT_LESS_OR_EQUAL")
+ * @param {string|null} exception Exception code for 9x era (e.g. "0E")
+ * @param {function} rng    PRNG function for hex generation
+ * @returns {CompItem}
+ */
+function buildBSODExportComp(name, era, code, exception, rng) {
+    var w = 640;
+    var h = (era === "xp") ? 260 : 180;
+    var fps = 24;
+    // 1-frame comp (duration = 1 frame)
+    var comp = app.project.items.addComp("_WEFX_TEMP_" + name, w, h, 1, 1 / fps, fps);
+
+    // Blue background solid
+    var bg = comp.layers.addSolid(C_BSOD_BG, "BG", w, h, 1);
+    bg.property("Position").setValue([w / 2, h / 2]);
+
+    var font = FONT_BSOD;
+    var fontSize = FSIZE_BSOD;
+    var lineH = fontSize + 3;
+    var xMargin = 10;
+
+    if (era === "xp") {
+        // XP BSOD: white text on blue
+        var lines = buildBSODXPText(code, rng);
+        var yPos = 8 + fontSize;
+        for (var li = 0; li < lines.length; li++) {
+            if (yPos > h) break;
+            if (lines[li] !== "") {
+                var tl = comp.layers.addText(lines[li]);
+                var tp = tl.property("Source Text");
+                var td = tp.value;
+                td.text = lines[li];
+                td.font = font;
+                td.fontSize = fontSize;
+                td.fillColor = C_BSOD_TEXT;
+                td.applyFill = true;
+                td.applyStroke = false;
+                td.justification = ParagraphJustification.LEFT_JUSTIFY;
+                tp.setValue(td);
+                tl.property("Position").setValue([xMargin, yPos]);
+                tl.name = "WEFX_BSOD_Line";
+            }
+            yPos += lineH;
+        }
+    } else {
+        // 9x BSOD: grey highlight bar + inverted header + white body text
+        var barH = fontSize + 4;
+        var barY = 8;
+
+        // Grey highlight bar
+        var barLayer = comp.layers.addSolid(
+            [0.667, 0.667, 0.667], "Bar", w, barH, 1);
+        barLayer.property("Position").setValue([w / 2, barY + barH / 2]);
+
+        // Header text (blue on grey)
+        var hlText = comp.layers.addText("A Fatal Exception Has Occurred");
+        var hlTp = hlText.property("Source Text");
+        var hlTd = hlTp.value;
+        hlTd.text = "A Fatal Exception Has Occurred";
+        hlTd.font = font;
+        hlTd.fontSize = fontSize;
+        hlTd.fillColor = C_BSOD_BG;
+        hlTd.applyFill = true;
+        hlTd.applyStroke = false;
+        hlTd.justification = ParagraphJustification.LEFT_JUSTIFY;
+        hlTp.setValue(hlTd);
+        hlText.property("Position").setValue([xMargin, barY + fontSize]);
+        hlText.name = "WEFX_BSOD_Header";
+
+        // Body lines
+        var bodyLines = buildBSOD9XText(exception, rng);
+        var bodyY = barY + barH + 6 + fontSize;
+        for (var bi = 0; bi < bodyLines.length; bi++) {
+            if (bodyY > h) break;
+            if (bodyLines[bi] !== "") {
+                var btl = comp.layers.addText(bodyLines[bi]);
+                var btp = btl.property("Source Text");
+                var btd = btp.value;
+                btd.text = bodyLines[bi];
+                btd.font = font;
+                btd.fontSize = fontSize;
+                btd.fillColor = C_BSOD_TEXT;
+                btd.applyFill = true;
+                btd.applyStroke = false;
+                btd.justification = ParagraphJustification.LEFT_JUSTIFY;
+                btp.setValue(btd);
+                btl.property("Position").setValue([xMargin, bodyY]);
+                btl.name = "WEFX_BSOD_Line";
+            }
+            bodyY += lineH;
+        }
+
+        // Block cursor after last line of text
+        var cursorW = 9;
+        var cursorH = fontSize;
+        var lastLine = bodyLines[bodyLines.length - 1] || "";
+        var cursorX = xMargin + lastLine.length * 8 + 2;
+        var cursorY = bodyY - lineH;
+        var cursorLayer = comp.layers.addSolid(C_BSOD_TEXT, "Cursor", cursorW, cursorH, 1);
+        cursorLayer.property("Position").setValue([cursorX + cursorW / 2, cursorY - cursorH / 2 + fontSize]);
+    }
+
+    return comp;
+}
+
+/**
+ * Build XP-era BSOD text lines (matching render_bsods.py output).
+ */
+function buildBSODXPText(code, rng) {
+    return [
+        "A problem has been detected and Windows has been shut down to prevent damage",
+        "to your computer.",
+        "",
+        code,
+        "",
+        "If this is the first time you've seen this Stop error screen,",
+        "restart your computer. If this screen appears again, follow",
+        "these steps:",
+        "",
+        "Check to make sure any new hardware or software is properly installed.",
+        "If this is a new installation, ask your hardware or software manufacturer",
+        "for any Windows updates you might need.",
+        "",
+        "If problems continue, disable or remove any newly installed hardware",
+        "or software. Disable BIOS memory options such as caching or shadowing.",
+        "If you need to use Safe Mode to remove or disable components, restart",
+        "your computer, press F8 to select Advanced Startup Options, and then",
+        "select Safe Mode.",
+        "",
+        "Technical information:",
+        "",
+        "*** STOP: " + fakeHex(rng) + " (" + fakeHex(rng) + ", " + fakeHex(rng) + ", " + fakeHex(rng) + ", " + fakeHex(rng) + ")"
+    ];
+}
+
+/**
+ * Build 9x-era BSOD text lines (matching render_bsods.py output).
+ */
+function buildBSOD9XText(exception, rng) {
+    return [
+        "A fatal exception " + exception + " has occurred at " + fakeHex(rng) + ":" + fakeHex(rng) + " in VXD VMM(01) +",
+        fakeHex(rng) + ". The current application will be terminated.",
+        "",
+        "*  Press any key to terminate the current application.",
+        "*  Press CTRL+ALT+DELETE again to restart your computer. You will",
+        "   lose any unsaved information in all applications.",
+        "",
+        "",
+        "Press any key to continue _"
+    ];
 }
 
 /**
@@ -4176,29 +4496,105 @@ function generate(settings, forceReplace) {
     panel.margins = 10;
     panel.spacing = 6;
 
+    // ── UI Color Constants ───────────────────────
+    var UI_DOT_INACTIVE = [0.745, 0.706, 0.627, 1]; // beige
+    var UI_DOT_ACTIVE   = [0.392, 0.824, 0.863, 1]; // robin egg blue
+    var UI_BG_NORMAL    = [0.19, 0.19, 0.21, 1];
+    var UI_BG_ACTIVE    = [0.26, 0.26, 0.29, 1];
+    var UI_TEXT_DIM     = [0.55, 0.55, 0.57, 1];
+    var UI_TEXT_BRIGHT  = [0.90, 0.90, 0.92, 1];
+    var UI_GREEN        = [0.22, 0.69, 0.37, 1];
+    var UI_GREEN_HOVER  = [0.26, 0.76, 0.42, 1];
+    var UI_RED          = [0.78, 0.25, 0.23, 1];
+    var UI_RED_HOVER    = [0.85, 0.30, 0.28, 1];
+
+    // ── Custom draw helper: colored button ───────
+    function makeColoredButton(btn, bgColor, hoverColor, textColor) {
+        btn.onDraw = function(drawState) {
+            var g = this.graphics;
+            var w = this.size[0];
+            var h = this.size[1];
+            var isOver = drawState.mouseOver;
+            var isDown = drawState.leftButtonPressed;
+            var bg = (isOver || isDown) ? hoverColor : bgColor;
+            var brush = g.newBrush(g.BrushType.SOLID_COLOR, bg);
+            g.rectPath(0, 0, w, h);
+            g.fillPath(brush);
+            var pen = g.newPen(g.PenType.SOLID_COLOR, textColor, 1);
+            var tw = g.measureString(this.text, g.font, w);
+            var tx = (w - tw.width) / 2;
+            var ty = (h - tw.height) / 2;
+            g.drawString(this.text, pen, tx, ty, g.font);
+        };
+    }
+
     // ── Header ───────────────────────────────────
     var header = panel.add("statictext", undefined, "WINDOWS ERROR FX");
     header.alignment = ["center", "top"];
 
-    // ── Seed row ──────────────────────────────────
+    // ── Seed row with dice button ────────────────
     var seedRow = panel.add("group");
     seedRow.orientation = "row";
     seedRow.add("statictext", undefined, "SEED");
     var seedField = seedRow.add("edittext", undefined, "1984");
     seedField.preferredSize.width = 70;
+    var diceBtn = seedRow.add("button", undefined, "\u2749");
+    diceBtn.preferredSize = [26, 22];
+    diceBtn.helpTip = "Random seed";
+    diceBtn.onClick = function() {
+        seedField.text = String(Math.floor(Math.random() * 99999) + 1000);
+    };
 
-    // ── Chaos (number field, uncapped) ────────────
+    // ── Chaos with gradient bar ──────────────────
     var chaosRow = panel.add("group");
     chaosRow.orientation = "row";
     chaosRow.add("statictext", undefined, "CHAOS");
     var chaosField = chaosRow.add("edittext", undefined, "100");
     chaosField.preferredSize.width = 50;
-    chaosRow.add("statictext", undefined, "(0 = off, 100 = normal, 500+ = insane)");
+    // Gradient indicator bar
+    var chaosBar = chaosRow.add("image", undefined, undefined, { name: "chaosBar" });
+    chaosBar.preferredSize = [140, 18];
+    chaosBar.helpTip = "Chaos intensity";
+    chaosBar.onDraw = function() {
+        var g = this.graphics;
+        var w = this.size[0];
+        var h = this.size[1];
+        // Gradient stops: green → yellow → orange → red
+        var stops = [
+            [0.31, 0.51, 0.31],  // green-gray
+            [0.63, 0.67, 0.24],  // yellow
+            [0.86, 0.55, 0.16],  // orange
+            [0.82, 0.22, 0.18]   // red
+        ];
+        var segW = w / (stops.length - 1);
+        for (var px = 0; px < w; px++) {
+            var t = px / w;
+            var n = stops.length - 1;
+            var idx = Math.min(Math.floor(t * n), n - 1);
+            var lt = (t * n) - idx;
+            var c = [
+                stops[idx][0] + (stops[idx + 1][0] - stops[idx][0]) * lt,
+                stops[idx][1] + (stops[idx + 1][1] - stops[idx][1]) * lt,
+                stops[idx][2] + (stops[idx + 1][2] - stops[idx][2]) * lt,
+                1
+            ];
+            var brush = g.newBrush(g.BrushType.SOLID_COLOR, c);
+            g.rectPath(px, 0, 1, h);
+            g.fillPath(brush);
+        }
+        // Scale labels
+        var dimPen = g.newPen(g.PenType.SOLID_COLOR, UI_TEXT_DIM, 1);
+        g.drawString("off", dimPen, 2, h + 1, g.font);
+        var normalW = g.measureString("normal", g.font, w);
+        g.drawString("normal", dimPen, (w - normalW.width) / 2, h + 1, g.font);
+        var insaneW = g.measureString("insane", g.font, w);
+        g.drawString("insane", dimPen, w - insaneW.width - 2, h + 1, g.font);
+    };
 
     // ── Virtual resolution dropdown ─────────────────
     var resRow = panel.add("group");
     resRow.orientation = "row";
-    resRow.add("statictext", undefined, "Simulated Resolution:");
+    resRow.add("statictext", undefined, "Resolution");
     var resDrop = resRow.add("dropdownlist", undefined, []);
     for (var ri = 0; ri < VIRTUAL_RESOLUTIONS.length; ri++) {
         resDrop.add("item", VIRTUAL_RESOLUTIONS[ri].label);
@@ -4208,7 +4604,7 @@ function generate(settings, forceReplace) {
     // ── Roto layer picker ────────────────────────────
     var rotoPickRow = panel.add("group");
     rotoPickRow.orientation = "row";
-    rotoPickRow.add("statictext", undefined, "Roto:");
+    rotoPickRow.add("statictext", undefined, "Roto");
     var rotoPickDropdown = rotoPickRow.add("dropdownlist", undefined, ["Auto-detect"]);
     rotoPickDropdown.selection = 0;
     rotoPickDropdown.preferredSize.width = 160;
@@ -4222,16 +4618,10 @@ function generate(settings, forceReplace) {
     advPanel.margins = 8;
     advPanel.spacing = 4;
 
-    // ── Global Settings: Element Layering, Style, Animation Curves ──
-    var globalPanel = advPanel.add("panel", undefined, "");
-    globalPanel.orientation = "column";
-    globalPanel.alignChildren = ["fill", "top"];
-    globalPanel.margins = 6;
-    globalPanel.spacing = 2;
-
-    var layeringRow = globalPanel.add("group");
+    // ── Global Settings: Layering, Style, Curves ──
+    var layeringRow = advPanel.add("group");
     layeringRow.orientation = "row";
-    layeringRow.add("statictext", undefined, "Element Layering");
+    layeringRow.add("statictext", undefined, "Layering");
     var rotoModeDropdown = layeringRow.add("dropdownlist", undefined,
         ["Split", "All Over", "All Under", "Flat"]);
     rotoModeDropdown.selection = 0;
@@ -4239,89 +4629,161 @@ function generate(settings, forceReplace) {
     var rotoBehindField = layeringRow.add("edittext", undefined, "50");
     rotoBehindField.preferredSize.width = 30;
 
-    var styleRow = globalPanel.add("group");
+    var styleRow = advPanel.add("group");
     styleRow.orientation = "row";
     styleRow.add("statictext", undefined, "Style");
     var animStyleDropdown = styleRow.add("dropdownlist", undefined,
         ["XP Classic", "Glitch Heavy", "Slow Burn", "Chaos Maximum"]);
     animStyleDropdown.selection = 0;
 
-    var curveRow = globalPanel.add("group");
+    var curveRow = advPanel.add("group");
     curveRow.orientation = "row";
     curveRow.add("statictext", undefined, "Animation Curves");
     var chaosCurveDropdown = curveRow.add("dropdownlist", undefined,
         ["Flat", "Build", "Peak", "Burst", "Random"]);
     chaosCurveDropdown.selection = 0;
 
-    // ── Per-Element Tabbed Controls ──────────────
-    var elemTabs = advPanel.add("tabbedpanel");
+    // ── Per-Element Custom Tab Bar ────────────────
     var tabUI = {};
     var tabLabels = { dialog: "Dialog", bsod: "BSOD", cursor: "Cursor", pixel: "Pixel", freeze: "Freeze" };
     var tabKeys = ["dialog", "bsod", "cursor", "pixel", "freeze"];
+    var tabBtns = [];
+    var tabPanels = [];
+    var activeTabIdx = 0;
 
+    // Tab button row
+    var tabRow = advPanel.add("group");
+    tabRow.orientation = "row";
+    tabRow.spacing = 2;
+    tabRow.alignment = ["fill", "top"];
+
+    for (var tbi = 0; tbi < tabKeys.length; tbi++) {
+        var tbtn = tabRow.add("button", undefined, tabLabels[tabKeys[tbi]]);
+        tbtn.preferredSize = [68, 22];
+        tabBtns.push(tbtn);
+    }
+
+    // Draw function for tab buttons
+    function updateTabButtons(btns, activeIdx) {
+        for (var di = 0; di < btns.length; di++) {
+            (function(btn, isActive) {
+                btn.onDraw = function(drawState) {
+                    var g = this.graphics;
+                    var w = this.size[0];
+                    var h = this.size[1];
+                    var isOver = drawState.mouseOver;
+                    var bg = isActive ? UI_BG_ACTIVE : (isOver ? [0.22, 0.22, 0.24, 1] : UI_BG_NORMAL);
+                    var bgBrush = g.newBrush(g.BrushType.SOLID_COLOR, bg);
+                    g.rectPath(0, 0, w, h);
+                    g.fillPath(bgBrush);
+                    // Dot
+                    var dotColor = isActive ? UI_DOT_ACTIVE : UI_DOT_INACTIVE;
+                    var dotBrush = g.newBrush(g.BrushType.SOLID_COLOR, dotColor);
+                    g.ellipsePath(4, (h - 8) / 2, 8, 8);
+                    g.fillPath(dotBrush);
+                    // Text
+                    var tc = isActive ? UI_TEXT_BRIGHT : UI_TEXT_DIM;
+                    var pen = g.newPen(g.PenType.SOLID_COLOR, tc, 1);
+                    g.drawString(this.text, pen, 16, 3, g.font);
+                };
+            })(btns[di], di === activeIdx);
+        }
+    }
+
+    // Tab click handler
+    function switchTab(idx) {
+        activeTabIdx = idx;
+        for (var si = 0; si < tabPanels.length; si++) {
+            tabPanels[si].visible = (si === idx);
+        }
+        updateTabButtons(tabBtns, idx);
+        panel.layout.layout(true);
+    }
+
+    // Wire up tab button clicks
+    for (var tci = 0; tci < tabBtns.length; tci++) {
+        (function(idx) {
+            tabBtns[idx].onClick = function() { switchTab(idx); };
+        })(tci);
+    }
+
+    // Create tab content panels
     for (var ti = 0; ti < tabKeys.length; ti++) {
         var tkey = tabKeys[ti];
-        var tab = elemTabs.add("tab", undefined, tabLabels[tkey]);
-        tab.orientation = "column";
-        tab.alignChildren = ["fill", "top"];
-        tab.margins = 4;
-        tab.spacing = 2;
+        var tabContent = advPanel.add("group");
+        tabContent.orientation = "column";
+        tabContent.alignChildren = ["fill", "top"];
+        tabContent.margins = [4, 4, 4, 4];
+        tabContent.spacing = 2;
+        tabContent.visible = (ti === 0);
+        tabPanels.push(tabContent);
 
         // Row 1: Count
-        var r1 = tab.add("group");
+        var r1 = tabContent.add("group");
         r1.orientation = "row";
-        r1.add("statictext", undefined, "Count").preferredSize.width = 40;
+        r1.add("statictext", undefined, "Count").preferredSize.width = 50;
         var countF = r1.add("edittext", undefined, "0");
         countF.preferredSize.width = 35;
         r1.add("statictext", undefined, "(0 = auto)");
 
-        // Row 2: Min/Max frames
-        var r2 = tab.add("group");
+        // Row 2: Duration range
+        var r2 = tabContent.add("group");
         r2.orientation = "row";
-        r2.add("statictext", undefined, "Min f").preferredSize.width = 35;
+        r2.add("statictext", undefined, "Duration").preferredSize.width = 50;
         var minF = r2.add("edittext", undefined, String(FLOOR_FRAMES));
         minF.preferredSize.width = 35;
-        r2.add("statictext", undefined, "Max f").preferredSize.width = 35;
+        r2.add("statictext", undefined, "\u2013");
         var maxF = r2.add("edittext", undefined, String(MAX_FRAMES));
         maxF.preferredSize.width = 35;
+        r2.add("statictext", undefined, "frames");
 
         // Row 3: Scale / Speed / Jitter
-        var r3 = tab.add("group");
+        var r3 = tabContent.add("group");
         r3.orientation = "row";
-        r3.add("statictext", undefined, "Scale%").preferredSize.width = 42;
+        r3.add("statictext", undefined, "Scale").preferredSize.width = 35;
         var scaleF = r3.add("edittext", undefined, String(DEFAULT_ELEMENT_SCALE));
         scaleF.preferredSize.width = 35;
-        r3.add("statictext", undefined, "Spd%").preferredSize.width = 32;
+        r3.add("statictext", undefined, "Speed").preferredSize.width = 35;
         var speedF = r3.add("edittext", undefined, String(DEFAULT_SPEED_MULT));
         speedF.preferredSize.width = 35;
-        r3.add("statictext", undefined, "Jit").preferredSize.width = 20;
+        r3.add("statictext", undefined, "Jitter").preferredSize.width = 35;
         var jitterF = r3.add("edittext", undefined, "0");
         jitterF.preferredSize.width = 30;
 
-        // Row 4: Opacity min-max
-        var r4 = tab.add("group");
+        // Row 4: Opacity range
+        var r4 = tabContent.add("group");
         r4.orientation = "row";
-        r4.add("statictext", undefined, "Opac").preferredSize.width = 35;
+        r4.add("statictext", undefined, "Opacity").preferredSize.width = 50;
         var opMinF = r4.add("edittext", undefined, String(DEFAULT_OPACITY_MIN));
         opMinF.preferredSize.width = 30;
-        r4.add("statictext", undefined, "-");
+        r4.add("statictext", undefined, "\u2013");
         var opMaxF = r4.add("edittext", undefined, String(DEFAULT_OPACITY_MAX));
         opMaxF.preferredSize.width = 30;
+        r4.add("statictext", undefined, "%");
 
-        // Row 5: Entry / Exit frames
-        var r5 = tab.add("group");
+        // Row 5: Fade In / Fade Out
+        var r5 = tabContent.add("group");
         r5.orientation = "row";
-        r5.add("statictext", undefined, "Entry").preferredSize.width = 35;
+        r5.add("statictext", undefined, "Fade In").preferredSize.width = 42;
         var entryF = r5.add("edittext", undefined, String(DEFAULT_ENTRY_FRAMES));
         entryF.preferredSize.width = 25;
-        r5.add("statictext", undefined, "Exit").preferredSize.width = 28;
+        r5.add("statictext", undefined, "Fade Out").preferredSize.width = 50;
         var exitF = r5.add("edittext", undefined, String(DEFAULT_EXIT_FRAMES));
         exitF.preferredSize.width = 25;
 
-        // ── Override: Trails ──────────────────────────
-        var trailsRow = tab.add("group");
+        // ── Overrides (collapsible) ──────────────────
+        var overrideCb = tabContent.add("checkbox", undefined, "Per-Element Overrides");
+        overrideCb.value = false;
+        var overrideGrp = tabContent.add("group");
+        overrideGrp.orientation = "column";
+        overrideGrp.alignChildren = ["fill", "top"];
+        overrideGrp.spacing = 2;
+        overrideGrp.visible = false;
+
+        // Override: Trails
+        var trailsRow = overrideGrp.add("group");
         trailsRow.orientation = "row";
-        var trailsCb = trailsRow.add("checkbox", undefined, "Override Trails");
+        var trailsCb = trailsRow.add("checkbox", undefined, "Trails");
         trailsCb.value = false;
         var trailsGroup = trailsRow.add("group");
         trailsGroup.orientation = "row";
@@ -4336,10 +4798,10 @@ function generate(settings, forceReplace) {
         var trDecayF = trailsGroup.add("edittext", undefined, String(DEFAULT_TRAILS_DECAY));
         trDecayF.preferredSize.width = 30;
 
-        // ── Override: Roto ────────────────────────────
-        var rotoOvRow = tab.add("group");
+        // Override: Roto
+        var rotoOvRow = overrideGrp.add("group");
         rotoOvRow.orientation = "row";
-        var rotoCb = rotoOvRow.add("checkbox", undefined, "Override Roto");
+        var rotoCb = rotoOvRow.add("checkbox", undefined, "Roto");
         rotoCb.value = false;
         var rotoGroup = rotoOvRow.add("group");
         rotoGroup.orientation = "row";
@@ -4347,10 +4809,10 @@ function generate(settings, forceReplace) {
         var rotoDD = rotoGroup.add("dropdownlist", undefined, ["Over", "Under"]);
         rotoDD.selection = 0;
 
-        // ── Override: Curve ───────────────────────────
-        var curveOvRow = tab.add("group");
+        // Override: Curve
+        var curveOvRow = overrideGrp.add("group");
         curveOvRow.orientation = "row";
-        var curveCb = curveOvRow.add("checkbox", undefined, "Override Curve");
+        var curveCb = curveOvRow.add("checkbox", undefined, "Curve");
         curveCb.value = false;
         var curveGroup = curveOvRow.add("group");
         curveGroup.orientation = "row";
@@ -4358,14 +4820,12 @@ function generate(settings, forceReplace) {
         var curveDD = curveGroup.add("dropdownlist", undefined, ["Flat", "Build", "Peak", "Burst", "Random"]);
         curveDD.selection = 0;
 
-        // ── Override: Custom Messages (dialog + bsod only) ──
+        // Override: Custom Messages (bsod only)
         var msgsCb = null;
         var msgsGroup = null;
         var msgsBtn = null;
-        var tabCustomMessages = [];
-        var tabCustomTitles = [];
         if (tkey === "bsod") {
-            var msgsRow = tab.add("group");
+            var msgsRow = overrideGrp.add("group");
             msgsRow.orientation = "row";
             msgsCb = msgsRow.add("checkbox", undefined, "Custom Messages");
             msgsCb.value = false;
@@ -4377,7 +4837,11 @@ function generate(settings, forceReplace) {
         }
 
         // Checkbox onClick handlers (IIFE to capture closure vars in ES3 for-loop)
-        (function(trCb, trGrp, rCb, rGrp, cCb, cGrp, mCb, mGrp, pnl) {
+        (function(ovCb, ovGrp, trCb, trGrp, rCb, rGrp, cCb, cGrp, mCb, mGrp, pnl) {
+            ovCb.onClick = function() {
+                ovGrp.visible = ovCb.value;
+                pnl.layout.layout(true);
+            };
             trCb.onClick = function() {
                 trGrp.visible = trCb.value;
                 pnl.layout.layout(true);
@@ -4396,7 +4860,7 @@ function generate(settings, forceReplace) {
                     pnl.layout.layout(true);
                 };
             }
-        })(trailsCb, trailsGroup, rotoCb, rotoGroup, curveCb, curveGroup, msgsCb, msgsGroup, panel);
+        })(overrideCb, overrideGrp, trailsCb, trailsGroup, rotoCb, rotoGroup, curveCb, curveGroup, msgsCb, msgsGroup, panel);
 
         tabUI[tkey] = {
             count: countF,
@@ -4410,6 +4874,7 @@ function generate(settings, forceReplace) {
             entryFrames: entryF,
             exitFrames: exitF,
             // Override controls
+            overrideToggle: overrideCb, overrideGroup: overrideGrp,
             trailsOverride: trailsCb, trailsChance: trChanceF,
             trailsEchoes: trEchoesF, trailsDecay: trDecayF, trailsGroup: trailsGroup,
             rotoOverride: rotoCb, rotoForceDropdown: rotoDD, rotoGroup: rotoGroup,
@@ -4418,7 +4883,7 @@ function generate(settings, forceReplace) {
             _customMessages: [], _customTitles: []
         };
 
-        // Custom Messages Edit button handler (IIFE for closure, after tabUI[tkey] exists)
+        // Custom Messages Edit button handler (IIFE for closure)
         if (msgsBtn) {
             (function(btn, tk, tabMap, labels) {
                 btn.onClick = function() {
@@ -4469,6 +4934,9 @@ function generate(settings, forceReplace) {
         }
     }
 
+    // Initialize tab button drawing
+    updateTabButtons(tabBtns, 0);
+
     // ── Global Stack Controls ────────────────────
     var stackRow = advPanel.add("group");
     stackRow.orientation = "row";
@@ -4501,7 +4969,7 @@ function generate(settings, forceReplace) {
     var slJitter = slRow2.add("checkbox", undefined, "Scanline Jitter");
     slJitter.value = false;
 
-    // Noise
+    // Noise — single compact row
     var noRow = overlayGroup.add("group");
     noRow.orientation = "row";
     var noEnabled = noRow.add("checkbox", undefined, "Noise");
@@ -4512,12 +4980,9 @@ function generate(settings, forceReplace) {
     noRow.add("statictext", undefined, "Scale").preferredSize.width = 35;
     var noScale = noRow.add("edittext", undefined, String(DEFAULT_NOISE_SCALE));
     noScale.preferredSize.width = 40;
-
-    var noRow2 = overlayGroup.add("group");
-    noRow2.orientation = "row";
-    noRow2.add("statictext", undefined, "Complexity").preferredSize.width = 65;
-    var noComplexity = noRow2.add("edittext", undefined, String(DEFAULT_NOISE_COMPLEXITY));
-    noComplexity.preferredSize.width = 35;
+    noRow.add("statictext", undefined, "Cplx").preferredSize.width = 28;
+    var noComplexity = noRow.add("edittext", undefined, String(DEFAULT_NOISE_COMPLEXITY));
+    noComplexity.preferredSize.width = 30;
 
     // Head Scratch
     var hsRow = overlayGroup.add("group");
@@ -4546,20 +5011,48 @@ function generate(settings, forceReplace) {
     var trDecay = trRow.add("edittext", undefined, String(DEFAULT_TRAILS_DECAY));
     trDecay.preferredSize.width = 35;
 
-    // Custom messages button
-    var customBtn = advPanel.add("button", undefined, "Custom Messages...");
+    // ── Utility buttons — compact row ────────────
+    var utilRow = advPanel.add("group");
+    utilRow.orientation = "row";
+    utilRow.alignment = ["fill", "top"];
+    var customBtn = utilRow.add("button", undefined, "Custom Msgs\u2026");
+    customBtn.preferredSize.width = 110;
+    var exportBtn = utilRow.add("button", undefined, "Export Assets\u2026");
+    exportBtn.preferredSize.width = 110;
+    var logBtn = utilRow.add("button", undefined, "Show Log");
 
-    // Export built-in assets button
-    var exportBtn = advPanel.add("button", undefined, "Export Assets...");
-
-    // Randomize, Regenerate, Clear, and Log buttons
+    // ── RANDOMIZE ────────────────────────────────
     var randomizeBtn = advPanel.add("button", undefined, "RANDOMIZE");
+
+    // ── Primary actions — colored ────────────────
     var actionRow = advPanel.add("group");
     actionRow.orientation = "row";
+    actionRow.alignment = ["fill", "top"];
     var regenBtn = actionRow.add("button", undefined, "REGENERATE");
+    regenBtn.preferredSize = [200, 32];
+    makeColoredButton(regenBtn, UI_GREEN, UI_GREEN_HOVER, [1, 1, 1, 1]);
     var clearBtn = actionRow.add("button", undefined, "CLEAR ALL");
+    clearBtn.preferredSize = [120, 32];
+    makeColoredButton(clearBtn, UI_RED, UI_RED_HOVER, [1, 1, 1, 1]);
 
-    var logBtn = advPanel.add("button", undefined, "Show Log");
+    // ── Status bar ───────────────────────────────
+    var statusRow = advPanel.add("group");
+    statusRow.orientation = "row";
+    statusRow.alignment = ["fill", "top"];
+    var statusDot = statusRow.add("statictext", undefined, "\u25CF");
+    try {
+        statusDot.graphics.foregroundColor = statusDot.graphics.newPen(
+            statusDot.graphics.PenType.SOLID_COLOR, [0.27, 0.75, 0.35, 1], 1);
+    } catch (e) {}
+    var statusText = statusRow.add("statictext", undefined, "Ready");
+    statusText.preferredSize.width = 300;
+    try {
+        statusText.graphics.foregroundColor = statusText.graphics.newPen(
+            statusText.graphics.PenType.SOLID_COLOR, UI_TEXT_DIM, 1);
+    } catch (e) {}
+    function updateStatus(msg) {
+        statusText.text = msg;
+    }
 
     // ── Assemble UI references ────────────────────
     var ui = {
@@ -4621,14 +5114,17 @@ function generate(settings, forceReplace) {
     randomizeBtn.onClick = function() {
         var rs = randomizeSettings();
         applySettingsToUI(ui, rs);
+        updateStatus("Randomized \u2014 seed " + rs.seed + " \u2022 chaos " + rs.chaos);
     };
 
     regenBtn.onClick = function() {
         refreshRotoDropdown(ui);
         var settings = settingsFromUI(ui);
+        updateStatus("Generating\u2026");
         var count = generate(settings, true);
         if (count != null) {
             rotoStatus.text = count + " elems";
+            updateStatus("Generated " + count + " elements \u2014 seed " + settings.seed);
         }
     };
 
@@ -4646,6 +5142,7 @@ function generate(settings, forceReplace) {
         try {
             clearEffect(comp);
             rotoStatus.text = "Cleared.";
+            updateStatus("Cleared");
             wlog("=== CLEAR COMPLETE ===");
         } catch (e) {
             werr("Clear failed: " + e.toString() + " [line " + (e.line || "?") + "]");
@@ -4736,12 +5233,10 @@ function generate(settings, forceReplace) {
 
         resetBtn.onClick = function() {
             msgArea.text = "";
-            titleArea.text = "";
         };
 
         if (dlg.show() === 1) {
             ui._customMessages = msgArea.text.split("\n");
-            ui._customTitles = titleArea.text.split("\n");
             // Filter out empty lines
             var i;
             var filtered = [];
@@ -4758,6 +5253,7 @@ function generate(settings, forceReplace) {
         try {
             var exported = exportBuiltInAssets();
             alert("Exported " + exported + " assets to WindowsErrorFX_Custom folder.");
+            updateStatus("Exported " + exported + " assets");
         } catch (e) {
             alert("Export failed: " + e.toString());
         }
@@ -4775,13 +5271,16 @@ function generate(settings, forceReplace) {
             wlog("Panel init: settings loaded (seed=" + saved.seed + " chaos=" + saved.chaos + ")");
             var roto = detectRotoLayers(comp, ROTO_KEYWORDS, []);
             rotoStatus.text = roto.length + " roto";
+            updateStatus("Ready \u2014 seed " + saved.seed + " \u2022 chaos " + saved.chaos);
             wlog("Panel init: " + roto.length + " roto layers detected");
         } else {
             rotoStatus.text = "No comp";
+            updateStatus("Ready \u2014 no active comp");
             wlog("Panel init: no active comp");
         }
     } catch (e) {
         rotoStatus.text = "Ready";
+        updateStatus("Ready");
         werr("Panel init failed: " + e.toString());
     }
     wlog("Panel init complete.");
