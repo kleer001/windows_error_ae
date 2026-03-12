@@ -183,21 +183,18 @@ var MAX_FRAMES        = 96;
 // Three tiers: heavy (40% Normal), medium (60%), light (80%)
 // Remaining weight distributed: Add 30%, Screen 30%, Overlay 16%, Hard Light 16%, Difference 8%
 var BLEND_WEIGHTS = {
-    bsod:   [{ value: "normal", weight: 40 }, { value: "add", weight: 18 }, { value: "screen", weight: 18 }, { value: "overlay", weight: 10 }, { value: "hardLight", weight: 10 }, { value: "difference", weight: 4 }],
-    pixel:  [{ value: "normal", weight: 40 }, { value: "add", weight: 18 }, { value: "screen", weight: 18 }, { value: "overlay", weight: 10 }, { value: "hardLight", weight: 10 }, { value: "difference", weight: 4 }],
-    dialog: [{ value: "normal", weight: 60 }, { value: "add", weight: 12 }, { value: "screen", weight: 12 }, { value: "overlay", weight: 6 }, { value: "hardLight", weight: 6 }, { value: "difference", weight: 4 }],
-    cursor: [{ value: "normal", weight: 80 }, { value: "add", weight: 6 }, { value: "screen", weight: 6 }, { value: "overlay", weight: 3 }, { value: "hardLight", weight: 3 }, { value: "difference", weight: 2 }],
-    freeze: [{ value: "normal", weight: 90 }, { value: "add", weight: 3 }, { value: "screen", weight: 3 }, { value: "overlay", weight: 2 }, { value: "hardLight", weight: 1 }, { value: "difference", weight: 1 }]
+    bsod:   [{ value: "normal", weight: 40 }, { value: "add", weight: 9 }, { value: "screen", weight: 9 }],
+    pixel:  [{ value: "normal", weight: 40 }, { value: "add", weight: 9 }, { value: "screen", weight: 9 }],
+    dialog: [{ value: "normal", weight: 60 }, { value: "add", weight: 9 }, { value: "screen", weight: 9 }],
+    cursor: [{ value: "normal", weight: 80 }, { value: "add", weight: 6 }, { value: "screen", weight: 6 }],
+    freeze: [{ value: "normal", weight: 90 }, { value: "add", weight: 3 }, { value: "screen", weight: 3 }]
 };
 
 // Map blend mode names to AE BlendingMode enum values
 var BLEND_MODE_MAP = {
     normal: "NORMAL",
     add: "ADD",
-    screen: "SCREEN",
-    overlay: "OVERLAY",
-    hardLight: "HARD_LIGHT",
-    difference: "DIFFERENCE"
+    screen: "SCREEN"
 };
 
 // ── Dialog geometry ──────────────────────────────────────────────
@@ -214,7 +211,7 @@ var MAX_STACK_DEPTH   = 8;
 var DEFAULT_SCANLINE_OPACITY  = 20;   // percent
 var DEFAULT_SCANLINE_SPACING  = 4;    // pixels between lines
 var DEFAULT_NOISE_OPACITY     = 8;    // percent
-var DEFAULT_NOISE_SCALE       = 100;  // fractal noise scale
+var DEFAULT_NOISE_SCALE       = 10;   // fractal noise scale (grain-like)
 var DEFAULT_NOISE_COMPLEXITY  = 5;    // fractal noise detail (1–20)
 var DEFAULT_HEADSCRATCH_FREQ  = 20;   // frames between scratches
 var DEFAULT_HEADSCRATCH_HEIGHT = 2;   // pixels tall
