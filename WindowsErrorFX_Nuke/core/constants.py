@@ -77,29 +77,24 @@ MAX_FRAMES = 96
 # Blend mode weights per element type
 BLEND_WEIGHTS = {
     "bsod": [
-        {"value": "normal", "weight": 40}, {"value": "add", "weight": 18},
-        {"value": "screen", "weight": 18}, {"value": "overlay", "weight": 10},
-        {"value": "hardLight", "weight": 10}, {"value": "difference", "weight": 4},
+        {"value": "normal", "weight": 40}, {"value": "add", "weight": 9},
+        {"value": "screen", "weight": 9},
     ],
     "pixel": [
-        {"value": "normal", "weight": 40}, {"value": "add", "weight": 18},
-        {"value": "screen", "weight": 18}, {"value": "overlay", "weight": 10},
-        {"value": "hardLight", "weight": 10}, {"value": "difference", "weight": 4},
+        {"value": "normal", "weight": 40}, {"value": "add", "weight": 9},
+        {"value": "screen", "weight": 9},
     ],
     "dialog": [
-        {"value": "normal", "weight": 60}, {"value": "add", "weight": 12},
-        {"value": "screen", "weight": 12}, {"value": "overlay", "weight": 6},
-        {"value": "hardLight", "weight": 6}, {"value": "difference", "weight": 4},
+        {"value": "normal", "weight": 60}, {"value": "add", "weight": 6},
+        {"value": "screen", "weight": 6},
     ],
     "cursor": [
-        {"value": "normal", "weight": 80}, {"value": "add", "weight": 6},
-        {"value": "screen", "weight": 6}, {"value": "overlay", "weight": 3},
-        {"value": "hardLight", "weight": 3}, {"value": "difference", "weight": 2},
+        {"value": "normal", "weight": 80}, {"value": "add", "weight": 3},
+        {"value": "screen", "weight": 3},
     ],
     "freeze": [
-        {"value": "normal", "weight": 90}, {"value": "add", "weight": 3},
-        {"value": "screen", "weight": 3}, {"value": "overlay", "weight": 2},
-        {"value": "hardLight", "weight": 1}, {"value": "difference", "weight": 1},
+        {"value": "normal", "weight": 90}, {"value": "add", "weight": 1},
+        {"value": "screen", "weight": 1},
     ],
 }
 
@@ -127,7 +122,7 @@ MAX_STACK_DEPTH = 8
 DEFAULT_SCANLINE_OPACITY = 20
 DEFAULT_SCANLINE_SPACING = 4
 DEFAULT_NOISE_OPACITY = 8
-DEFAULT_NOISE_SCALE = 100
+DEFAULT_NOISE_SCALE = 10
 DEFAULT_NOISE_COMPLEXITY = 5
 DEFAULT_HEADSCRATCH_FREQ = 20
 DEFAULT_HEADSCRATCH_HEIGHT = 2

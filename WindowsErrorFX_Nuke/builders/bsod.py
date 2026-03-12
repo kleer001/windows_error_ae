@@ -1,89 +1,102 @@
-"""BSOD panel element builder for Nuke."""
+"""BSOD panel element builder for Nuke.
+
+Uses pre-rendered BSOD PNGs from the assets directory instead of
+building from scratch with Constant/Text2 nodes.
+"""
+
+import os
 
 import nuke
 
-from ..core.constants import (
-    C_BSOD_BG, C_BSOD_TEXT, FONT_MONO_CANDIDATES, FSIZE_BSOD,
-    BSOD_LINES_XP, BSOD_LINES_9X, BSOD_CODES, BSOD_EXCEPTIONS,
-    set_font,
-)
-from ..core.prng import create_rng, rng_pick, rng_int
-from ..core.scheduler import resolve_hex_placeholders
+from ..core.prng import create_rng, rng_int, rng_float
+
+
+# Path to bundled pre-rendered BSOD PNGs
+_ASSETS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets")
+
+# Available BSOD PNGs per era
+_BSOD_COUNTS = {"9x": 5, "xp": 7}
+# Native dimensions of BSOD PNGs
+_BSOD_SIZES = {"9x": (640, 180), "xp": (640, 260)}
 
 
 def build_bsod(job, comp_w, comp_h, frame_rate):
-    """Build BSOD panel nodes inside a Group.
+    """Build BSOD panel using a pre-rendered PNG.
 
+    Reads the appropriate BSOD PNG from the assets directory, scales it,
+    and positions it in comp space.
     Returns (output_node, list_of_all_nodes).
     """
     in_frame = job["inFrame"]
     out_frame = job["outFrame"]
     scale = job.get("scale", 1.0)
+    era = job.get("bsodEra", "xp")
 
-    # Pick era-specific text
-    if job.get("bsodEra") == "9x":
-        text_lines = list(BSOD_LINES_9X)
-    else:
-        text_lines = list(BSOD_LINES_XP)
-
-    # Append any pre-picked lines from scheduler
-    if job.get("textLines"):
-        text_lines.extend(job["textLines"])
-
-    # Resolve placeholders in era text lines
     rng = create_rng(in_frame * 7919)
-    resolved = []
-    for line in text_lines:
-        line = line.replace("%BSOD_EXCEPTION%", rng_pick(rng, BSOD_EXCEPTIONS))
-        line = line.replace("%BSOD_CODE%", rng_pick(rng, BSOD_CODES))
-        line = resolve_hex_placeholders(line, rng)
-        resolved.append(line)
-    body_text = "\n".join(resolved)
 
-    # Determine BSOD panel size based on variant
-    variant = job.get("variant", "island")
-    if variant == "fullStrip":
-        panel_w = comp_w
-        panel_h = int(300 * scale)
-    elif variant == "corner":
-        panel_w = int(comp_w * 0.6 * scale)
-        panel_h = int(comp_h * 0.5 * scale)
-    else:  # island
-        panel_w = int(640 * scale)
-        panel_h = int(400 * scale)
+    # Pick a random BSOD PNG for this era
+    count = _BSOD_COUNTS.get(era, 7)
+    index = rng_int(rng, 0, count - 1)
+    png_name = "bsod_%s_%d.png" % (era, index)
+    png_path = os.path.join(_ASSETS_DIR, png_name)
+
+    if not os.path.exists(png_path):
+        # Fallback to index 0
+        png_path = os.path.join(_ASSETS_DIR, "bsod_%s_0.png" % era)
+
+    native_w, native_h = _BSOD_SIZES.get(era, (640, 260))
 
     x = job.get("x", comp_w // 2)
     y = job.get("y", comp_h // 2)
-
-    # Constant node for BSOD blue background (unique format name per element)
     prefix = "WEFX_bsod_%d" % in_frame
-    fmt_name = "WEFX_bsod_fmt_%d" % in_frame
-    bg = nuke.nodes.Constant(name=prefix + "_bg")
-    bg["color"].setValue([C_BSOD_BG[0], C_BSOD_BG[1], C_BSOD_BG[2], 1.0])
-    bg["format"].setValue(nuke.addFormat("%d %d %s" % (panel_w, panel_h, fmt_name)))
 
-    # Text node for BSOD content
-    text_node = nuke.nodes.Text2(name=prefix + "_text")
-    text_node.setInput(0, bg)
-    text_node["message"].setValue(body_text)
-    set_font(text_node["font"], FONT_MONO_CANDIDATES)
-    text_node["font_size"].setValue(int(FSIZE_BSOD * scale))
-    text_node["color"].setValue([C_BSOD_TEXT[0], C_BSOD_TEXT[1], C_BSOD_TEXT[2], 1.0])
-    text_node["box"].setValue([10, 10, panel_w - 10, panel_h - 10])
+    # Read node for the pre-rendered BSOD PNG
+    read = nuke.nodes.Read(name=prefix + "_read")
+    read["file"].setValue(png_path)
+    read["colorspace"].setValue("sRGB")
+    read["first"].setValue(1)
+    read["last"].setValue(1)
+    read["origfirst"].setValue(1)
+    read["origlast"].setValue(1)
+    read["on_error"].setValue("black")
 
-    # Transform for positioning
+    # Determine variant-specific scaling
+    # The PNG is at 640px native width. Apply variant sizing then compScale.
+    variant = job.get("variant", "island")
+    if variant == "fullStrip":
+        # Stretch to fill comp width, maintaining aspect ratio
+        variant_scale_x = float(comp_w) / native_w
+        variant_scale_y = scale
+    elif variant == "corner":
+        # Smaller panel — random 30-60% of native size, scaled by compScale
+        size_factor = rng_float(rng, 0.3, 0.6)
+        variant_scale_x = scale * size_factor
+        variant_scale_y = scale * size_factor
+    else:  # island
+        # Moderate panel — random 40-80% of native size, scaled by compScale
+        size_factor = rng_float(rng, 0.4, 0.8)
+        variant_scale_x = scale * size_factor
+        variant_scale_y = scale * size_factor
+
+    # Transform: scale + position
     xform = nuke.nodes.Transform(name=prefix + "_xform")
-    xform.setInput(0, text_node)
-    xform["translate"].setValue([x - panel_w / 2, comp_h - y - panel_h / 2])
-    xform["filter"].setValue("Impulse")
+    xform.setInput(0, read)
+    xform["scale"].setValue([variant_scale_x, variant_scale_y])
+    xform["center"].setValue([native_w / 2.0, native_h / 2.0])
+    xform["filter"].setValue("Impulse")  # Nearest-neighbor for pixel-art
+
+    # Position in comp space
+    panel_w = native_w * variant_scale_x
+    panel_h = native_h * variant_scale_y
+    tx_start = x - panel_w / 2.0
+    ty_start = comp_h - y - panel_h / 2.0
+    xform["translate"].setValue([tx_start, ty_start])
 
     # Behavior animation
     behavior = job.get("behavior", "static")
     if behavior in ("slideH", "slideV", "stutter"):
         speed = job.get("slideSpeed", 40) * job.get("speedMult", 1.0)
         slide_dir = job.get("slideDir", "right")
-        tx_start = x - panel_w / 2
-        ty_start = comp_h - y - panel_h / 2
         tx_end = tx_start
         ty_end = ty_start
 
@@ -102,5 +115,5 @@ def build_bsod(job, comp_w, comp_h, frame_rate):
         xform["translate"].setValueAt(ty_start, in_frame, 1)
         xform["translate"].setValueAt(ty_end, out_frame, 1)
 
-    nodes = [bg, text_node, xform]
+    nodes = [read, xform]
     return xform, nodes

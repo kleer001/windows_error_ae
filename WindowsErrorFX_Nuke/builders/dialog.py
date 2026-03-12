@@ -1,108 +1,98 @@
-"""Dialog box element builder for Nuke."""
+"""Dialog box element builder for Nuke.
+
+Uses pre-rendered dialog PNGs from the assets directory instead of
+building dialogs from scratch with Constant/Text2 nodes.
+"""
+
+import os
 
 import nuke
 
-from ..core.constants import (
-    DIALOG_VARIANTS, DIALOG_WIDTH, DIALOG_HEIGHT,
-    C_DIALOG_TITLE_TX, FONT_UI_CANDIDATES, FSIZE_DIALOG_BODY, FSIZE_DIALOG_TITLE,
-    FSIZE_BUTTON, set_font,
-)
+from ..core.constants import DIALOG_CATALOG
+
+
+# Path to bundled pre-rendered dialog PNGs
+_ASSETS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets")
+
+
+def _get_dialog_png_path(catalog_id):
+    """Return the full path to a pre-rendered dialog PNG."""
+    return os.path.join(_ASSETS_DIR, catalog_id + ".png")
 
 
 def build_dialog(job, comp_w, comp_h, frame_rate):
-    """Build Win9x dialog box nodes inside a Group.
+    """Build Win9x dialog box using a pre-rendered PNG.
 
-    Uses Nuke Constant + Text2 nodes to draw the dialog.
+    Reads the appropriate PNG from the assets directory, scales it by
+    compScale, and positions it in comp space.
     Returns (output_node, list_of_all_nodes).
     """
     in_frame = job["inFrame"]
     out_frame = job["outFrame"]
     scale = job.get("scale", 1.0)
-    variant_key = job.get("dialogVariant", "B")
-    variant = DIALOG_VARIANTS[variant_key]
-
-    dlg_w = int(DIALOG_WIDTH * scale)
-    dlg_h = int(DIALOG_HEIGHT * scale)
-    if variant_key == "C":
-        dlg_h = int(147 * scale)
 
     x = job.get("x", comp_w // 2)
     y = job.get("y", comp_h // 2)
 
     prefix = "WEFX_dlg_%d" % in_frame
 
-    # Dialog body background (unique format name per element)
-    body_color = variant["body"]
-    bg = nuke.nodes.Constant(name=prefix + "_bg")
-    bg["color"].setValue([body_color[0], body_color[1], body_color[2], 1.0])
-    bg["format"].setValue(nuke.addFormat("%d %d WEFX_dlg_fmt_%d" % (dlg_w, dlg_h, in_frame)))
+    # Resolve catalog PNG
+    catalog_id = job.get("catalogId", "B_error_0")
+    png_path = _get_dialog_png_path(catalog_id)
 
-    # Title bar — same width as dialog, positioned at the top
-    title_h = int(variant["titleH"] * scale)
-    title_start = variant["titleStart"]
-    title_bg = nuke.nodes.Constant(name=prefix + "_title")
-    title_bg["color"].setValue([title_start[0], title_start[1], title_start[2], 1.0])
-    title_bg["format"].setValue(nuke.addFormat(
-        "%d %d WEFX_title_fmt_%d" % (dlg_w, title_h, in_frame)
-    ))
+    if not os.path.exists(png_path):
+        # Fallback: try any B_error variant
+        png_path = _get_dialog_png_path("B_error_0")
 
-    # Transform title bar to top of dialog (Nuke Y=0 is bottom)
-    title_xform = nuke.nodes.Transform(name=prefix + "_titleXform")
-    title_xform.setInput(0, title_bg)
-    title_xform["translate"].setValue([0, dlg_h - title_h])
-    title_xform["filter"].setValue("Impulse")
+    # Read node for the pre-rendered dialog PNG
+    read = nuke.nodes.Read(name=prefix + "_read")
+    read["file"].setValue(png_path)
+    read["colorspace"].setValue("sRGB")
+    # Static image — set to single frame
+    read["first"].setValue(1)
+    read["last"].setValue(1)
+    read["origfirst"].setValue(1)
+    read["origlast"].setValue(1)
+    read["on_error"].setValue("black")
 
-    # Merge title bar over body
-    merge_title = nuke.nodes.Merge2(name=prefix + "_mergeTitle")
-    merge_title.setInput(0, bg)
-    merge_title.setInput(1, title_xform)
-    merge_title["operation"].setValue("over")
+    # Get native PNG dimensions from the catalog
+    native_w = 280
+    native_h = 140
+    for entry in DIALOG_CATALOG:
+        if entry["id"] == catalog_id:
+            native_w = entry["w"]
+            native_h = entry["h"]
+            break
 
-    # Title text
-    title_text = job.get("title", "Error")
-    title_node = nuke.nodes.Text2(name=prefix + "_titleText")
-    title_node.setInput(0, merge_title)
-    title_node["message"].setValue(title_text)
-    set_font(title_node["font"], FONT_UI_CANDIDATES)
-    title_node["font_size"].setValue(int(FSIZE_DIALOG_TITLE * scale))
-    title_node["color"].setValue([C_DIALOG_TITLE_TX[0], C_DIALOG_TITLE_TX[1],
-                                  C_DIALOG_TITLE_TX[2], 1.0])
-    title_node["box"].setValue([4 * scale, dlg_h - title_h + 2 * scale,
-                                dlg_w - 4 * scale, dlg_h - 2 * scale])
-
-    # Body text
-    body_text = job.get("body", "An error has occurred.")
-    body_node = nuke.nodes.Text2(name=prefix + "_bodyText")
-    body_node.setInput(0, title_node)
-    body_node["message"].setValue(body_text)
-    set_font(body_node["font"], FONT_UI_CANDIDATES)
-    body_node["font_size"].setValue(int(FSIZE_DIALOG_BODY * scale))
-    body_node["color"].setValue([0, 0, 0, 1.0])
-    body_node["box"].setValue([50 * scale, 30 * scale,
-                                dlg_w - 10 * scale, dlg_h - title_h - 10 * scale])
-
-    # Transform for positioning in comp space
-    base_tx = x - dlg_w / 2
-    base_ty = comp_h - y - dlg_h / 2
-
+    # Transform: scale from native res to comp space, then position
+    # The PNG is at native virtual resolution (280x140), scale maps it
+    # to the correct size in the comp (matching AE's approach)
     xform = nuke.nodes.Transform(name=prefix + "_xform")
-    xform.setInput(0, body_node)
+    xform.setInput(0, read)
+    xform["scale"].setValue([scale, scale])
+    xform["center"].setValue([native_w / 2.0, native_h / 2.0])
+    xform["filter"].setValue("Impulse")  # Nearest-neighbor for pixel-art
+
+    # Position in comp space (Nuke Y=0 is bottom, comp Y=0 is top)
+    dlg_w = native_w * scale
+    dlg_h = native_h * scale
+    base_tx = x - dlg_w / 2.0
+    base_ty = comp_h - y - dlg_h / 2.0
     xform["translate"].setValue([base_tx, base_ty])
-    xform["filter"].setValue("Impulse")
 
     # Stack offset
     stack_index = job.get("stackIndex", 0)
     stack_offset = job.get("stackOffset", 10)
     if stack_index > 0:
-        base_tx = x - dlg_w / 2 + stack_index * stack_offset
-        base_ty = comp_h - y - dlg_h / 2 - stack_index * stack_offset
+        base_tx = x - dlg_w / 2.0 + stack_index * stack_offset
+        base_ty = comp_h - y - dlg_h / 2.0 - stack_index * stack_offset
         xform["translate"].setValue([base_tx, base_ty])
 
     # Arrival/life/exit behaviors
     _animate_dialog(xform, job, comp_w, comp_h, dlg_w, dlg_h,
                     in_frame, out_frame, frame_rate, base_tx, base_ty)
 
-    nodes = [bg, title_bg, title_xform, merge_title, title_node, body_node, xform]
+    nodes = [read, xform]
     return xform, nodes
 
 
@@ -119,17 +109,16 @@ def _animate_dialog(xform, job, comp_w, comp_h, dlg_w, dlg_h, in_f, out_f, fps,
 
     if arrival == "scalePop" and entry_frames > 0:
         xform["scale"].setAnimated()
-        xform["scale"].setValueAt(0.8, in_f, 0)
-        xform["scale"].setValueAt(0.8, in_f, 1)
-        xform["scale"].setValueAt(0.95, in_f + 1, 0)
-        xform["scale"].setValueAt(0.95, in_f + 1, 1)
-        xform["scale"].setValueAt(1.0, in_f + entry_frames, 0)
-        xform["scale"].setValueAt(1.0, in_f + entry_frames, 1)
+        xform["scale"].setValueAt(0.8 * job.get("scale", 1.0), in_f, 0)
+        xform["scale"].setValueAt(0.8 * job.get("scale", 1.0), in_f, 1)
+        xform["scale"].setValueAt(0.95 * job.get("scale", 1.0), in_f + 1, 0)
+        xform["scale"].setValueAt(0.95 * job.get("scale", 1.0), in_f + 1, 1)
+        xform["scale"].setValueAt(1.0 * job.get("scale", 1.0), in_f + entry_frames, 0)
+        xform["scale"].setValueAt(1.0 * job.get("scale", 1.0), in_f + entry_frames, 1)
 
     if life == "shake":
         shake_start = in_f + job.get("shakeFrame", 10)
         shake_dur = job.get("shakeDur", 8)
-        # Expression adds shake offset to base position
         xform["translate"].setExpression(
             "%f + ((frame >= %d && frame <= %d) ? "
             "(((frame - %d) %% 4 < 2) ? 3 : -3) : 0)" % (
@@ -139,10 +128,11 @@ def _animate_dialog(xform, job, comp_w, comp_h, dlg_w, dlg_h, in_f, out_f, fps,
 
     if exit_b == "collapse" and exit_frames > 0:
         collapse_start = out_f - exit_frames
+        s = job.get("scale", 1.0)
         xform["scale"].setAnimated()
-        xform["scale"].setValueAt(1.0, collapse_start, 0)
-        xform["scale"].setValueAt(1.0, collapse_start, 1)
-        xform["scale"].setValueAt(0.5, collapse_start + 1, 0)
-        xform["scale"].setValueAt(0.5, collapse_start + 1, 1)
+        xform["scale"].setValueAt(1.0 * s, collapse_start, 0)
+        xform["scale"].setValueAt(1.0 * s, collapse_start, 1)
+        xform["scale"].setValueAt(0.5 * s, collapse_start + 1, 0)
+        xform["scale"].setValueAt(0.5 * s, collapse_start + 1, 1)
         xform["scale"].setValueAt(0.0, out_f, 0)
         xform["scale"].setValueAt(0.0, out_f, 1)

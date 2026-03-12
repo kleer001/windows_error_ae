@@ -208,14 +208,18 @@ def generate(group, settings=None):
             built_count += 1
 
     # Add overlays (noise, head scratch)
-    noise_out, noise_nodes = build_noise(settings, comp_w, comp_h)
+    noise_result = build_noise(settings, comp_w, comp_h)
+    if len(noise_result) == 3:
+        noise_out, noise_nodes, noise_mix = noise_result
+    else:
+        noise_out, noise_nodes, noise_mix = None, [], 0
     if noise_out:
         all_nodes.extend(noise_nodes)
         noise_merge = nuke.nodes.Merge2(name="WEFX_noise_merge")
         noise_merge.setInput(0, current)
         noise_merge.setInput(1, noise_out)
-        noise_merge["operation"].setValue("overlay")
-        noise_merge["mix"].setValue(1.0)
+        noise_merge["operation"].setValue("screen")
+        noise_merge["mix"].setValue(noise_mix)
         all_nodes.append(noise_merge)
         current = noise_merge
 

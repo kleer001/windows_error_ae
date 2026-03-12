@@ -14,7 +14,7 @@ def build_freeze(job, comp_w, comp_h, frame_rate, footage_node=None):
 
     in_frame = job["inFrame"]
     scale = job.get("scale", 1.0)
-    freeze_frame = job.get("freezeFrame", 0)
+    freeze_frame = int(job.get("freezeFrame", 0))
     behavior = job.get("behavior", "single")
 
     prefix = "WEFX_freeze_%d" % in_frame
@@ -68,14 +68,19 @@ def _make_freeze_strip(name, footage_node, comp_w, comp_h, strip_y, strip_h, fre
     # FrameHold to freeze at the target frame
     hold = nuke.nodes.FrameHold(name=name + "_hold")
     hold.setInput(0, footage_node)
-    hold["firstFrame"].setValue(freeze_frame)
+    hold["firstFrame"].setValue(int(freeze_frame))
 
-    # Crop to the strip region
-    crop = nuke.nodes.Crop(name=name + "_crop")
-    crop.setInput(0, hold)
+    # Crop to the strip region — Nuke Y=0 is bottom
     y_bottom = comp_h - strip_y - strip_h
     y_top = comp_h - strip_y
+
+    crop = nuke.nodes.Crop(name=name + "_crop")
+    crop.setInput(0, hold)
     crop["box"].setValue([0, y_bottom, comp_w, y_top])
     crop["reformat"].setValue(False)
+    # Ensure soft edge = 0 for hard crop boundaries
+    crop["softness"].setValue(0)
+    # Intersect with input format to avoid oversized bounding box
+    crop["intersect"].setValue(True)
 
     return crop, [hold, crop]
