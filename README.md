@@ -163,7 +163,10 @@ Python module that creates a Group node with custom knobs. All settings persist 
 4. In the Group's properties, set **Seed** and **Chaos**.
 5. Click **Generate**.
 
-The Group fills with element nodes wired into a merge chain. The output carries the composited result. Change settings and re-generate as needed. **Clear** removes all generated nodes, keeping the Group shell.
+> **How it works — Generate, not live.**
+> Unlike standard Nuke nodes, changing knobs on the Group does **not** update the output in real time. The knobs are settings for the *next* generate. When you click **Generate**, the plugin deletes all internal nodes and rebuilds the entire element network from scratch based on the current knob values. This is a deliberate design choice — the plugin creates dozens of interconnected Read, Transform, and Merge nodes driven by a seeded random schedule, which cannot be meaningfully "tweaked" in place.
+>
+> **Typical workflow:** adjust knobs → Generate → review in viewer → tweak knobs → Generate again. **Clear** removes all generated nodes, keeping the Group shell ready for the next generate.
 
 ## Nuke Controls
 
@@ -195,12 +198,14 @@ Enable, Chance %, Echoes, Decay %.
 
 ## Nuke Architecture
 
+The Group node is a **generator, not a processor**. Its knobs store settings; its internal network is rebuilt on each Generate. After generation, the internal nodes are standard Nuke nodes (Read, Transform, Merge2, etc.) that you can inspect, tweak by hand, or even break out of the Group if you want manual control.
+
 ```
 [Footage] ──► ┌─────────────────────────────────┐
               │  WindowsErrorFX (Group)          │
 [Roto]   ──► │                                   │ ──► [Output]
-              │  Knobs for all settings           │
-              │  Generate → element nodes + merges│
+              │  Knobs = settings for generation  │
+              │  Generate → rebuild all WEFX_*    │
               │  Clear → delete WEFX_* nodes      │
               └─────────────────────────────────┘
 ```
