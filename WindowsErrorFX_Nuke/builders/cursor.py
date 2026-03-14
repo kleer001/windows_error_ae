@@ -49,8 +49,8 @@ def build_cursor(job, comp_w, comp_h, frame_rate):
 
     # Read node for cursor PNG (has transparency)
     read = nuke.nodes.Read(name=prefix + "_read")
-    read["file"].setValue(png_path)
-    read["colorspace"].setValue("sRGB")
+    read["file"].setValue(png_path.replace("\\", "/"))
+    read["colorspace"].setValue("default")
     read["first"].setValue(1)
     read["last"].setValue(1)
     read["origfirst"].setValue(1)

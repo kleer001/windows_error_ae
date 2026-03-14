@@ -46,8 +46,8 @@ def build_dialog(job, comp_w, comp_h, frame_rate):
 
     # Read node for the pre-rendered dialog PNG
     read = nuke.nodes.Read(name=prefix + "_read")
-    read["file"].setValue(png_path)
-    read["colorspace"].setValue("sRGB")
+    read["file"].setValue(png_path.replace("\\", "/"))
+    read["colorspace"].setValue("default")
     # Static image — set to single frame
     read["first"].setValue(1)
     read["last"].setValue(1)
